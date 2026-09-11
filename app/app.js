@@ -47,16 +47,19 @@ function dueSorted() {
     .slice().sort((a, b) => a.due_resolved.localeCompare(b.due_resolved) || a.course.localeCompare(b.course));
 }
 
-function precisionTag(a) {
-  return a.date_precision === "exact"
-    ? ""
-    : ` <span class="tag" title="The syllabus gives only a week, not a day. Raw: ${esc(a.due_date_raw)}">week of</span>`;
+/* The date itself is rendered "wk of 14 Sep" when we only know the week, so the
+   precision is already visible; this just explains it on hover. */
+function whenCell(a, long) {
+  const d = long ? fmt(a.due_resolved) : fmtShort(a.due_resolved);
+  if (a.date_precision === "exact") return long ? fmt(a.due_resolved) : d;
+  return `<span title="The syllabus gives only a week, not a day. Syllabus says: ${esc(a.due_date_raw)}">${long ? "week of " : "wk of "}${d}</span>`;
 }
 
 /* ------------------------------------------------------------ networking */
 async function load() {
   const r = await fetch("/api/data");
   D = await r.json();
+  viewFromHash();
   chrome();
   render();
 }
@@ -98,8 +101,16 @@ $("#tabs").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-view]");
   if (!b) return;
   state.view = b.dataset.view;
+  location.hash = b.dataset.view;          // bookmarkable, and Back works
   render();
 });
+
+/* Restore the tab from the URL, so a bookmark to #exams lands on Exams. */
+function viewFromHash() {
+  const v = (location.hash || "").replace(/^#/, "");
+  if (v && VIEWS[v]) state.view = v;
+}
+window.addEventListener("hashchange", () => { viewFromHash(); render(); });
 $("#reload").addEventListener("click", load);
 
 /* ==================================================================== WEEK */
@@ -210,11 +221,11 @@ function dueRow(a) {
   const n = daysBetween(today(), a.due_resolved);
   const cls = n < 0 ? "overdue" : n <= 4 ? "soon" : "";
   return `<div class="due ${cls}">
-    <div class="when">${a.date_precision === "exact" ? fmt(a.due_resolved) : "wk of " + fmtShort(a.due_resolved)}</div>
+    <div class="when">${whenCell(a, false)}</div>
     <div class="body">
       <span class="course-pill">${esc(a.course)}</span>
       <span class="tag ${esc(a.type)}">${esc(a.type)}</span>
-      ${esc(a.name)}${precisionTag(a)}
+      ${esc(a.name)}
       ${a.scope_chapters ? `<div class="quiet">covers ch. ${esc(a.scope_chapters.replace(/;/g, ", "))}</div>` : ""}
     </div>
     <div class="left">${a.weight_pct ? a.weight_pct + "%" : "—"}<br>
@@ -241,12 +252,19 @@ VIEWS.grid = () => {
       if (!rows.length) { h += `<td class="muted"></td>`; continue; }
       if (rows.every((r) => r.due_type === "study_week")) { h += `<td class="break">study week</td>`; continue; }
 
-      const chapters = [...new Set(rows.flatMap((r) => r.chapters.split(";").filter(Boolean)))];
+      // Chapters come from the DERIVED readings, not the raw row, so an exam's
+      // scope ("Chapters 1,2,3,6, and 7" in LGL225's Reading(s) column) is not
+      // shown as reading newly assigned that week. The scope is stated on the
+      // exam badge instead, where it belongs.
+      const chapters = [...new Set(D.readings
+        .filter((r) => r.course === code && r.week_no === w).map((r) => r.chapter))];
       const dues = D.assessments.filter((a) => a.course === code && a.week_no === w);
       let cell = "";
       if (chapters.length) cell += `<span class="ch">ch ${chapters.join(", ")}</span>`;
       for (const a of dues) {
-        cell += `<span class="mini"><span class="tag ${esc(a.type)}">${esc(a.name)}${a.weight_pct ? " " + a.weight_pct + "%" : ""}</span></span>`;
+        cell += `<span class="mini"><span class="tag ${esc(a.type)}">${esc(a.name)}${a.weight_pct ? " " + a.weight_pct + "%" : ""}</span>`;
+        if (a.scope_chapters) cell += `<span class="ch muted"> covers ch ${esc(a.scope_chapters.replace(/;/g, ", "))}</span>`;
+        cell += `</span>`;
       }
       if (!cell) cell = `<span class="muted">—</span>`;
       const holiday = Object.keys(D.term.holidays).find((d) => rows.some((r) => r.class_date === d));
@@ -329,7 +347,7 @@ VIEWS.exams = () => {
         <h3><span class="course-pill">${esc(a.course)}</span>
           <span class="tag ${esc(a.type)}">${esc(a.type)}</span> ${esc(a.name)}</h3>
         <div class="nowrap"><b>${a.weight_pct ? a.weight_pct + "%" : "no weight"}</b>
-          · ${a.date_precision === "exact" ? fmt(a.due_resolved) : "week of " + fmt(a.due_resolved)}${precisionTag(a)}</div>
+          · ${whenCell(a, true)}</div>
       </div>
       <table><tbody>
         <tr><th style="width:130px">Scope</th><td>${a.scope_chapters

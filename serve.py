@@ -15,7 +15,6 @@ import argparse
 import csv
 import datetime as dt
 import http.server
-import io
 import json
 import os
 import re
@@ -91,17 +90,28 @@ def week_no(iso):
     return ((dt.date.fromisoformat(iso) - WEEK1_MONDAY).days // 7) + 1
 
 
-def monday_of(iso):
-    d = dt.date.fromisoformat(iso)
-    return (d - dt.timedelta(days=d.weekday())).isoformat()
 
-
-def derive_readings(schedule):
+def derive_readings(schedule, assessments):
     """One row per chapter per class meeting, with a stable id.
 
     Stable because it is built from the schedule row id plus the chapter number,
     so progress.csv keeps pointing at the right thing across regenerations.
+
+    Exam-scope chapters are NOT readings. LGL225 puts "Chapters 1,2,3,6, and 7"
+    in the Reading(s) column of its mid-term row -- that is the scope of the
+    exam, not five chapters newly assigned that week. Counting them would invent
+    reading you never had, and hand you checkboxes for it.
+
+    The test is deliberately narrow: skip only when the row's chapters are
+    exactly the matching assessment's stated scope. LGL152 also holds tests on
+    days that carry genuine new reading (Midterm #1 with chapter 13), and those
+    must survive.
     """
+    scope_by_week = {}
+    for a in assessments:
+        if a.get("scope_chapters") and a.get("week_no") != "":
+            scope_by_week[(a["course"], a["week_no"])] = set(a["scope_chapters"].split(";"))
+
     out = []
     for r in schedule:
         if r["due_type"] == "study_week":
@@ -110,6 +120,10 @@ def derive_readings(schedule):
         pages = [p for p in r["pages"].split(";") if p]
         if not chapters:
             continue
+        if r["due_type"] in ("exam", "test"):
+            scope = scope_by_week.get((r["course"], r["week_no"]))
+            if scope and scope == set(chapters):
+                continue
         for i, ch in enumerate(chapters):
             out.append({
                 "id": f"{r['id']}-ch{ch}",
@@ -181,7 +195,7 @@ def build_payload():
         "courses": read_csv("courses.csv"),
         "schedule": schedule,
         "assessments": assessments,
-        "readings": derive_readings(schedule),
+        "readings": derive_readings(schedule, assessments),
         "progress": read_csv("progress.csv"),
         "grades": read_csv("grades.csv"),
         "cases": read_csv("cases.csv"),
@@ -383,7 +397,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 
 class Server(socketserver.ThreadingTCPServer):
-    allow_reuse_address = True
+    # NOT allow_reuse_address. On Windows SO_REUSEADDR lets a second process bind
+    # a port that is already being listened on, instead of failing -- so starting
+    # the app twice leaves two servers on 8787 and whichever answers first wins.
+    # That surfaces as edits to data/ apparently having no effect. Better to
+    # refuse the second start and say so.
+    allow_reuse_address = False
     daemon_threads = True
 
 
@@ -400,12 +419,20 @@ def main():
     NOTES.mkdir(exist_ok=True)
 
     url = f"http://127.0.0.1:{args.port}/"
-    with Server(("127.0.0.1", args.port), Handler) as httpd:
+    try:
+        httpd = Server(("127.0.0.1", args.port), Handler)
+    except OSError:
+        raise SystemExit(
+            f"Port {args.port} is already in use -- Paralegal Beagle is probably already\n"
+            f"running. Open {url} in your browser, or close the other window first.\n"
+            f"To run a second copy anyway:  python serve.py --port {args.port + 1}")
+
+    with httpd:
         p = build_payload()
-        print("Paralegal Beagle")
+        print("Paralegal Beagle", flush=True)
         print(f"  {len(p['courses'])} courses | {len(p['schedule'])} class meetings | "
-              f"{len(p['assessments'])} assessments | {len(p['readings'])} chapter-readings")
-        print(f"  serving {url}   (Ctrl+C to stop)")
+              f"{len(p['assessments'])} assessments | {len(p['readings'])} chapter-readings", flush=True)
+        print(f"  serving {url}   (Ctrl+C to stop)", flush=True)
         if not args.no_browser:
             threading.Timer(0.4, lambda: webbrowser.open(url)).start()
         try:
