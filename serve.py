@@ -1,0 +1,418 @@
+"""The local web app. Python standard library only -- no pip install, no build.
+
+    python serve.py          # then open http://127.0.0.1:8787
+    python serve.py --port 9000 --no-browser
+
+Binds to 127.0.0.1 only, so nothing outside this machine can reach it.
+
+Reads data/*.csv, serves them as JSON, and writes back the three files you own:
+progress.csv, grades.csv and cases.csv, plus Markdown under notes/. Everything
+else -- readings, term weeks, grade standing, crunch load -- is DERIVED on each
+request and never stored, so re-running extract.py can't contradict it.
+"""
+
+import argparse
+import csv
+import datetime as dt
+import http.server
+import io
+import json
+import os
+import re
+import socketserver
+import threading
+import urllib.parse
+import webbrowser
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+DATA = ROOT / "data"
+APP = ROOT / "app"
+NOTES = ROOT / "notes"
+SYLLABI = ROOT / "syllabi"
+
+TERM = {
+    "start": "2026-09-08",
+    "end": "2026-12-16",
+    "week1_monday": "2026-09-07",
+    "study_week": ["2026-10-26", "2026-10-30"],
+    "holidays": {"2026-09-07": "Labour Day (Seneca closed)",
+                 "2026-10-12": "Thanksgiving (Seneca closed)"},
+    "drop_deadline": "2026-11-13",
+    "drop_deadline_label": "Last day to drop Session 1 without academic penalty",
+    "grades_released": "2026-12-22",
+}
+
+WEEK1_MONDAY = dt.date.fromisoformat(TERM["week1_monday"])
+
+# How far ahead to start warning, by assessment type. Reverse-planning: an exam
+# is not a thing you do on the day, it is a thing you start two weeks before.
+LEAD_DAYS = {"exam": 14, "test": 14, "assignment": 10, "presentation": 10,
+             "quiz": 5, "milestone": 5, "": 7}
+
+_lock = threading.Lock()
+
+
+# ---------------------------------------------------------------- csv helpers
+def read_csv(name):
+    path = DATA / name
+    if not path.exists():
+        return []
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def write_csv(name, fieldnames, rows):
+    path = DATA / name
+    tmp = path.with_suffix(".csv.tmp")
+    with open(tmp, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
+        for r in rows:
+            w.writerow({k: r.get(k, "") for k in fieldnames})
+    os.replace(tmp, path)      # atomic, so a crash mid-write can't truncate the file
+
+
+def upsert(name, fieldnames, key, record):
+    """Insert or replace one row, keyed on `key`. Blank-valued rows are deleted."""
+    with _lock:
+        rows = read_csv(name)
+        rows = [r for r in rows if r.get(key) != record.get(key)]
+        meaningful = any(v not in ("", None) for k, v in record.items() if k != key)
+        if meaningful:
+            rows.append(record)
+        rows.sort(key=lambda r: r.get(key, ""))
+        write_csv(name, fieldnames, rows)
+        return rows
+
+
+# ------------------------------------------------------------------- deriving
+def week_no(iso):
+    return ((dt.date.fromisoformat(iso) - WEEK1_MONDAY).days // 7) + 1
+
+
+def monday_of(iso):
+    d = dt.date.fromisoformat(iso)
+    return (d - dt.timedelta(days=d.weekday())).isoformat()
+
+
+def derive_readings(schedule):
+    """One row per chapter per class meeting, with a stable id.
+
+    Stable because it is built from the schedule row id plus the chapter number,
+    so progress.csv keeps pointing at the right thing across regenerations.
+    """
+    out = []
+    for r in schedule:
+        if r["due_type"] == "study_week":
+            continue
+        chapters = [c for c in r["chapters"].split(";") if c]
+        pages = [p for p in r["pages"].split(";") if p]
+        if not chapters:
+            continue
+        for i, ch in enumerate(chapters):
+            out.append({
+                "id": f"{r['id']}-ch{ch}",
+                "course": r["course"],
+                "class_date": r["class_date"],
+                "week_no": int(r["week_no"]),
+                "chapter": ch,
+                # Pages only attach one-to-one when the counts line up. Guessing
+                # which range belongs to which chapter would be fabrication.
+                "pages": pages[i] if len(pages) == len(chapters) else "",
+                "all_pages": ";".join(pages) if len(pages) != len(chapters) else "",
+                "topic": r["topic"],
+                "reading_raw": r["reading_raw"],
+                "schedule_id": r["id"],
+            })
+    return out
+
+
+def resolve_due(a):
+    """The date to sort and count down against, plus how precise it really is."""
+    if a["due_date"]:
+        return a["due_date"]
+    if a["due_week_of"]:
+        return a["due_week_of"]
+    return ""
+
+
+def notes_index():
+    out = []
+    if not NOTES.exists():
+        return out
+    for p in sorted(NOTES.rglob("*.md")):
+        rel = p.relative_to(NOTES).as_posix()
+        text = p.read_text(encoding="utf-8", errors="replace")
+        meta = {}
+        m = re.match(r"^---\s*\n(.*?)\n---\s*\n", text, re.S)
+        if m:
+            for line in m.group(1).splitlines():
+                if ":" in line:
+                    k, v = line.split(":", 1)
+                    meta[k.strip()] = v.strip().strip('"').strip("'")
+        out.append({
+            "path": rel,
+            "course": meta.get("course") or (rel.split("/")[0] if "/" in rel else ""),
+            "title": meta.get("title") or p.stem,
+            "week_of": meta.get("week_of", ""),
+            "chapter": meta.get("chapter", ""),
+            "topic": meta.get("topic", ""),
+            "tags": meta.get("tags", ""),
+            "words": len(text.split()),
+            "modified": dt.datetime.fromtimestamp(p.stat().st_mtime).isoformat(timespec="seconds"),
+        })
+    return out
+
+
+def build_payload():
+    schedule = read_csv("schedule.csv")
+    for r in schedule:
+        r["week_no"] = int(r["week_no"]) if r["week_no"] else week_no(r["class_date"])
+    assessments = read_csv("assessments.csv")
+    for a in assessments:
+        a["due_resolved"] = resolve_due(a)
+        a["week_no"] = week_no(a["due_resolved"]) if a["due_resolved"] else ""
+        a["lead_days"] = LEAD_DAYS.get(a["type"], LEAD_DAYS[""])
+    return {
+        "term": TERM,
+        "today": dt.date.today().isoformat(),
+        "generated": dt.datetime.now().isoformat(timespec="seconds"),
+        "courses": read_csv("courses.csv"),
+        "schedule": schedule,
+        "assessments": assessments,
+        "readings": derive_readings(schedule),
+        "progress": read_csv("progress.csv"),
+        "grades": read_csv("grades.csv"),
+        "cases": read_csv("cases.csv"),
+        "notes": notes_index(),
+        "syllabi": sorted(p.name for p in SYLLABI.glob("*")) if SYLLABI.exists() else [],
+    }
+
+
+# --------------------------------------------------------------- note writing
+def safe_segment(s, fallback="untitled"):
+    s = re.sub(r"[^A-Za-z0-9._-]+", "-", (s or "").strip()).strip("-.")
+    return s[:80] or fallback
+
+
+def note_path(rel):
+    """Resolve a note path, refusing anything that escapes notes/."""
+    p = (NOTES / rel).resolve()
+    if not str(p).startswith(str(NOTES.resolve())):
+        raise ValueError("path outside notes/")
+    return p
+
+
+# ------------------------------------------------------------------- handler
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, fmt, *args):
+        if "--verbose" in os.sys.argv:
+            super().log_message(fmt, *args)
+
+    # -- helpers
+    def _send(self, code, body, ctype="application/json; charset=utf-8"):
+        if isinstance(body, (dict, list)):
+            body = json.dumps(body, ensure_ascii=False)
+        raw = body.encode("utf-8") if isinstance(body, str) else body
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def _body(self):
+        n = int(self.headers.get("Content-Length") or 0)
+        if not n:
+            return {}
+        return json.loads(self.rfile.read(n).decode("utf-8"))
+
+    def _static(self, path, ctype):
+        if not path.exists():
+            return self._send(404, {"error": f"{path.name} not found"})
+        self._send(200, path.read_bytes(), ctype)
+
+    # -- GET
+    def do_GET(self):
+        url = urllib.parse.urlparse(self.path)
+        q = urllib.parse.parse_qs(url.query)
+        route = url.path
+
+        if route in ("/", "/index.html"):
+            return self._static(APP / "index.html", "text/html; charset=utf-8")
+        if route == "/app.css":
+            return self._static(APP / "app.css", "text/css; charset=utf-8")
+        if route == "/app.js":
+            return self._static(APP / "app.js", "application/javascript; charset=utf-8")
+        if route == "/api/data":
+            return self._send(200, build_payload())
+        if route == "/api/note":
+            rel = (q.get("path") or [""])[0]
+            try:
+                p = note_path(rel)
+            except ValueError:
+                return self._send(400, {"error": "bad path"})
+            if not p.exists():
+                return self._send(404, {"error": "no such note"})
+            return self._send(200, {"path": rel, "text": p.read_text(encoding="utf-8",
+                                                                     errors="replace")})
+        return self._send(404, {"error": "not found"})
+
+    # -- POST
+    def do_POST(self):
+        route = urllib.parse.urlparse(self.path).path
+        try:
+            body = self._body()
+        except json.JSONDecodeError:
+            return self._send(400, {"error": "body is not valid JSON"})
+
+        if route == "/api/progress":
+            rid = body.get("reading_id")
+            if not rid:
+                return self._send(400, {"error": "reading_id required"})
+            status = body.get("status", "")
+            if status not in ("", "not_started", "in_progress", "done"):
+                return self._send(400, {"error": f"bad status {status!r}"})
+            # "not_started" is the absence of progress, so it normalises to empty
+            # and the row is dropped entirely -- otherwise un-ticking a chapter
+            # leaves a ghost row behind that only looks like data.
+            status = "" if status == "not_started" else status
+            rec = {"reading_id": rid,
+                   "status": status,
+                   "updated": dt.date.today().isoformat() if status else "",
+                   "minutes": str(body.get("minutes") or "") if status else "",
+                   "note": body.get("note", "") if status else ""}
+            upsert("progress.csv", ["reading_id", "status", "updated", "minutes", "note"],
+                   "reading_id", rec)
+            return self._send(200, {"ok": True, "progress": read_csv("progress.csv")})
+
+        if route == "/api/grade":
+            aid = body.get("assessment_id")
+            if not aid:
+                return self._send(400, {"error": "assessment_id required"})
+            earned = str(body.get("earned_pct") or "").strip()
+            if earned:
+                try:
+                    v = float(earned)
+                except ValueError:
+                    return self._send(400, {"error": "earned_pct must be a number"})
+                if not 0 <= v <= 100:
+                    return self._send(400, {"error": "earned_pct must be 0-100"})
+                earned = f"{v:g}"
+            rec = {"assessment_id": aid, "earned_pct": earned,
+                   "returned_date": body.get("returned_date") or
+                   (dt.date.today().isoformat() if earned else ""),
+                   "note": body.get("note", "")}
+            upsert("grades.csv", ["assessment_id", "earned_pct", "returned_date", "note"],
+                   "assessment_id", rec)
+            return self._send(200, {"ok": True, "grades": read_csv("grades.csv")})
+
+        if route == "/api/case":
+            cid = body.get("id") or f"case-{dt.datetime.now().strftime('%Y%m%d%H%M%S')}"
+            fields = ["id", "course", "style_of_cause", "citation", "canlii_url", "court",
+                      "year", "week_of", "status", "verified", "note"]
+            rec = {k: str(body.get(k, "")) for k in fields}
+            rec["id"] = cid
+            if body.get("_delete"):
+                rec = {"id": cid}
+            upsert("cases.csv", fields, "id", rec)
+            return self._send(200, {"ok": True, "cases": read_csv("cases.csv")})
+
+        if route == "/api/note":
+            course = safe_segment(body.get("course"), "GENERAL")
+            title = (body.get("title") or "").strip() or "Untitled"
+            rel = body.get("path")
+            if rel:
+                try:
+                    p = note_path(rel)
+                except ValueError:
+                    return self._send(400, {"error": "bad path"})
+            else:
+                week_of = body.get("week_of") or dt.date.today().isoformat()
+                stem = f"{week_of}-{safe_segment(title)}"
+                p = NOTES / course / f"{stem}.md"
+                rel = p.relative_to(NOTES).as_posix()
+            p.parent.mkdir(parents=True, exist_ok=True)
+
+            if body.get("text") is not None:
+                p.write_text(body["text"], encoding="utf-8")
+            elif not p.exists():
+                fm = [
+                    "---",
+                    f"title: {title}",
+                    f"course: {course}",
+                    f"week_of: {body.get('week_of', '')}",
+                    f"chapter: {body.get('chapter', '')}",
+                    f"topic: {(body.get('topic') or '')[:200]}",
+                    "tags:",
+                    "---",
+                    "",
+                    f"# {title}",
+                    "",
+                    "## Rule",
+                    "",
+                    "## Elements / test",
+                    "",
+                    "## Exceptions",
+                    "",
+                    "## Cases",
+                    "",
+                    "## Questions for the professor",
+                    "",
+                ]
+                p.write_text("\n".join(fm), encoding="utf-8")
+            return self._send(200, {"ok": True, "path": rel,
+                                    "text": p.read_text(encoding="utf-8", errors="replace")})
+
+        if route == "/api/open":
+            # Open a source PDF or note in whatever the OS uses for it. Convenience
+            # only -- confined to syllabi/, handouts/ and notes/.
+            rel = body.get("path", "")
+            target = (ROOT / rel).resolve()
+            allowed = [ (ROOT / d).resolve() for d in ("syllabi", "handouts", "notes", "data") ]
+            if not any(str(target).startswith(str(a)) for a in allowed) or not target.exists():
+                return self._send(400, {"error": "refused"})
+            try:
+                os.startfile(str(target))       # noqa: S606  (Windows only)
+            except Exception as e:               # pragma: no cover
+                return self._send(500, {"error": str(e)})
+            return self._send(200, {"ok": True})
+
+        return self._send(404, {"error": "not found"})
+
+
+class Server(socketserver.ThreadingTCPServer):
+    allow_reuse_address = True
+    daemon_threads = True
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--port", type=int, default=8787)
+    ap.add_argument("--no-browser", action="store_true")
+    ap.add_argument("--verbose", action="store_true")
+    args = ap.parse_args()
+
+    for required in ("courses.csv", "schedule.csv", "assessments.csv"):
+        if not (DATA / required).exists():
+            raise SystemExit(f"data/{required} is missing -- nothing to serve.")
+    NOTES.mkdir(exist_ok=True)
+
+    url = f"http://127.0.0.1:{args.port}/"
+    with Server(("127.0.0.1", args.port), Handler) as httpd:
+        p = build_payload()
+        print("Paralegal Beagle")
+        print(f"  {len(p['courses'])} courses | {len(p['schedule'])} class meetings | "
+              f"{len(p['assessments'])} assessments | {len(p['readings'])} chapter-readings")
+        print(f"  serving {url}   (Ctrl+C to stop)")
+        if not args.no_browser:
+            threading.Timer(0.4, lambda: webbrowser.open(url)).start()
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\nstopped")
+
+
+if __name__ == "__main__":
+    main()

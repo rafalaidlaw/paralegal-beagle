@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paralegal Beagle</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="dog">🐕</span>
+    <div>
+      <h1>Paralegal Beagle</h1>
+      <p class="sub" id="termline">loading…</p>
+    </div>
+  </div>
+  <div class="topright">
+    <span class="chip" id="todaychip"></span>
+    <button id="reload" class="ghost" title="Re-read data/ from disk">↻ reload</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-view="week"    class="on">This Week</button>
+  <button data-view="grid">Term Grid</button>
+  <button data-view="crunch">Crunch</button>
+  <button data-view="exams">Exams</button>
+  <button data-view="courses">Courses</button>
+  <button data-view="notes">Notes</button>
+  <button data-view="cases">Cases</button>
+  <button data-view="review">Review <span class="badge" id="reviewcount"></span></button>
+</nav>
+
+<main id="main"><p class="muted pad">loading…</p></main>
+
+<footer class="foot">
+  <span id="footstats"></span>
+  <span class="muted">Source of truth is <code>data/*.csv</code>. Run <code>python validate.py</code> after editing.</span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
