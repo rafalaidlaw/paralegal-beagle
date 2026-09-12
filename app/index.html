@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Paralegal Beagle</title>
 <link rel="stylesheet" href="app.css">
+<script>
+  /* Read the theme before the first paint so an explicit choice never
+     flashes the system theme first. ?theme= wins, for screenshot checks. */
+  try {
+    var q = new URLSearchParams(location.search).get("theme");
+    var t = q || localStorage.getItem("beagle-theme");
+    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    var d = localStorage.getItem("beagle-density");
+    if (d === "compact") document.documentElement.dataset.density = d;
+  } catch (e) {}
+</script>
 </head>
 <body>
 
@@ -13,11 +24,12 @@
     <span class="dog">🐕</span>
     <div>
       <h1>Paralegal Beagle</h1>
-      <p class="sub" id="termline">loading…</p>
+      <p class="sub">Fall 2026 · Paralegal Accelerated (PLEA)</p>
     </div>
   </div>
   <div class="topright">
     <span class="chip" id="todaychip"></span>
+    <button id="theme" class="ghost" title="Theme: follow Windows / light / dark">◐ auto</button>
     <button id="reload" class="ghost" title="Re-read data/ from disk">↻ reload</button>
   </div>
 </header>
@@ -37,7 +49,6 @@
 
 <footer class="foot">
   <span id="footstats"></span>
-  <span class="muted">Source of truth is <code>data/*.csv</code>. Run <code>python validate.py</code> after editing.</span>
 </footer>
 
 <script src="app.js"></script>

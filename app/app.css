@@ -1,294 +1,687 @@
-/* Paralegal Beagle - local dashboard.
-   Light palette on bare :root, dark only redefines tokens. */
+/* ============================================================================
+   Paralegal Beagle — local dashboard.
+
+   Three rules this file follows, so a later edit doesn't undo them:
+
+   1. LIGHT is defined on bare :root. DARK is defined TWICE — once under
+      prefers-color-scheme for the "system" setting, once under
+      [data-theme="dark"] so the header toggle wins in both directions.
+      No colour is ever defined ONLY inside a media query.
+   2. Every contrast figure in a comment was measured with the WCAG 2.1
+      formula, not estimated. If you change a colour, re-measure it.
+      Anything carrying content clears 4.5:1. --ink4 is DECORATIVE ONLY
+      (dashes, rules, disabled glyphs) — it fails AA by design.
+   3. 12px is the floor for anything with content. Below that, only
+      non-text decoration (dots, bars, rules).
+
+   Fonts are all already installed on Windows 11 — nothing is downloaded and
+   nothing is bundled, which also matters because serve.py serves exactly
+   three files and has no route for an asset. The stacks below were chosen by
+   MEASURING which family names the browser actually resolves: all six Sitka
+   optical sizes do, and so do "Segoe UI Variable Text/Small/Display" — but
+   bare "Segoe UI Variable" does NOT resolve and is deliberately absent.
+   ========================================================================== */
 
 :root {
-  --bg: #f7f6f3;
-  --panel: #ffffff;
-  --panel2: #fbfaf8;
+  /* ---- surfaces: page, panel, card/row, control ---------------------- */
+  --bg: #f6f4f0;
+  --surf1: #ffffff;
+  --surf2: #fbf9f5;
+  --surf3: #efece5;
+  --hover: rgba(0, 0, 0, .035);
+
+  /* ---- ink: 17.4 / 8.6 / 5.4 on --surf1; ink4 4.0 decorative -------- */
   --ink: #1b1a17;
-  --ink2: #55524c;
-  --ink3: #8a857c;
-  --line: #e2ded6;
-  --line2: #cdc7bb;
-  --accent: #7a1f2b;          /* oxblood - legal, not corporate blue */
+  --ink2: #4f4c46;
+  --ink3: #6f6a61;
+  --ink4: #847e74;
+
+  /* ---- hairlines: soft (inside a panel) and strong (panel edges) ----- */
+  --line: #e4e0d8;
+  --line2: #cfc9bd;
+
+  /* ---- accent: oxblood. Touches FOUR things: links, active tab,
+         focus ring, and the now-marker. Never a decorative fill. ------- */
+  --accent: #7a1f2b;            /* 10.2 on --surf1 */
   --accent-ink: #ffffff;
-  --ok: #2f6b43;
-  --ok-bg: #e7f1e9;
-  --warn: #8a5a00;
-  --warn-bg: #fbf0d9;
-  --hot: #a3232d;
-  --hot-bg: #fae8e8;
-  --cool: #2c5578;
-  --cool-bg: #e6eef5;
-  --shade: #efece5;
-  --radius: 7px;
-  --mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  --now: var(--accent);         /* "you are here" is the accent, not a 2nd hue */
+  --now-bg: #f3ebec;
+
+  /* ---- semantic, by assessment type. Bordered text chips, not fills. - */
+  --hot: #a3232d;               /* 7.4  exam / test / overdue */
+  --hot-bg: #f6e9ea;
+  --warn: #8a5a00;              /* 5.9  quiz */
+  --warn-bg: #f3eee6;
+  --cool: #2c5578;              /* 7.8  assignment / presentation */
+  --cool-bg: #eaeef2;
+  --ok: #2f6b43;                /* 6.4  stated in syllabus */
+  --ok-bg: #eaf0ec;
+
+  /* ---- heat ramp for Crunch / term strip. One hue, from the accent.
+         --heat-cap stops the mix before the label goes unreadable; the
+         magnitude ABOVE the cap is carried by cell height instead, so the
+         scale survives greyscale, forced-colors and colour blindness.
+         Measured: at the cap, --ink clears 6.0 but --ink2 is only 3.0 —
+         so text on a heat cell is ALWAYS --ink. Never ink2, never ink3. -- */
+  --heat-cap: 50%;
+
+  /* ---- eight course hues, spaced across 38°-324° and deliberately
+         vacating 330°-20° so a course can never be mistaken for the
+         accent. All clear 4.5:1 on --surf1 and --surf2, so they work as
+         text as well as marks. They are NEVER the only carrier of
+         meaning — the mono course code sits beside every one. ---------- */
+  --c-lgl151: #845f1f;          /* 5.8  ochre */
+  --c-lgl152: #567128;          /* 5.5  olive */
+  --c-lgl153: #286c48;          /* 6.3  green */
+  --c-lgl154: #236970;          /* 6.3  teal */
+  --c-lgl156: #2b5d97;          /* 6.7  blue */
+  --c-lgl160: #5138b2;          /* 8.2  indigo */
+  --c-lgl225: #873993;          /* 6.9  violet */
+  --c-lgl250: #79345e;          /* 8.5  plum */
+
+  /* ---- type ---------------------------------------------------------- */
+  --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --sans-sm: "Segoe UI Variable Small", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --sans-lg: "Segoe UI Variable Display", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --serif: "Sitka Subheading", "Sitka Text", Constantia, Georgia, serif;
+  --serif-lg: "Sitka Heading", "Sitka Subheading", "Sitka Text", Constantia, Georgia, serif;
+  --serif-read: "Sitka Text", Constantia, Georgia, serif;
+  --mono: "Cascadia Mono", Consolas, ui-monospace, "Courier New", monospace;
+
+  --radius: 8px;
+  --measure: 34em;              /* every prose block is capped at this */
 }
 
+/* dark, for the "system" setting (no attribute on the root) */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #16161a;
-    --panel: #1e1e23;
-    --panel2: #24242a;
-    --ink: #ece9e3;
-    --ink2: #b3aea5;
-    --ink3: #837e75;
-    --line: #32323a;
-    --line2: #44444e;
-    --accent: #c9646f;
-    --accent-ink: #16161a;
-    --ok: #7fc496;
-    --ok-bg: #1d2f24;
-    --warn: #e0b459;
-    --warn-bg: #33290f;
-    --hot: #f08a8a;
-    --hot-bg: #3a1d1f;
-    --cool: #8fb8dc;
-    --cool-bg: #1a2733;
-    --shade: #26262c;
+    --bg: #141418;
+    --surf1: #1c1c21;
+    --surf2: #22222a;
+    --surf3: #2a2a33;
+    --hover: rgba(255, 255, 255, .05);
+
+    --ink: #ece9e3;             /* 14.0 on --surf1 */
+    --ink2: #b8b3aa;            /*  8.1 */
+    --ink3: #9a958c;            /*  5.7 — was #837e75 at 4.1, which failed */
+    --ink4: #857f77;            /*  4.3 decorative */
+
+    --line: #2f2f38;
+    --line2: #3d3d48;
+
+    --accent: #d87f89;          /* 5.9 on surf1, 5.0 on surf3 */
+    --accent-ink: #141418;
+    --now-bg: #36282e;
+
+    --hot: #f0898f;             /*  7.0 */
+    --hot-bg: #35292e;
+    --warn: #e8c46a;            /* 10.1 — ground lifted off the old brown */
+    --warn-bg: #34302a;
+    --cool: #93bde0;            /*  8.6 */
+    --cool-bg: #2a2f38;
+    --ok: #7fc496;              /*  8.3 */
+    --ok-bg: #28302f;
+
+    --heat-cap: 55%;
+
+    --c-lgl151: #d8b16e;        /* 8.4 */
+    --c-lgl152: #a9c775;        /* 9.0 */
+    --c-lgl153: #70c296;        /* 8.0 */
+    --c-lgl154: #64bac4;        /* 7.6 */
+    --c-lgl156: #76a5db;        /* 6.6 */
+    --c-lgl160: #a192dd;        /* 6.2 */
+    --c-lgl225: #bb77c5;        /* 5.3 */
+    --c-lgl250: #d5a5c1;        /* 8.1 */
   }
 }
+
+/* dark, chosen explicitly in the header — must win over a light system */
+:root[data-theme="dark"] {
+  --bg: #141418;
+  --surf1: #1c1c21;
+  --surf2: #22222a;
+  --surf3: #2a2a33;
+  --hover: rgba(255, 255, 255, .05);
+
+  --ink: #ece9e3;
+  --ink2: #b8b3aa;
+  --ink3: #9a958c;
+  --ink4: #857f77;
+
+  --line: #2f2f38;
+  --line2: #3d3d48;
+
+  --accent: #d87f89;
+  --accent-ink: #141418;
+  --now-bg: #36282e;
+
+  --hot: #f0898f;
+  --hot-bg: #35292e;
+  --warn: #e8c46a;
+  --warn-bg: #34302a;
+  --cool: #93bde0;
+  --cool-bg: #2a2f38;
+  --ok: #7fc496;
+  --ok-bg: #28302f;
+
+  --heat-cap: 55%;
+
+  --c-lgl151: #d8b16e;
+  --c-lgl152: #a9c775;
+  --c-lgl153: #70c296;
+  --c-lgl154: #64bac4;
+  --c-lgl156: #76a5db;
+  --c-lgl160: #a192dd;
+  --c-lgl225: #bb77c5;
+  --c-lgl250: #d5a5c1;
+}
+
+/* Resolve one course hue onto any element that carries data-c, so
+   descendants inherit it. Put data-c on the BLOCK, not on a child pill,
+   or var(--c) silently falls back. */
+[data-c="LGL151"] { --c: var(--c-lgl151); }
+[data-c="LGL152"] { --c: var(--c-lgl152); }
+[data-c="LGL153"] { --c: var(--c-lgl153); }
+[data-c="LGL154"] { --c: var(--c-lgl154); }
+[data-c="LGL156"] { --c: var(--c-lgl156); }
+[data-c="LGL160"] { --c: var(--c-lgl160); }
+[data-c="LGL225"] { --c: var(--c-lgl225); }
+[data-c="LGL250"] { --c: var(--c-lgl250); }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
+  overflow-x: clip;                     /* no sideways scroll, ever */
   background: var(--bg);
   color: var(--ink);
-  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 400 14px/1.43 var(--sans);
+  -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4 { margin: 0 0 .35em; line-height: 1.2; font-weight: 640; }
-h1 { font-size: 1.18rem; letter-spacing: -.01em; }
-h2 { font-size: 1.05rem; }
-h3 { font-size: .95rem; }
-p { margin: 0 0 .6em; }
-a { color: var(--accent); }
-code { font-family: var(--mono); font-size: .88em; }
+/* Tabular lining figures everywhere a number is compared to another number.
+   This is not polish: proportional digits let a weights column that sums to
+   97% look tidy, and hiding that mismatch would defeat the cheapest
+   integrity check in the project. */
+.grid, .crunch, .num, .stat, .countdown, .weight, .when, .termstrip,
+table, .kv, .ch, .raw, input, .stackbar { font-variant-numeric: tabular-nums lining-nums; }
 
+/* ---- headings: serif carries identity only, never a table cell ------- */
+h1, h2, h3, h4 { margin: 0 0 .3em; font-family: var(--serif); font-weight: 600; line-height: 1.25; }
+h1 { font-size: 17px; letter-spacing: -.005em; }
+h2 { font-size: 20px; letter-spacing: -.008em; }
+h3 { font-size: 15px; }
+h4 { font-size: 14px; }
+p { margin: 0 0 .6em; max-width: var(--measure); }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+code { font-family: var(--mono); font-size: .9em; }
+
+/* Italics are excluded on purpose — they reduce legibility, particularly
+   for dyslexic readers, and Windows' own type ramp leaves them out. */
+i, em { font-style: normal; font-weight: 600; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 3px; }
+
+/* ---- the non-content voice: uppercase micro-labels ------------------- */
+.lbl {
+  font: 600 12px/1.34 var(--sans-sm);
+  letter-spacing: .07em; text-transform: uppercase; color: var(--ink3);
+}
 .muted { color: var(--ink3); }
+.quiet { font: 400 12px/1.45 var(--sans-sm); letter-spacing: .02em; color: var(--ink3); max-width: var(--measure); }
 .pad { padding: 18px 20px; }
+.nowrap { white-space: nowrap; }
+.num { text-align: right; }
 
-/* ------------------------------------------------------------- chrome */
+/* ======================================================= chrome ======= */
 .top {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; flex-wrap: wrap;
-  padding: 12px 20px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--line);
+  gap: 14px; flex-wrap: wrap;
+  padding: 10px 20px;
+  background: var(--surf1);
+  border-bottom: 1px solid var(--line2);
 }
-.brand { display: flex; align-items: center; gap: 11px; }
-.dog { font-size: 25px; line-height: 1; }
-.sub { margin: 0; font-size: .8rem; color: var(--ink3); }
-.topright { display: flex; align-items: center; gap: 9px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dog { font-size: 22px; line-height: 1; }
+.brand h1 { margin: 0; }
+.sub { margin: 0; font: 400 12px/1.34 var(--sans-sm); letter-spacing: .02em; color: var(--ink3); }
+.topright { display: flex; align-items: center; gap: 8px; }
 
 .chip {
-  font-size: .76rem; padding: 3px 9px; border-radius: 99px;
-  background: var(--accent); color: var(--accent-ink); font-weight: 600;
+  font: 600 12px/1.34 var(--sans-sm);
+  padding: 4px 10px; border-radius: 99px;
+  border: 1px solid var(--accent); color: var(--accent); background: transparent;
   white-space: nowrap;
 }
 
 button {
-  font: inherit; cursor: pointer; border-radius: var(--radius);
-  border: 1px solid var(--line2); background: var(--panel2); color: var(--ink);
+  font: inherit; font-family: var(--sans); cursor: pointer;
+  border-radius: 6px; border: 1px solid var(--line2);
+  background: var(--surf3); color: var(--ink);
   padding: 5px 11px;
 }
-button:hover { border-color: var(--accent); }
-button.ghost { font-size: .8rem; }
+button:hover { border-color: var(--accent); color: var(--accent); }
+button.ghost { font-size: 12px; padding: 4px 9px; background: transparent; }
+button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--now-bg); }
 
+/* One scrollable row — never a second row that gets clipped on a phone. */
 .tabs {
-  display: flex; gap: 2px; flex-wrap: wrap;
-  padding: 0 14px; background: var(--panel);
-  border-bottom: 1px solid var(--line);
-  overflow-x: auto;
+  display: flex; gap: 2px; flex-wrap: nowrap;
+  padding: 0 14px; background: var(--surf1);
+  border-bottom: 1px solid var(--line2);
+  overflow-x: auto; scrollbar-width: none;
+  scroll-snap-type: x proximity;
 }
+.tabs::-webkit-scrollbar { display: none; }
 .tabs button {
   border: none; background: none; border-radius: 0;
   border-bottom: 2px solid transparent;
-  padding: 9px 12px; color: var(--ink2); font-size: .89rem; white-space: nowrap;
+  padding: 9px 11px; color: var(--ink2); font-size: 13px; white-space: nowrap;
+  scroll-snap-align: start;
 }
-.tabs button:hover { color: var(--ink); }
-.tabs button.on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 640; }
+.tabs button:hover { color: var(--ink); background: var(--hover); }
+.tabs button.on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 
+/* Open questions are not an error count — never --hot. */
 .badge {
-  display: inline-block; min-width: 17px; padding: 0 5px;
-  background: var(--hot); color: #fff; border-radius: 99px;
-  font-size: .7rem; font-weight: 700; text-align: center;
+  display: inline-block; min-width: 18px; padding: 0 5px;
+  background: var(--warn-bg); color: var(--warn);
+  border: 1px solid currentColor; border-radius: 99px;
+  font: 600 12px/1.34 var(--sans-sm); text-align: center;
 }
 
-main { padding: 18px 20px 40px; max-width: 1500px; }
+main { padding: 16px 20px 44px; max-width: 1520px; }
 
 .foot {
-  display: flex; gap: 18px; flex-wrap: wrap;
-  padding: 11px 20px; border-top: 1px solid var(--line);
-  font-size: .77rem; color: var(--ink3); background: var(--panel);
+  display: flex; gap: 16px; flex-wrap: wrap;
+  padding: 10px 20px; border-top: 1px solid var(--line);
+  font: 400 12px/1.4 var(--sans-sm); color: var(--ink3); background: var(--surf1);
 }
 
-/* ------------------------------------------------------------- panels */
+/* ======================================================= panels ======= */
 .panel {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 14px 16px; margin: 0 0 16px;
+  background: var(--surf1); border: 1px solid var(--line2);
+  border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px;
 }
 .panel > h2 { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
-.panel > h2 .muted { font-weight: 400; font-size: .8rem; }
+.panel > h2 .muted, .panel > h2 .lbl { font-family: var(--sans-sm); font-weight: 400; font-size: 12px; letter-spacing: .02em; }
+.panel.sub { background: var(--surf2); }
 
-.cols { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
+.cols { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr)); }
+.cols.tight { grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); }
+.row { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }
+.spread { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
 
-.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.spread { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; }
-
-/* ------------------------------------------------------------- tags */
+/* ======================================================= tags ========= */
+/* One decision, held: every type chip is a bordered TEXT chip with a faint
+   tint. Exactly one filled chip exists in the whole app — .tag.overdue. */
 .tag {
-  display: inline-block; padding: 1px 7px; border-radius: 4px;
-  font-size: .72rem; font-weight: 620; white-space: nowrap;
-  background: var(--shade); color: var(--ink2);
+  display: inline-block; padding: 1px 6px; border-radius: 4px;
+  font: 600 12px/1.4 var(--sans-sm);
+  white-space: nowrap;
+  border: 1px solid currentColor;
+  background: var(--surf3); color: var(--ink2);
 }
 .tag.exam, .tag.test { background: var(--hot-bg); color: var(--hot); }
 .tag.quiz { background: var(--warn-bg); color: var(--warn); }
-.tag.assignment { background: var(--cool-bg); color: var(--cool); }
-.tag.presentation { background: var(--cool-bg); color: var(--cool); }
-.tag.milestone { background: var(--shade); color: var(--ink2); }
+.tag.assignment, .tag.presentation { background: var(--cool-bg); color: var(--cool); }
+.tag.milestone, .tag.study_week { background: var(--surf3); color: var(--ink2); }
 .tag.ok { background: var(--ok-bg); color: var(--ok); }
 .tag.hot { background: var(--hot-bg); color: var(--hot); }
 .tag.warn { background: var(--warn-bg); color: var(--warn); }
+.tag.cool { background: var(--cool-bg); color: var(--cool); }
+
+/* The one filled chip: an overdue item should be the loudest thing here. */
+.tag.overdue { background: var(--hot); color: var(--accent-ink); border-color: var(--hot); }
+
+/* Absence is DRAWN, not shouted. 27 of 35 assessments state no scope; in
+   --hot that made the missing information the loudest thing on the page. */
+.tag.unstated {
+  background: transparent; color: var(--ink3);
+  border: 1px dashed var(--line2);
+  font-weight: 400; letter-spacing: .02em;
+}
 
 .course-pill {
-  font-family: var(--mono); font-size: .74rem; font-weight: 700;
-  padding: 2px 6px; border-radius: 4px;
-  background: var(--shade); color: var(--ink);
-  border: 1px solid var(--line2);
-  white-space: nowrap;
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  padding: 1px 5px 1px 6px; border-radius: 4px;
+  background: var(--surf3); color: var(--ink);
+  border-left: 3px solid var(--c, var(--line2));
+  white-space: nowrap; text-decoration: none;
+}
+a.course-pill:hover { color: var(--accent); }
+.dot {
+  display: inline-block; width: 10px; height: 10px; border-radius: 99px;
+  background: var(--c, var(--line2)); flex: none;
 }
 
-/* The full course name, on the same line as its code and matching whatever it
-   sits in -- heading weight in a heading, body weight in a row. Eight codes in
-   one family are too easy to confuse for the code to be the only identifier.
-   `.stack` opts back into a second line for the few fixed-width columns too
-   narrow to hold both. */
-.course-title {
-  font-weight: inherit; font-size: inherit; color: var(--ink2);
-  font-style: normal;
-}
-.course-title.stack {
-  display: block; margin-top: 2px;
-  font-size: .78rem; font-weight: 400;
-}
-.crunchgrp { margin-bottom: 6px; }
-.crunchgrp:last-child { margin-bottom: 0; }
+/* The full course title belongs in HEADINGS, where eight similar codes are
+   genuinely ambiguous — not in every dense row, where it was longer than
+   the item it labelled and tripled the row height. */
+.course-title { font-weight: inherit; font-size: inherit; color: var(--ink2); }
+.course-title.stack { display: block; margin-top: 1px; font: 400 12px/1.35 var(--sans-sm); color: var(--ink3); }
 
-/* Term grid column headers: code on one line, title wrapped under it. */
-.grid th { max-width: 190px; }
-.gridcode { display: block; font-size: .8rem; color: var(--ink); }
-.gridtitle {
-  display: block; margin-top: 2px; font-weight: 400; font-size: .68rem;
-  color: var(--ink3); text-transform: none; letter-spacing: 0; line-height: 1.25;
-  white-space: normal;
-}
-
-/* Notes sidebar group heading */
-.grptitle {
-  display: block; font-size: .68rem; font-weight: 400;
-  text-transform: none; letter-spacing: 0; color: var(--ink3); margin-top: 1px;
-}
-
-/* ------------------------------------------------------------- tables */
-table { border-collapse: collapse; width: 100%; font-size: .86rem; }
+/* ======================================================= tables ======= */
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
 th, td { text-align: left; padding: 6px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--ink3); font-weight: 700; }
-tbody tr:hover { background: var(--panel2); }
-.scroll { overflow-x: auto; }
-.num { text-align: right; font-variant-numeric: tabular-nums; }
-
-/* ------------------------------------------------------------- readings */
-.reading {
-  display: flex; gap: 10px; align-items: flex-start;
-  padding: 7px 0; border-bottom: 1px dashed var(--line);
+th {
+  font: 600 12px/1.34 var(--sans-sm); letter-spacing: .07em;
+  text-transform: uppercase; color: var(--ink3);
 }
-.reading:last-child { border-bottom: none; }
-.reading .body { flex: 1; min-width: 0; }
-.reading .what { font-weight: 600; }
-.reading .why { font-size: .8rem; color: var(--ink3); }
-.reading.done .what { text-decoration: line-through; color: var(--ink3); }
+thead th { position: sticky; top: 0; z-index: 2; background: var(--surf1); border-bottom: 2px solid var(--line2); }
+tbody tr:hover { background: var(--hover); }
+.scroll { overflow-x: auto; }
+
+/* ---- key/value list, replacing the 130px label-column tables --------- */
+.kv { display: grid; grid-template-columns: minmax(88px, 118px) 1fr; gap: 4px 12px; margin: 0; }
+.kv dt { font: 600 12px/1.5 var(--sans-sm); letter-spacing: .07em; text-transform: uppercase; color: var(--ink3); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+
+/* ==================================================== command bar ===== */
+.cmd { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); }
+.stat {
+  border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px;
+  background: var(--surf2); min-width: 0;
+  border-left: 3px solid var(--c, var(--line2));
+}
+.stat .lbl { display: block; margin-bottom: 3px; }
+.stat b { display: block; font: 600 22px/1.2 var(--sans-lg); letter-spacing: -.01em; }
+.stat .sub2 { font: 400 12px/1.4 var(--sans-sm); color: var(--ink3); overflow-wrap: anywhere; }
+
+/* The one display-size number in the whole app. */
+.countdown { font: 600 40px/1.05 var(--sans-lg); letter-spacing: -.02em; }
+.countdown small { font: 600 13px/1 var(--sans-sm); letter-spacing: .04em; text-transform: uppercase; }
+.countdown.hot { color: var(--hot); }
+.countdown.warn { color: var(--warn); }
+.countdown.now { color: var(--now); }
+
+/* ==================================================== term strip ====== */
+/* 15 weeks of the whole term in ~46px, as the crunch radar in miniature.
+   The tint carries load; the inner .fill height carries it a second time so
+   the scale survives greyscale and forced-colors. */
+.termstrip { display: flex; gap: 3px; align-items: stretch; }
+.tsc {
+  flex: 1 1 0; min-width: 0; position: relative; isolation: isolate;
+  display: block; padding: 4px 0 3px; text-align: center; text-decoration: none;
+  border: 1px solid var(--line); border-radius: 4px; overflow: hidden;
+  background: var(--surf2);
+  background: color-mix(in oklab, var(--accent) calc(var(--i, 0) * var(--heat-cap)), var(--surf2));
+  color: var(--ink); font: 600 12px/1.3 var(--sans-sm);
+}
+.tsc .fill {
+  position: absolute; inset: auto 0 0 0; z-index: -1;
+  height: calc(var(--i, 0) * 100%);
+  background: color-mix(in oklab, var(--accent) 22%, transparent);
+}
+.tsc .n { display: block; }
+.tsc .wl { display: block; font: 400 12px/1.2 var(--sans-sm); color: var(--ink3); }
+.tsc:hover { border-color: var(--accent); }
+.tsc.now { border: 2px solid var(--now); font-weight: 600; }
+.tsc.break { background: var(--surf3); color: var(--ink3); }
+.tsc.past { opacity: .62; }
+
+/* ==================================================== week band ======= */
+/* Sixteen of thirty-five assessments give a WEEK, not a day. Drawn as an
+   explicit dashed band rather than silently filed onto a Monday. */
+.weekband {
+  border: 1px dashed var(--line2); border-radius: var(--radius);
+  padding: 10px 13px; margin: 0 0 14px; background: transparent;
+}
+.weekband > .lbl { display: block; margin-bottom: 6px; }
+.wbrow { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.wbrow:last-child { border-bottom: none; }
+
+/* ==================================================== due buckets ==== */
+.bucket { margin: 0 0 12px; }
+.bucket:last-child { margin-bottom: 0; }
+.bucket > .lbl { display: flex; gap: 6px; align-items: baseline; padding-bottom: 4px; border-bottom: 1px solid var(--line2); }
+.bucket > .lbl .n { color: var(--ink2); }
+
+.due { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px dashed var(--line); }
+.due:last-child { border-bottom: none; }
+.due .when { flex: none; width: 82px; font: 600 13px/1.35 var(--sans-sm); color: var(--ink2); }
+.due .when .abs { display: block; font-weight: 400; font-size: 12px; color: var(--ink3); }
+.due .body { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.due .weight { flex: none; font: 600 14px/1.3 var(--sans); text-align: right; }
+.due.soon .when { color: var(--hot); }
+.due.today .when { color: var(--now); }
+.due.over .when { color: var(--hot); }
+.due.heavy .weight { color: var(--hot); }
+
+/* ==================================================== readings ======== */
+/* Grouped by CLASS MEETING: the topic belongs to the meeting, not to each
+   chapter, so it printed ten identical grey blurbs before this. */
+.meet { padding: 8px 0 9px; border-bottom: 1px dashed var(--line); }
+.meet:last-child { border-bottom: none; }
+.meet .mhead { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.meet .mdate { font: 600 13px/1.35 var(--sans-sm); color: var(--ink2); }
+.meet .mwhen { font: 400 12px/1.35 var(--sans-sm); color: var(--ink3); }
+.meet .topic { margin: 3px 0 6px; color: var(--ink2); max-width: var(--measure); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* A chapter is one chip: the tick and the label are one hit target. */
+.chch {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--line2); border-radius: 6px;
+  padding: 3px 8px 3px 5px; background: var(--surf2);
+  font: 400 13px/1.4 var(--sans); color: var(--ink);
+  cursor: pointer; text-align: left; white-space: nowrap;
+}
+.chch:hover { border-color: var(--accent); color: var(--ink); background: var(--hover); }
+.chch .pg { font: 400 12px/1.4 var(--sans-sm); color: var(--ink3); }
+.chch[data-s="done"] { border-color: var(--ok); background: var(--ok-bg); }
+.chch[data-s="done"] .lab { text-decoration: line-through; color: var(--ink3); }
+.chch[data-s="in_progress"] { border-color: var(--warn); background: var(--warn-bg); }
+
+/* The tick: 18px box with a real border, not a faint 26px square. */
+.box {
+  flex: none; width: 17px; height: 17px; border-radius: 4px;
+  border: 1.5px solid var(--ink3); display: grid; place-items: center;
+  font-size: 12px; line-height: 1;
+}
+.chch:hover .box { border-color: var(--accent); }
+.chch[data-s="done"] .box { border-color: var(--ok); background: var(--ok); color: var(--accent-ink); }
+.chch[data-s="in_progress"] .box {
+  border-color: var(--warn);
+  background: linear-gradient(90deg, var(--warn) 50%, transparent 50%);
+}
 
 .statebtn {
-  flex: none; width: 26px; height: 26px; padding: 0;
-  border-radius: 5px; font-size: 13px; line-height: 1;
+  flex: none; width: 30px; height: 30px; padding: 0;
+  border-radius: 6px; font-size: 13px; line-height: 1;
   display: grid; place-items: center;
+  border: 1.5px solid var(--ink3); background: transparent;
 }
 .statebtn[data-s="done"] { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
 .statebtn[data-s="in_progress"] { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
 
-/* ------------------------------------------------------------- due list */
-.due {
-  display: flex; gap: 11px; align-items: baseline;
-  padding: 8px 0; border-bottom: 1px dashed var(--line);
-}
-.due:last-child { border-bottom: none; }
-.due .when { flex: none; width: 118px; font-size: .8rem; color: var(--ink2); font-variant-numeric: tabular-nums; }
-.due .body { flex: 1; min-width: 0; }
-.due .left { flex: none; font-size: .78rem; font-weight: 700; }
-.due.soon .left { color: var(--hot); }
-.due.overdue { opacity: .62; }
-
-/* ------------------------------------------------------------- term grid */
-.grid { font-size: .76rem; }
+/* ==================================================== term grid ======= */
+.grid { font-size: 12px; }
 .grid th, .grid td { border: 1px solid var(--line); padding: 4px 6px; }
-.grid th { position: sticky; top: 0; background: var(--panel); z-index: 2; }
-.grid td.wk { font-weight: 700; white-space: nowrap; background: var(--panel2); }
-.grid tr.now td { background: var(--warn-bg); }
-.grid td.break { background: var(--shade); color: var(--ink3); font-style: italic; text-align: center; }
+.grid thead th { background: var(--surf1); }
+.grid th { max-width: 190px; }
+.gridcode { display: block; font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--ink); text-transform: none; letter-spacing: 0; }
+.gridtitle {
+  display: block; margin-top: 1px; font: 400 12px/1.25 var(--sans-sm);
+  color: var(--ink3); text-transform: none; letter-spacing: .02em;
+  white-space: normal;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.grid thead th { border-top: 3px solid var(--c, transparent); }
+/* Sticky week column, so reading across week 11 doesn't lose the week. */
+.grid td.wk, .grid th.wk, .grid th.wkh {
+  position: sticky; left: 0; z-index: 3;
+  background: var(--surf2); font-weight: 600; white-space: nowrap;
+  border-right: 1px solid var(--line2);
+  font-family: var(--sans); font-size: 12px; text-transform: none;
+  letter-spacing: 0; color: var(--ink);
+}
+.grid th.wkh { z-index: 4; background: var(--surf1); }
+.grid tr.now td.wk, .grid tr.now th.wk { background: var(--now-bg); box-shadow: inset 3px 0 0 var(--now); }
+.grid tr.now td { background: color-mix(in oklab, var(--now) 5%, transparent); }
+.grid td.break { background: var(--surf3); color: var(--ink3); text-align: center; }
 .grid .ch { font-family: var(--mono); }
 .grid .mini { display: block; margin-top: 2px; }
+.grid .cov { display: block; font: 400 12px/1.3 var(--sans-sm); color: var(--ink3); }
+.grid tr.landmark td { background: var(--surf3); color: var(--ink2); font-size: 12px; text-align: center; padding: 3px 6px; }
+:root[data-density="compact"] .grid .ch,
+:root[data-density="compact"] .grid .cov { display: none; }
 
-/* ------------------------------------------------------------- bars */
-.bar { height: 9px; border-radius: 99px; background: var(--shade); overflow: hidden; min-width: 70px; }
+/* ==================================================== crunch chart ==== */
+.stackbar { display: grid; grid-template-columns: 74px minmax(0, 1fr) 58px; gap: 10px; align-items: center; padding: 3px 0; }
+.stackbar .wkl { font: 600 13px/1.3 var(--sans-sm); color: var(--ink2); white-space: nowrap; }
+.stackbar .wkl small { display: block; font: 400 12px/1.3 var(--sans-sm); color: var(--ink3); letter-spacing: .02em; }
+.track { position: relative; height: 22px; background: var(--surf2); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.track .bars { position: absolute; inset: 0; z-index: 1; display: flex; width: calc(var(--w, 0) * 1%); }
+.seg { flex-grow: var(--v, 1); flex-basis: 0; min-width: 2px; background: var(--c, var(--line2)); }
+.seg:not(:last-child) { border-right: 1px solid var(--surf1); }
+/* An even spread of the whole term's grade would be 6.7% a week. */
+.track .flat { position: absolute; top: 0; bottom: 0; z-index: 2; left: var(--flat, 6.7%); border-left: 1px dashed var(--ink3); }
+.stackbar .pc { font: 600 14px/1.3 var(--sans); text-align: right; }
+.stackbar .pc.hot { color: var(--hot); }
+.stackbar .pc.warn { color: var(--warn); }
+.stackbar.now .wkl { color: var(--now); }
+.stackbar.break .track { background: repeating-linear-gradient(135deg, var(--surf3) 0 6px, var(--surf2) 6px 12px); }
+.lmk { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 10px; align-items: center; padding: 2px 0; }
+.lmk .txt { font: 400 12px/1.4 var(--sans-sm); color: var(--ink3); letter-spacing: .02em; border-top: 1px dashed var(--line2); padding-top: 3px; }
+
+.legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line); }
+.legend a { display: inline-flex; align-items: center; gap: 5px; text-decoration: none; color: var(--ink2); font-size: 12px; }
+.legend a:hover { color: var(--accent); }
+.legend .code { font-family: var(--mono); font-weight: 600; }
+
+.bar { height: 8px; border-radius: 99px; background: var(--surf3); overflow: hidden; min-width: 60px; }
 .bar > i { display: block; height: 100%; background: var(--accent); }
 .bar.hot > i { background: var(--hot); }
 .bar.ok > i { background: var(--ok); }
 
-/* ------------------------------------------------------------- forms */
+/* ==================================================== exams =========== */
+.examcard { border: 1px solid var(--line2); border-radius: var(--radius); padding: 12px 14px; margin: 0 0 10px; background: var(--surf2); }
+.examcard.next { border-left: 3px solid var(--now); }
+.examcard .ehead { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+.examcard h3 { margin: 0; font-size: 18px; }
+.examcard .ewhen { font: 600 13px/1.4 var(--sans-sm); color: var(--ink2); text-align: right; white-space: nowrap; }
+.examcard .ewhen .d { display: block; font: 600 20px/1.15 var(--sans-lg); }
+.monthsep { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; }
+.monthsep::after { content: ""; flex: 1; border-top: 1px solid var(--line2); }
+
+details { margin: 4px 0 0; }
+details > summary { cursor: pointer; font: 400 12px/1.4 var(--sans-sm); letter-spacing: .02em; color: var(--ink3); list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "+ "; font-weight: 600; }
+details[open] > summary::before { content: "– "; }
+details > summary:hover { color: var(--accent); }
+
+/* ==================================================== forms =========== */
 input, select, textarea {
-  font: inherit; color: var(--ink); background: var(--panel2);
-  border: 1px solid var(--line2); border-radius: 5px; padding: 5px 8px;
+  font: inherit; font-family: var(--sans); color: var(--ink); background: var(--surf3);
+  border: 1px solid var(--line2); border-radius: 6px; padding: 5px 8px;
 }
-input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-textarea { width: 100%; min-height: 380px; font-family: var(--mono); font-size: .85rem; line-height: 1.55; }
-label { font-size: .78rem; color: var(--ink2); display: block; margin-bottom: 2px; }
+/* A native select is as wide as its widest option, and the note picker holds
+   121 class meetings — 544px of it, which was the only real horizontal
+   overflow on a phone. Let it shrink and clip its own label instead. */
+select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
+.row > select { flex: 1 1 190px; }
+textarea { width: 100%; min-height: 380px; font-family: var(--mono); font-size: 13px; line-height: 1.6; }
+label { font: 400 12px/1.4 var(--sans-sm); color: var(--ink2); display: block; margin-bottom: 2px; }
 .field { margin-bottom: 9px; }
-input.mark { width: 74px; text-align: right; }
+input.mark { width: 72px; text-align: right; }
 
-/* ------------------------------------------------------------- notes */
-.notelayout { display: grid; gap: 16px; grid-template-columns: minmax(210px, 280px) 1fr; align-items: start; }
+/* ==================================================== notes =========== */
+.notelayout { display: grid; gap: 14px; grid-template-columns: minmax(200px, 270px) 1fr; align-items: start; }
 .notelist { max-height: 72vh; overflow: auto; }
-.notelist a {
-  display: block; padding: 5px 8px; border-radius: 5px;
-  color: var(--ink); text-decoration: none; font-size: .84rem;
-}
-.notelist a:hover { background: var(--panel2); }
-.notelist a.on { background: var(--shade); font-weight: 640; }
-.notelist .grp { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em;
-                 color: var(--ink3); margin: 11px 0 3px; font-weight: 700; }
-.md h1, .md h2, .md h3 { margin-top: 1.1em; }
-.md ul, .md ol { margin: 0 0 .7em; padding-left: 1.4em; }
-.md blockquote { margin: 0 0 .7em; padding-left: 11px; border-left: 3px solid var(--line2); color: var(--ink2); }
-.md hr { border: none; border-top: 1px solid var(--line); margin: 1.1em 0; }
-.md pre { background: var(--panel2); padding: 9px 11px; border-radius: 5px; overflow-x: auto; }
+.notelist a { display: block; padding: 5px 8px; border-radius: 5px; color: var(--ink); text-decoration: none; font-size: 13px; }
+.notelist a:hover { background: var(--hover); }
+.notelist a.on { background: var(--now-bg); font-weight: 600; }
+.notelist .grp { font: 600 12px/1.34 var(--sans-sm); letter-spacing: .07em; text-transform: uppercase; color: var(--ink3); margin: 11px 0 3px; }
+.grptitle { display: block; font: 400 12px/1.3 var(--sans-sm); text-transform: none; letter-spacing: .02em; color: var(--ink3); margin-top: 1px; }
 
-/* ------------------------------------------------------------- misc */
-.quiet { font-size: .8rem; color: var(--ink3); }
+/* Notes are the one place that is READ, not scanned: serif, 16px, 1.6. */
+.md { font: 400 16px/1.65 var(--serif-read); max-width: var(--measure); }
+.md h1, .md h2, .md h3 { margin-top: 1.1em; }
+.md ul, .md ol { margin: 0 0 .7em; padding-left: 1.3em; }
+.md blockquote { margin: 0 0 .7em; padding-left: 11px; border-left: 3px solid var(--line2); color: var(--ink2); }
+.md hr { border: none; border-top: 1px solid var(--line); margin: 1.2em 0; }
+.md pre { background: var(--surf2); padding: 9px 11px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
+.md code { font-family: var(--mono); }
+
+/* ==================================================== misc =========== */
 .callout {
-  border-left: 3px solid var(--accent); background: var(--panel2);
+  border-left: 3px solid var(--accent); background: var(--surf2);
   padding: 9px 13px; border-radius: 0 var(--radius) var(--radius) 0; margin: 0 0 12px;
-  font-size: .86rem;
+  font-size: 13px; max-width: 78ch;
 }
+.callout .lbl { display: block; margin-bottom: 4px; }
+.callout ul { margin: 0; padding-left: 1.1em; }
+.callout li { margin-bottom: 3px; }
 .callout.hot { border-left-color: var(--hot); background: var(--hot-bg); }
 .callout.warn { border-left-color: var(--warn); background: var(--warn-bg); }
-.raw { font-family: var(--mono); font-size: .78rem; color: var(--ink3); white-space: pre-wrap; }
-.nowrap { white-space: nowrap; }
+.callout p, .callout li { max-width: none; }
+/* Notes on a tinted callout ground use --ink2: --ink3 measured 3.6:1 there. */
+.callout .quiet { color: var(--ink2); }
+.wklist { display: grid; gap: 6px; }
+.wkitem { display: grid; grid-template-columns: minmax(170px, auto) 1fr; gap: 4px 10px; align-items: baseline; }
+.wkitem .wkname { white-space: nowrap; }
+@media (max-width: 720px) { .wkitem { grid-template-columns: 1fr; } }
+
+.raw { font-family: var(--mono); font-size: 12px; color: var(--ink3); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* A designed empty state, not a thin panel floating in a void. */
+.empty { max-width: 48ch; padding: 14px 0; }
+.empty p { color: var(--ink3); }
+.rowline { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; padding: 5px 0; border-bottom: 1px dashed var(--line); }
+.rowline:last-child { border-bottom: none; }
+
+/* ==================================================== layout ========= */
+/* This Week: a long readings column beside a sticky rail, instead of two
+   equal columns where the right one ran out after three rows. */
+.weekgrid { display: grid; gap: 14px; grid-template-columns: minmax(0, 1.9fr) minmax(300px, 1fr); align-items: start; }
+.weekgrid > .rail { position: sticky; top: 10px; }
+
+@media (max-width: 1000px) {
+  .weekgrid { grid-template-columns: 1fr; }
+  .weekgrid > .rail { position: static; order: -1; }   /* urgent, and shorter */
+}
 
 @media (max-width: 720px) {
+  main { padding: 12px 14px 34px; }
+  .top { padding: 8px 14px; }
+  .sub { display: none; }
   .notelayout { grid-template-columns: 1fr; }
   .due { flex-wrap: wrap; }
   .due .when { width: auto; }
-  main { padding: 14px 16px 34px; }
+  .kv { grid-template-columns: 1fr; gap: 1px 0; }
+  .kv dd { margin-bottom: 7px; }
+  .stackbar { grid-template-columns: 58px minmax(0, 1fr) 48px; gap: 7px; }
+  .termstrip { gap: 2px; }
+  .tsc .wl { display: none; }
+  /* A 44px target on a touch screen, without changing the visual size. */
+  .chch { padding: 6px 9px 6px 6px; }
+  .statebtn { width: 34px; height: 34px; }
+}
+
+/* Print the Term Grid on paper: no dark ground, no sticky, keep the ink. */
+@media print {
+  .top, .tabs, .foot, .termstrip, button { display: none !important; }
+  body { background: #fff; color: #000; }
+  .panel { border-color: #999; break-inside: avoid; }
+  .grid thead th, .grid td.wk { position: static; }
+}
+
+/* When the OS takes colour away, the heat tint goes with it and the second
+   channel (cell height / the printed number) has to carry the magnitude. */
+@media (forced-colors: active) {
+  .tsc, .seg, .track .bars { forced-color-adjust: none; }
+  .tsc { background: Canvas !important; color: CanvasText; border-color: CanvasText; }
+  .tsc .fill { background: CanvasText; opacity: .35; }
+  .seg { background: CanvasText; }
+  .seg:not(:last-child) { border-right-color: Canvas; }
+  .tsc.now, .examcard.next { border: 2px solid Highlight; }
+  .tag { border-color: CanvasText; }
+  .tag.overdue { background: Highlight; color: HighlightText; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
 }
