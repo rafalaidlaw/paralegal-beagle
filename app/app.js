@@ -441,8 +441,9 @@ VIEWS.grid = () => {
   let h = `<div class="panel"><div class="spread"><h2 style="margin:0">Term grid
       <span class="muted">every week, every course</span></h2>
     <button class="ghost" id="density" aria-pressed="${compact}">${compact ? "showing deadlines only" : "show deadlines only"}</button></div>
-    <p class="quiet">Chapters and deadlines by week. Study week and the holidays are marked in their own rows.
-      The current week is ruled in the accent colour. Click a course code to open it.</p>
+    <p class="quiet">Chapters and deadlines by week. Study week and the holidays get their own rows, and the
+      current week is ruled in the accent colour. An em dash means a class with nothing assigned; a hatched cell
+      means that course has no class at all that week. Click a course code to open it.</p>
     <div class="scroll"><table class="grid"><thead><tr><th class="wkh" scope="col">Week</th>`;
   h += codes.map((c) => `<th scope="col" data-c="${esc(c)}">
       <a class="gridcode" href="#courses/${esc(c)}" style="text-decoration:none">${esc(c)}</a>
@@ -462,7 +463,11 @@ VIEWS.grid = () => {
     h += `<tr class="${w === nowWk ? "now" : ""}"><th class="wk" scope="row">${w}<span class="mini muted">${fmtShort(mon)}</span></th>`;
     for (const code of codes) {
       const rows = D.schedule.filter((r) => r.course === code && r.week_no === w);
-      if (!rows.length) { h += `<td></td>`; continue; }
+      /* Say "no class" rather than leaving the cell blank. It is only two
+         cells of 120 (LGL152 and LGL153 both finish in week 14), but an empty
+         cell and a missing row look identical, which is the one failure mode
+         this project cannot afford. */
+      if (!rows.length) { h += `<td class="off"><span class="quiet">no class</span></td>`; continue; }
       if (rows.every((r) => r.due_type === "study_week")) { h += `<td class="break">study week</td>`; continue; }
 
       /* Chapters come from the DERIVED readings, so an exam's scope is not
@@ -586,16 +591,16 @@ VIEWS.crunch = () => {
   h += `</div>`;
 
   /* the table, compact */
-  h += `<div class="panel"><h2>The same term as a table</h2><div class="scroll"><table>
+  h += `<div class="panel"><h2>The same term as a table</h2><div class="scroll"><table class="rtable">
     <thead><tr><th scope="col">Week</th><th scope="col">Starting</th><th scope="col" class="num">Grade due</th>
       <th scope="col" class="num">Chapters</th><th scope="col">Items</th></tr></thead><tbody>`;
   for (const x of weeks) {
     h += `<tr class="${x.w === nowWk ? "now" : ""}" ${x.w === nowWk ? 'style="background:var(--now-bg)"' : ""}>
-      <td class="nowrap"><b>${x.w}</b>${ranked.slice(0, 3).some((r) => r.w === x.w) ? ' <span class="tag hot">peak</span>' : ""}${x.w === nowWk ? ' <span class="tag">now</span>' : ""}</td>
-      <td class="nowrap">${fmtShort(weekMonday(x.w))}</td>
-      <td class="num">${x.load ? x.load + "%" : "—"}</td>
-      <td class="num">${x.chapters || "—"}</td>
-      <td>${x.items.length
+      <td class="nowrap"><b><a href="#grid" style="text-decoration:none">Week ${x.w}</a></b>${ranked.slice(0, 3).some((r) => r.w === x.w) ? ' <span class="tag hot">peak</span>' : ""}${x.w === nowWk ? ' <span class="tag">now</span>' : ""}</td>
+      <td class="nowrap" data-label="Starting">${fmtShort(weekMonday(x.w))}</td>
+      <td class="num" data-label="Grade due">${x.load ? x.load + "%" : "—"}</td>
+      <td class="num" data-label="Chapters">${x.chapters || "—"}</td>
+      <td data-label="Items">${x.items.length
         ? `<div class="chips">${x.items.map((a) => `<span class="tag ${esc(a.type)}" data-c="${esc(a.course)}"
             title="${esc(courseName(a.course))}">${esc(a.course)} ${esc(a.name)}${a.weight_pct ? " " + a.weight_pct + "%" : ""}</span>`).join("")}</div>`
         : x.isBreak ? '<span class="tag study_week">study week</span>' : '<span class="muted">—</span>'}</td>
@@ -743,27 +748,27 @@ VIEWS.courses = () => {
       ${weightSum}% is accounted for, so ${(100 - weightSum).toFixed(1)}% is missing. A component was probably
       missed when the syllabus was read. Check before you rely on the standing figures above.</div>`;
   }
-  h += `<div class="scroll"><table>
+  h += `<div class="scroll"><table class="rtable">
     <thead><tr><th scope="col">When</th><th scope="col">Item</th><th scope="col" class="num">Weight</th>
       <th scope="col">Scope</th><th scope="col" class="num">Mark</th>${anyReturned ? '<th scope="col">Returned</th>' : ""}</tr></thead><tbody>`;
   for (const a of items.slice().sort((x, y) => (x.due_resolved || "").localeCompare(y.due_resolved || ""))) {
     const g = gm[a.id] || {};
     h += `<tr>
-      <td class="nowrap">${a.date_precision === "exact" ? fmt(a.due_resolved) : "wk of " + fmtShort(a.due_resolved)}</td>
+      <td class="nowrap" data-label="When">${a.date_precision === "exact" ? fmt(a.due_resolved) : "wk of " + fmtShort(a.due_resolved)}</td>
       <td><span class="tag ${esc(a.type)}">${esc(a.type)}</span> <b>${esc(a.name)}</b>
         ${a.note ? `<details><summary>note</summary><div class="quiet">${esc(a.note)}</div></details>` : ""}</td>
-      <td class="num">${a.weight_pct ? a.weight_pct + "%" : "—"}</td>
-      <td>${a.scope_chapters ? `<span class="ch">ch ${esc(a.scope_chapters.replace(/;/g, ", "))}</span>`
+      <td class="num" data-label="Weight">${a.weight_pct ? a.weight_pct + "%" : "—"}</td>
+      <td data-label="Scope">${a.scope_chapters ? `<span class="ch">ch ${esc(a.scope_chapters.replace(/;/g, ", "))}</span>`
         : `<span class="tag unstated">ask</span>`}</td>
-      <td class="num"><input class="mark" type="number" min="0" max="100" step="0.1"
+      <td class="num" data-label="Mark"><input class="mark" type="number" min="0" max="100" step="0.1"
         data-grade="${esc(a.id)}" value="${esc(g.earned_pct || "")}" placeholder="—"
         aria-label="Mark for ${esc(a.name)}, percent"></td>
-      ${anyReturned ? `<td class="nowrap quiet">${esc(g.returned_date || "")}</td>` : ""}
+      ${anyReturned ? `<td class="nowrap quiet" data-label="Returned">${esc(g.returned_date || "")}</td>` : ""}
     </tr>`;
   }
   h += `</tbody></table></div></div>`;
 
-  h += `<div class="panel"><h2>Schedule and readings</h2><div class="scroll"><table>
+  h += `<div class="panel"><h2>Schedule and readings</h2><div class="scroll"><table class="rtable">
     <thead><tr><th scope="col" style="width:92px">Date</th><th scope="col" class="num">Wk</th>
       <th scope="col">Topic</th><th scope="col" style="width:260px">Readings</th><th scope="col">Due</th></tr></thead><tbody>`;
   for (const r of D.schedule.filter((x) => x.course === code)) {
@@ -771,13 +776,13 @@ VIEWS.courses = () => {
     const rd = D.readings.filter((x) => x.schedule_id === r.id);
     h += `<tr class="${r.week_no === clampWeek(termWeek(today())) ? "now" : ""}"
       ${r.week_no === clampWeek(termWeek(today())) ? 'style="background:var(--now-bg)"' : ""}>
-      <td class="nowrap">${fmtShort(r.class_date)}<div class="quiet">${DOW[toDate(r.class_date).getDay()]}</div></td>
-      <td class="num">${r.week_no}</td>
+      <td class="nowrap"><b>${fmt(r.class_date)}</b><span class="quiet nowk"> · week ${r.week_no}</span></td>
+      <td class="num" data-label="Week">${r.week_no}</td>
       <td>${isBreak ? '<span class="tag study_week">study week</span>' : esc(r.topic)}
         ${r.note ? `<div class="quiet">${esc(r.note)}</div>` : ""}</td>
-      <td>${rd.length ? `<div class="chips">${rd.map((x) => chapterChip(x, prog[x.id])).join("")}</div>`
+      <td data-label="Readings">${rd.length ? `<div class="chips">${rd.map((x) => chapterChip(x, prog[x.id])).join("")}</div>`
         : (r.reading_raw ? `<span class="quiet">${esc(r.reading_raw)}</span>` : '<span class="muted">—</span>')}</td>
-      <td>${r.due_item ? `<span class="tag ${esc(r.due_type)}">${esc(r.due_item)}</span>` : ""}</td>
+      <td data-label="Due">${r.due_item ? `<span class="tag ${esc(r.due_type)}">${esc(r.due_item)}</span>` : ""}</td>
     </tr>`;
   }
   h += `</tbody></table></div>
@@ -928,17 +933,17 @@ VIEWS.cases = () => {
     return h;
   }
 
-  h += `<div class="panel"><div class="scroll"><table>
+  h += `<div class="panel"><div class="scroll"><table class="rtable">
     <thead><tr><th scope="col">Style of cause</th><th scope="col">Citation</th><th scope="col">Course</th>
       <th scope="col">Status</th><th scope="col">Verified</th><th scope="col"></th></tr></thead><tbody>`;
   for (const c of D.cases) {
     h += `<tr data-c="${esc(c.course)}">
       <td>${c.canlii_url ? `<a href="${esc(c.canlii_url)}" target="_blank" rel="noreferrer">${esc(c.style_of_cause)}</a>` : esc(c.style_of_cause)}</td>
-      <td class="raw">${esc(c.citation)}</td>
-      <td>${pill(c.course)}</td>
-      <td><select data-case-status="${esc(c.id)}" aria-label="Status">${["stub", "drafted", "reviewed", "exam-ready"]
+      <td class="raw" data-label="Citation">${esc(c.citation)}</td>
+      <td data-label="Course">${pill(c.course)}</td>
+      <td data-label="Status"><select data-case-status="${esc(c.id)}" aria-label="Status">${["stub", "drafted", "reviewed", "exam-ready"]
         .map((s) => `<option ${c.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>
-      <td><input type="checkbox" data-case-verified="${esc(c.id)}" ${c.verified === "yes" ? "checked" : ""}
+      <td data-label="Verified"><input type="checkbox" data-case-verified="${esc(c.id)}" ${c.verified === "yes" ? "checked" : ""}
         aria-label="Verified on CanLII"></td>
       <td><button class="ghost" data-case-del="${esc(c.id)}" aria-label="Delete case">×</button></td>
     </tr>`;
@@ -1021,7 +1026,7 @@ VIEWS.review = () => {
     const hasWhen = g.some((i) => i.when);
     const hasWhat = g.some((i) => i.what);
     const hasRaw = g.some((i) => i.raw);
-    h += `<div class="scroll"><table><thead><tr>
+    h += `<div class="scroll"><table class="rtable"><thead><tr>
       <th scope="col" style="width:78px">Course</th><th scope="col">Item</th>
       ${hasWeight ? '<th scope="col" class="num" style="width:64px">Weight</th>' : ""}
       ${hasWhen ? '<th scope="col" style="width:96px">When</th>' : ""}
@@ -1030,8 +1035,8 @@ VIEWS.review = () => {
       const item = i.who.replace(i.code, "").trim() || i.who;
       h += `<tr data-c="${esc(i.code)}"><td>${pill(i.code)}</td>
         <td><b>${esc(item)}</b>${i.sub ? `<div class="quiet">${esc(i.sub)}</div>` : ""}</td>
-        ${hasWeight ? `<td class="num">${i.weight ? i.weight + "%" : "—"}</td>` : ""}
-        ${hasWhen ? `<td class="nowrap quiet">${i.when ? fmtShort(i.when) : "—"}</td>` : ""}
+        ${hasWeight ? `<td class="num" data-label="Weight">${i.weight ? i.weight + "%" : "—"}</td>` : ""}
+        ${hasWhen ? `<td class="nowrap quiet" data-label="When">${i.when ? fmtShort(i.when) : "—"}</td>` : ""}
         ${hasWhat || hasRaw ? `<td>${i.what ? esc(i.what) : ""}
           ${i.raw ? `<details><summary>what the syllabus printed</summary><div class="raw">${esc(i.raw)}</div></details>` : ""}</td>` : ""}
       </tr>`;

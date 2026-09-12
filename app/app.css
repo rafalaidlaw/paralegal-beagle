@@ -521,6 +521,13 @@ tbody tr:hover { background: var(--hover); }
 .grid tr.now td.wk, .grid tr.now th.wk { background: var(--now-bg); box-shadow: inset 3px 0 0 var(--now); }
 .grid tr.now td { background: color-mix(in oklab, var(--now) 5%, transparent); }
 .grid td.break { background: var(--surf3); color: var(--ink3); text-align: center; }
+/* the course has no class meeting that week -- distinct from "a class with
+   nothing assigned", which prints an em dash */
+.grid td.off {
+  text-align: center;
+  background: repeating-linear-gradient(135deg,
+    transparent 0 5px, color-mix(in oklab, var(--ink4) 14%, transparent) 5px 10px);
+}
 .grid .ch { font-family: var(--mono); }
 .grid .mini { display: block; margin-top: 2px; }
 .grid .cov { display: block; font: 400 12px/1.3 var(--sans-sm); color: var(--ink3); }
@@ -644,7 +651,44 @@ input.mark { width: 72px; text-align: right; }
   .weekgrid > .rail { position: static; order: -1; }   /* urgent, and shorter */
 }
 
+/* The date cell carries its week only once the header row is gone. */
+.rtable .nowk { display: none; }
+
 @media (max-width: 720px) {
+  /* A dense table inside .scroll does NOT scroll — width:100% makes it fit the
+     container and the prose column collapses to ~30px, wrapping one or two
+     characters per line. So below 720px each row becomes a card of
+     label/value pairs. Same markup at every width; only this block differs.
+     The Term Grid is excluded on purpose: a 15x8 matrix must stay a matrix. */
+  .rtable { min-width: 0; }
+  .rtable thead { display: none; }
+  .rtable, .rtable tbody, .rtable tr, .rtable td { display: block; }
+  .rtable tr {
+    border: 1px solid var(--line); border-radius: 6px; background: var(--surf2);
+    padding: 8px 10px; margin: 0 0 8px;
+  }
+  .rtable tr:hover { background: var(--surf2); }
+  .rtable tr.now { border-color: var(--now); }
+  .rtable td { border: none; padding: 2px 0; }
+  /* a cell with no data-label is the row's own heading, full width */
+  .rtable td[data-label] {
+    display: grid; grid-template-columns: 78px minmax(0, 1fr);
+    gap: 10px; align-items: baseline;
+  }
+  /* An empty cell must not print its label. This has to come AFTER the rule
+     above and carry the attribute itself: [data-label] outranks :empty on
+     its own, which left a bare "DUE" under every class with nothing due. */
+  .rtable td[data-label]:empty, .rtable td:empty { display: none; }
+  .rtable td[data-label]::before {
+    content: attr(data-label);
+    font: 600 12px/1.5 var(--sans-sm); letter-spacing: .07em;
+    text-transform: uppercase; color: var(--ink3);
+  }
+  .rtable td.num { text-align: left; }
+  /* the week number is already in the date line, so drop the duplicate row */
+  .rtable td[data-label="Week"] { display: none; }
+  .rtable .nowk { display: inline; }
+
   main { padding: 12px 14px 34px; }
   .top { padding: 8px 14px; }
   .sub { display: none; }
