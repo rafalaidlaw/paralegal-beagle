@@ -39,6 +39,9 @@ const courseName = (code) => (D.courses.find((c) => c.code === code) || {}).name
 const courseTag = (code) =>
   `<span class="course-pill">${esc(code)}</span> <span class="course-title">${esc(courseName(code))}</span>`;
 
+/* Same, for rows where the assessment name comes first. */
+const courseTail = (code) => ` <span class="course-title">· ${esc(courseName(code))}</span>`;
+
 function startBy(a) {
   if (!a.due_resolved) return "";
   const d = toDate(a.due_resolved);
@@ -132,8 +135,7 @@ VIEWS.week = () => {
   for (const a of urgent) {
     const n = daysBetween(today(), a.due_resolved);
     h += `<div class="callout ${n <= 4 ? "hot" : "warn"}">
-      <b>${esc(a.course)} ${esc(a.name)}</b>
-      <span class="course-title">— ${esc(courseName(a.course))}</span><br>
+      <b>${esc(a.course)} ${esc(a.name)} · ${esc(courseName(a.course))}</b><br>
       ${a.weight_pct}% of the course —
       ${n === 0 ? "<b>today</b>" : n === 1 ? "<b>tomorrow</b>" : `in <b>${n} days</b>`}
       (${a.date_precision === "exact" ? fmt(a.due_resolved) : "week of " + fmt(a.due_resolved)}).
@@ -178,8 +180,7 @@ VIEWS.week = () => {
       <p class="quiet">Working back from the due date: an exam is not a thing you do on the day.</p>`;
     h += starting.map((a) => `<div class="due">
         <div class="when">${esc(a.weight_pct)}% · ${daysBetween(today(), a.due_resolved)}d left</div>
-        <div class="body"><span class="course-pill">${esc(a.course)}</span> ${esc(a.name)}
-        <div class="course-title">${esc(courseName(a.course))}</div>
+        <div class="body"><span class="course-pill">${esc(a.course)}</span> ${esc(a.name)}${courseTail(a.course)}
         <div class="quiet">due ${a.date_precision === "exact" ? fmt(a.due_resolved) : "week of " + fmt(a.due_resolved)}</div></div>
       </div>`).join("");
   }
@@ -233,8 +234,7 @@ function dueRow(a) {
     <div class="body">
       <span class="course-pill">${esc(a.course)}</span>
       <span class="tag ${esc(a.type)}">${esc(a.type)}</span>
-      ${esc(a.name)}
-      <div class="course-title">${esc(courseName(a.course))}</div>
+      ${esc(a.name)}${courseTail(a.course)}
       ${a.scope_chapters ? `<div class="quiet">covers ch. ${esc(a.scope_chapters.replace(/;/g, ", "))}</div>` : ""}
     </div>
     <div class="left">${a.weight_pct ? a.weight_pct + "%" : "—"}<br>
@@ -361,8 +361,7 @@ VIEWS.exams = () => {
     return `<div class="panel" style="background:var(--panel2)">
       <div class="spread">
         <h3><span class="course-pill">${esc(a.course)}</span>
-          <span class="tag ${esc(a.type)}">${esc(a.type)}</span> ${esc(a.name)}
-          <div class="course-title">${esc(courseName(a.course))}</div></h3>
+          <span class="tag ${esc(a.type)}">${esc(a.type)}</span> ${esc(a.name)}${courseTail(a.course)}</h3>
         <div class="nowrap"><b>${a.weight_pct ? a.weight_pct + "%" : "no weight"}</b>
           · ${whenCell(a, true)}</div>
       </div>
@@ -606,7 +605,7 @@ VIEWS.cases = () => {
       <td>${c.canlii_url ? `<a href="${esc(c.canlii_url)}" target="_blank" rel="noreferrer">${esc(c.style_of_cause)}</a>` : esc(c.style_of_cause)}</td>
       <td class="raw">${esc(c.citation)}</td>
       <td><span class="course-pill">${esc(c.course)}</span>
-        <div class="course-title">${esc(courseName(c.course))}</div></td>
+        <span class="course-title">${esc(courseName(c.course))}</span></td>
       <td><select data-case-status="${esc(c.id)}">${["stub", "drafted", "reviewed", "exam-ready"]
         .map((s) => `<option ${c.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>
       <td><input type="checkbox" data-case-verified="${esc(c.id)}" ${c.verified === "yes" ? "checked" : ""}></td>
@@ -663,7 +662,7 @@ VIEWS.review = () => {
   for (const kind of Object.keys(groups)) {
     h += `<div class="panel"><h2>${esc(kind)} <span class="muted">${groups[kind].length}</span></h2>`;
     h += groups[kind].map((i) => `<div class="due"><div class="when"><b>${esc(i.who)}</b>
-      ${i.sub ? `<div class="course-title">${esc(i.sub)}</div>` : ""}</div>
+      ${i.sub ? `<div class="course-title stack">${esc(i.sub)}</div>` : ""}</div>
       <div class="body">${esc(i.what || "")}
       ${i.raw ? `<div class="raw">syllabus: ${esc(i.raw)}</div>` : ""}</div></div>`).join("");
     h += `</div>`;

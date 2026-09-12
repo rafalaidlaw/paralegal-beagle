@@ -160,15 +160,19 @@ main { padding: 18px 20px 40px; max-width: 1500px; }
   white-space: nowrap;
 }
 
-/* The full course name, shown beside or under its code. Secondary weight so the
-   code still carries the scan, but present so eight near-identical codes are
-   never the only thing identifying a class. */
+/* The full course name, on the same line as its code and matching whatever it
+   sits in -- heading weight in a heading, body weight in a row. Eight codes in
+   one family are too easy to confuse for the code to be the only identifier.
+   `.stack` opts back into a second line for the few fixed-width columns too
+   narrow to hold both. */
 .course-title {
-  font-size: .78rem; font-weight: 400; color: var(--ink2);
+  font-weight: inherit; font-size: inherit; color: var(--ink2);
   font-style: normal;
 }
-h3 .course-title, h2 .course-title { display: block; margin-top: 2px; }
-.due .course-title { margin-top: 1px; }
+.course-title.stack {
+  display: block; margin-top: 2px;
+  font-size: .78rem; font-weight: 400;
+}
 .crunchgrp { margin-bottom: 6px; }
 .crunchgrp:last-child { margin-bottom: 0; }
 
