@@ -60,3 +60,33 @@ document as a whole. Re-introducing the original error now fails the validator.
 All eight syllabi were re-checked against their cell boundaries. LGL152, LGL153,
 LGL154, LGL156, LGL160, LGL225 and LGL250 were correct as recorded; LGL151 was
 the only course affected.
+
+## 2026-09-12 — second sweep, all eight syllabi
+
+Three independent passes: (1) a recall check that everything printed in each
+syllabus row is in the data — the reverse of what `validate.py` had been
+checking; (2) raw-date ↔ ISO-date agreement; (3) a visual audit of the rendered
+PDF pages, one reviewer per course, with every reported discrepancy re-checked
+by a second reviewer told to refute it. Authority throughout: `syllabus`.
+
+**No date, weight, chapter, page range, deadline or exam scope was wrong in any
+course.** What was found:
+
+| Course | Was | Now |
+|---|---|---|
+| LGL151 wk 6 (Oct 12) | `chapters` empty | `4` — a parser regression had blanked it; the reading is Chapter 4 |
+| LGL225 | textbook not recorded | *Canadian Immigration and Refugee Law for Legal Professionals*, 5th ed., Lynn Fournier Ruggles (no ISBN printed) |
+| LGL152 | Fri `8:00am-9:45am` | `8am-9:45am`, as printed |
+| LGL160 wk 4 outlines | wording truncated; type `assignment` | full wording incl. "See and follow instructions"; type `milestone`, matching assessments.csv |
+| LGL225 tool kit | raw string implied a printed date | now says the kit has no printed date and is due because the Sept 30 quiz requires it |
+| LGL154 wk 12 | "Excel continued" | "Excel Continue", as printed |
+| LGL151 wk 13 | "Andrews v Law Society of BC" | kept — the syllabus prints "Andrew", a typo for *Andrews v Law Society of British Columbia*, [1989] 1 SCR 143; noted on the row |
+| LGL152 wk 7 | "Hadley v Baxendale" | "Baxendale [Hadley v Baxendale]" — the syllabus prints only the second name; the expansion is now visibly bracketed |
+| LGL160 wk 14 | LSO `46-53` | kept; the syllabus prints "46053", a typo; noted on the row |
+
+`validate.py` gained rules 11 (every chapter the syllabus row names must be
+recorded) and 12 (date_raw and class_date must be the same calendar day). Both
+were checked by breaking the data on purpose and watching them fail.
+
+Two "mismatches" the sweep reported were the PDF's `ﬁ` ligature in
+"Yousseﬁ" / "ﬁlici" — the data's ordinary spelling is correct.

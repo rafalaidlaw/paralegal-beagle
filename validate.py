@@ -328,6 +328,69 @@ info(f"exam/test scope stated in the syllabus for {len(stated)} items; "
      f"{len(unstated)} exams/tests do NOT state their scope and must be confirmed with the professor")
 
 
+# -- 11. recall: every chapter the syllabus row names must be recorded ------
+# Rule 8 checks that what we recorded is in the right row. This is the reverse:
+# nothing the row names may be silently missing. A parser regression once left
+# LGL151 week 6 with an empty chapters column although its reading cell plainly
+# says "Chapter 4" -- and an empty column looks exactly like a week with no
+# reading, which is the failure mode this project exists to prevent.
+def chapters_named(text):
+    found = set()
+    for m in re.finditer(r"Chapters?\s*:?\s*([\d,;\sand&-]+)", text, re.I):
+        for part in re.split(r"[,;&]|\band\b", m.group(1)):
+            part = part.strip(" .;-")
+            if re.fullmatch(r"\d+\s*-\s*\d+", part):
+                lo, hi = (int(x) for x in re.split(r"\s*-\s*", part))
+                if hi - lo < 30:
+                    found |= {str(n) for n in range(lo, hi + 1)}
+            elif re.fullmatch(r"\d+", part):
+                found.add(part)
+    return found
+
+for r in schedule:
+    rows_gt = truth.get(r["source_file"])
+    if rows_gt is None or r["due_type"] in ("exam", "test", "study_week"):
+        continue
+    match = next((g for g in rows_gt if date_key(g["date"]) == date_key(r["date_raw"])), None)
+    if match is None:
+        continue
+    reading = " ".join(v for k, v in match["cells"].items() if k.lower().startswith("read"))
+    if r["source_file"] == "LGL153" and re.fullmatch(r"[\d\s,-]+", reading.strip() or "x"):
+        named = set()
+        for part in re.split(r"[,\s]+", reading.strip()):
+            if re.fullmatch(r"\d+-\d+", part):
+                lo, hi = (int(x) for x in part.split("-")); named |= {str(n) for n in range(lo, hi + 1)}
+            elif re.fullmatch(r"\d+", part):
+                named.add(part)
+    else:
+        named = chapters_named(reading)
+    have = set(filter(None, r["chapters"].split(";")))
+    if named - have:
+        err(f"{r['id']}: the syllabus reading cell names chapter(s) "
+            f"{', '.join(sorted(named - have, key=int))} but chapters is '{r['chapters']}'")
+
+
+# -- 12. date_raw and class_date must be the same calendar day ----------------
+# Rule 4 checks the weekday and rule 5 the spacing, but neither notices an ISO
+# date typed one week off from the syllabus string sitting next to it.
+MONTHS = {"sept": 9, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
+for r in schedule:
+    k = date_key(r["date_raw"])
+    numeric = re.match(r"^(\d{1,2})/(\d{1,2})$", k)          # "9/10", "10/7"
+    worded = re.match(r"^([a-z]+) (\d{1,2})$", k)             # "sept 14", "oct 05"
+    try:
+        if numeric:
+            d = dt.date(2026, int(numeric.group(1)), int(numeric.group(2)))
+        elif worded and worded.group(1) in MONTHS:
+            d = dt.date(2026, MONTHS[worded.group(1)], int(worded.group(2)))
+        else:
+            continue
+    except ValueError:
+        continue
+    if d.isoformat() != r["class_date"]:
+        err(f"{r['id']}: date_raw '{r['date_raw']}' is {d} but class_date is {r['class_date']}")
+
+
 # --------------------------------------------------------------------------
 def section(title, items, bullet):
     if not items:
