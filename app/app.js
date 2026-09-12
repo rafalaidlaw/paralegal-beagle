@@ -34,6 +34,11 @@ const progressMap = () => Object.fromEntries(D.progress.map((p) => [p.reading_id
 const gradeMap = () => Object.fromEntries(D.grades.map((g) => [g.assessment_id, g]));
 const courseName = (code) => (D.courses.find((c) => c.code === code) || {}).name || code;
 
+/* A bare code is ambiguous when you are carrying eight of them, especially the
+   ones that differ by a digit. The pill stays for scanning; the title follows. */
+const courseTag = (code) =>
+  `<span class="course-pill">${esc(code)}</span> <span class="course-title">${esc(courseName(code))}</span>`;
+
 function startBy(a) {
   if (!a.due_resolved) return "";
   const d = toDate(a.due_resolved);
@@ -127,7 +132,9 @@ VIEWS.week = () => {
   for (const a of urgent) {
     const n = daysBetween(today(), a.due_resolved);
     h += `<div class="callout ${n <= 4 ? "hot" : "warn"}">
-      <b>${esc(a.course)} ${esc(a.name)}</b> — ${a.weight_pct}% of the course —
+      <b>${esc(a.course)} ${esc(a.name)}</b>
+      <span class="course-title">— ${esc(courseName(a.course))}</span><br>
+      ${a.weight_pct}% of the course —
       ${n === 0 ? "<b>today</b>" : n === 1 ? "<b>tomorrow</b>" : `in <b>${n} days</b>`}
       (${a.date_precision === "exact" ? fmt(a.due_resolved) : "week of " + fmt(a.due_resolved)}).
       ${a.scope_chapters ? `Covers chapters ${esc(a.scope_chapters.replace(/;/g, ", "))}.` : ""}
@@ -147,7 +154,7 @@ VIEWS.week = () => {
     h += `<p class="muted">No chapter readings assigned for week ${wk}.</p>`;
   } else {
     for (const code of Object.keys(byCourse).sort()) {
-      h += `<h3><span class="course-pill">${esc(code)}</span></h3>`;
+      h += `<h3>${courseTag(code)}</h3>`;
       h += byCourse[code].map((r) => readingRow(r, prog[r.id])).join("");
     }
   }
@@ -172,6 +179,7 @@ VIEWS.week = () => {
     h += starting.map((a) => `<div class="due">
         <div class="when">${esc(a.weight_pct)}% · ${daysBetween(today(), a.due_resolved)}d left</div>
         <div class="body"><span class="course-pill">${esc(a.course)}</span> ${esc(a.name)}
+        <div class="course-title">${esc(courseName(a.course))}</div>
         <div class="quiet">due ${a.date_precision === "exact" ? fmt(a.due_resolved) : "week of " + fmt(a.due_resolved)}</div></div>
       </div>`).join("");
   }
@@ -188,7 +196,7 @@ VIEWS.week = () => {
     behind.forEach((r) => (bc[r.course] ||= []).push(r));
     h += `<div class="cols">`;
     for (const code of Object.keys(bc).sort()) {
-      h += `<div><h3><span class="course-pill">${esc(code)}</span>
+      h += `<div><h3>${courseTag(code)}
         <span class="muted">${bc[code].length} behind</span></h3>`;
       h += bc[code].map((r) => readingRow(r, prog[r.id])).join("") + `</div>`;
     }
@@ -226,6 +234,7 @@ function dueRow(a) {
       <span class="course-pill">${esc(a.course)}</span>
       <span class="tag ${esc(a.type)}">${esc(a.type)}</span>
       ${esc(a.name)}
+      <div class="course-title">${esc(courseName(a.course))}</div>
       ${a.scope_chapters ? `<div class="quiet">covers ch. ${esc(a.scope_chapters.replace(/;/g, ", "))}</div>` : ""}
     </div>
     <div class="left">${a.weight_pct ? a.weight_pct + "%" : "—"}<br>
@@ -242,7 +251,8 @@ VIEWS.grid = () => {
   let h = `<div class="panel"><h2>Term grid <span class="muted">every week, every course</span></h2>
     <p class="quiet">Chapters and deadlines per week. Study week (${fmt(D.term.study_week[0])}–${fmt(D.term.study_week[1])}) and Thanksgiving are shaded. The current week is highlighted.</p>
     <div class="scroll"><table class="grid"><thead><tr><th>Week</th>`;
-  h += codes.map((c) => `<th title="${esc(courseName(c))}">${esc(c)}</th>`).join("") + `</tr></thead><tbody>`;
+  h += codes.map((c) => `<th><span class="gridcode">${esc(c)}</span>
+      <span class="gridtitle">${esc(courseName(c))}</span></th>`).join("") + `</tr></thead><tbody>`;
 
   for (let w = 1; w <= last; w++) {
     const mon = weekMonday(w);
@@ -298,7 +308,8 @@ VIEWS.crunch = () => {
     h += `<div class="callout hot"><b>Weeks with two or more items worth 20% or more:</b><br>` +
       twoHeavy.map((x) => `Week ${x.w} (${fmtShort(weekMonday(x.w))}) — ${x.load}% total: ` +
         x.items.filter((a) => Number(a.weight_pct || 0) >= 20)
-          .map((a) => `${a.course} ${a.name} ${a.weight_pct}%`).join("; ")).join("<br>") + `</div>`;
+          .map((a) => `${a.course} ${courseName(a.course)} — ${a.name} ${a.weight_pct}%`)
+          .join("; ")).join("<br>") + `</div>`;
   }
 
   h += `<div class="scroll"><table><thead><tr>
@@ -313,7 +324,12 @@ VIEWS.crunch = () => {
       <td class="num">${x.load ? x.load + "%" : "—"}</td>
       <td><div class="bar ${barCls}"><i style="width:${(x.load / max) * 100}%"></i></div></td>
       <td class="num">${x.chapters || "—"}</td>
-      <td>${x.items.map((a) => `<span class="tag ${esc(a.type)}">${esc(a.course)} ${esc(a.name)} ${a.weight_pct ? a.weight_pct + "%" : ""}</span>`).join(" ") || '<span class="muted">—</span>'}</td>
+      <td>${[...new Set(x.items.map((a) => a.course))].map((code) => `<div class="crunchgrp">
+          <span class="course-pill">${esc(code)}</span>
+          <span class="course-title">${esc(courseName(code))}</span><br>
+          ${x.items.filter((a) => a.course === code).map((a) =>
+            `<span class="tag ${esc(a.type)}">${esc(a.name)}${a.weight_pct ? " " + a.weight_pct + "%" : ""}</span>`).join(" ")}
+        </div>`).join("") || '<span class="muted">—</span>'}</td>
     </tr>`;
   }
   h += `</tbody></table></div></div>`;
@@ -345,7 +361,8 @@ VIEWS.exams = () => {
     return `<div class="panel" style="background:var(--panel2)">
       <div class="spread">
         <h3><span class="course-pill">${esc(a.course)}</span>
-          <span class="tag ${esc(a.type)}">${esc(a.type)}</span> ${esc(a.name)}</h3>
+          <span class="tag ${esc(a.type)}">${esc(a.type)}</span> ${esc(a.name)}
+          <div class="course-title">${esc(courseName(a.course))}</div></h3>
         <div class="nowrap"><b>${a.weight_pct ? a.weight_pct + "%" : "no weight"}</b>
           · ${whenCell(a, true)}</div>
       </div>
@@ -473,7 +490,8 @@ VIEWS.notes = () => {
   let h = `<div class="panel"><h2>Reading notes <span class="muted">${D.notes.length} note${D.notes.length === 1 ? "" : "s"}</span></h2>
     <p class="quiet">Plain Markdown under <code>notes/&lt;COURSE&gt;/</code>. Write them here or in any editor — this only indexes and renders them, so your notes are never trapped in this app.</p>
     <div class="row">
-      <select id="newnote-course">${D.courses.map((c) => `<option value="${esc(c.code)}">${esc(c.code)}</option>`).join("")}</select>
+      <select id="newnote-course">${D.courses.map((c) =>
+        `<option value="${esc(c.code)}">${esc(c.code)} — ${esc(c.name)}</option>`).join("")}</select>
       <select id="newnote-row"><option value="">— blank note —</option>${D.schedule
         .filter((r) => r.due_type !== "study_week")
         .map((r) => `<option value="${esc(r.id)}">${esc(r.course)} · ${fmtShort(r.class_date)} · ${esc(r.topic).slice(0, 60)}</option>`).join("")}</select>
@@ -484,7 +502,7 @@ VIEWS.notes = () => {
     <div class="panel notelist">`;
   if (!D.notes.length) h += `<p class="muted">No notes yet.</p>`;
   for (const code of Object.keys(byCourse).sort()) {
-    h += `<div class="grp">${esc(code)}</div>`;
+    h += `<div class="grp">${esc(code)}<span class="grptitle">${esc(courseName(code))}</span></div>`;
     h += byCourse[code].sort((a, b) => (b.week_of || "").localeCompare(a.week_of || ""))
       .map((n) => `<a href="#" data-note="${esc(n.path)}" class="${n.path === state.notePath ? "on" : ""}">
         ${esc(n.title)}<div class="quiet">${n.week_of ? fmtShort(n.week_of) + " · " : ""}${n.words} words</div></a>`).join("");
@@ -587,7 +605,8 @@ VIEWS.cases = () => {
     h += `<tr>
       <td>${c.canlii_url ? `<a href="${esc(c.canlii_url)}" target="_blank" rel="noreferrer">${esc(c.style_of_cause)}</a>` : esc(c.style_of_cause)}</td>
       <td class="raw">${esc(c.citation)}</td>
-      <td><span class="course-pill">${esc(c.course)}</span></td>
+      <td><span class="course-pill">${esc(c.course)}</span>
+        <div class="course-title">${esc(courseName(c.course))}</div></td>
       <td><select data-case-status="${esc(c.id)}">${["stub", "drafted", "reviewed", "exam-ready"]
         .map((s) => `<option ${c.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></td>
       <td><input type="checkbox" data-case-verified="${esc(c.id)}" ${c.verified === "yes" ? "checked" : ""}></td>
@@ -605,26 +624,26 @@ function reviewItems() {
 
   for (const a of D.assessments) {
     if (["exam", "test"].includes(a.type) && a.scope_source !== "stated") {
-      out.push({ kind: "Exam scope not stated", who: `${a.course} ${a.name}`,
+      out.push({ kind: "Exam scope not stated", who: `${a.course} ${a.name}`, sub: courseName(a.course),
         what: `${a.weight_pct}% of the course, and the syllabus does not say which chapters it covers. One email settles it.`,
         raw: a.due_date_raw });
     }
     if (a.confidence && a.confidence !== "high") {
-      out.push({ kind: "Low confidence", who: `${a.course} ${a.name}`, what: a.note, raw: a.due_date_raw });
+      out.push({ kind: "Low confidence", who: `${a.course} ${a.name}`, sub: courseName(a.course), what: a.note, raw: a.due_date_raw });
     } else if (a.note && FLAG.test(a.note)) {
-      out.push({ kind: "Worth confirming", who: `${a.course} ${a.name}`, what: a.note, raw: a.due_date_raw });
+      out.push({ kind: "Worth confirming", who: `${a.course} ${a.name}`, sub: courseName(a.course), what: a.note, raw: a.due_date_raw });
     }
   }
   for (const r of D.schedule) {
     if ((r.confidence && r.confidence !== "high") || (r.note && FLAG.test(r.note))) {
-      out.push({ kind: "Schedule row", who: `${r.course} ${fmtShort(r.class_date)}`, what: r.note, raw: r.date_raw });
+      out.push({ kind: "Schedule row", who: `${r.course} ${fmtShort(r.class_date)}`, sub: courseName(r.course), what: r.note, raw: r.date_raw });
     }
   }
   for (const c of D.courses) {
-    if (c.note && FLAG.test(c.note)) out.push({ kind: "Course detail", who: c.code, what: c.note, raw: "" });
-    if (!c.textbook) out.push({ kind: "Textbook unknown", who: c.code,
+    if (c.note && FLAG.test(c.note)) out.push({ kind: "Course detail", who: c.code, sub: c.name, what: c.note, raw: "" });
+    if (!c.textbook) out.push({ kind: "Textbook unknown", who: c.code, sub: c.name,
       what: "The syllabus cites chapter numbers but never names the book. Check Blackboard or the Seneca bookstore before you buy anything.", raw: "" });
-    if (!c.instructor) out.push({ kind: "Instructor unknown", who: c.code,
+    if (!c.instructor) out.push({ kind: "Instructor unknown", who: c.code, sub: c.name,
       what: "No instructor named in the syllabus.", raw: "" });
   }
   return out;
@@ -643,7 +662,8 @@ VIEWS.review = () => {
 
   for (const kind of Object.keys(groups)) {
     h += `<div class="panel"><h2>${esc(kind)} <span class="muted">${groups[kind].length}</span></h2>`;
-    h += groups[kind].map((i) => `<div class="due"><div class="when"><b>${esc(i.who)}</b></div>
+    h += groups[kind].map((i) => `<div class="due"><div class="when"><b>${esc(i.who)}</b>
+      ${i.sub ? `<div class="course-title">${esc(i.sub)}</div>` : ""}</div>
       <div class="body">${esc(i.what || "")}
       ${i.raw ? `<div class="raw">syllabus: ${esc(i.raw)}</div>` : ""}</div></div>`).join("");
     h += `</div>`;

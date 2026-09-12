@@ -157,6 +157,34 @@ main { padding: 18px 20px 40px; max-width: 1500px; }
   padding: 2px 6px; border-radius: 4px;
   background: var(--shade); color: var(--ink);
   border: 1px solid var(--line2);
+  white-space: nowrap;
+}
+
+/* The full course name, shown beside or under its code. Secondary weight so the
+   code still carries the scan, but present so eight near-identical codes are
+   never the only thing identifying a class. */
+.course-title {
+  font-size: .78rem; font-weight: 400; color: var(--ink2);
+  font-style: normal;
+}
+h3 .course-title, h2 .course-title { display: block; margin-top: 2px; }
+.due .course-title { margin-top: 1px; }
+.crunchgrp { margin-bottom: 6px; }
+.crunchgrp:last-child { margin-bottom: 0; }
+
+/* Term grid column headers: code on one line, title wrapped under it. */
+.grid th { max-width: 190px; }
+.gridcode { display: block; font-size: .8rem; color: var(--ink); }
+.gridtitle {
+  display: block; margin-top: 2px; font-weight: 400; font-size: .68rem;
+  color: var(--ink3); text-transform: none; letter-spacing: 0; line-height: 1.25;
+  white-space: normal;
+}
+
+/* Notes sidebar group heading */
+.grptitle {
+  display: block; font-size: .68rem; font-weight: 400;
+  text-transform: none; letter-spacing: 0; color: var(--ink3); margin-top: 1px;
 }
 
 /* ------------------------------------------------------------- tables */
