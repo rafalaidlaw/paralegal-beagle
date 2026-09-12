@@ -1,0 +1,193 @@
+{
+ "course": "LGL154",
+ "source": "lgl154-npf-Fall 2026 Syllabus.pdf",
+ "columns": [
+  "Day",
+  "Date",
+  "Agenda/Topic",
+  "Reading(s)",
+  "Due"
+ ],
+ "rows": [
+  {
+   "row": 1,
+   "date": "9/9",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Introduction to the course Lesson: Symbol, Watermarks, Footnotes, Endnotes, Tables",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 2,
+   "date": "9/16",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Lesson: Letters, Envelopes, Labels, Professional Writing Guidelines",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 3,
+   "date": "9/23",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Lesson: AODA Compliance, Headers and Footers",
+    "Reading(s)": "",
+    "Due": "Assignment # 1 (6%)"
+   }
+  },
+  {
+   "row": 4,
+   "date": "9/30",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Lesson: Section Breaks, Page Breaks, Automated Page Numbers",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 5,
+   "date": "10/7",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "In-Class Test # 1 (20%)",
+    "Reading(s)": "",
+    "Due": "In-Class Test # 1 (20%) (95 Minutes)"
+   }
+  },
+  {
+   "row": 6,
+   "date": "10/14",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Lesson: Emails, Disclaimers, Signatures, Styles, Automated Tables of Contents",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 7,
+   "date": "10/21",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Lesson: Headings, Jurats, Retainers, Authorizations, Directions, Memoranda",
+    "Reading(s)": "",
+    "Due": "Assignment # 2 (6%)"
+   }
+  },
+  {
+   "row": 8,
+   "date": "10/28",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Study Week",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 9,
+   "date": "11/4",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "In-Class Test # 2",
+    "Reading(s)": "",
+    "Due": "In-Class Test # 2 (30%) (95 Minutes)"
+   }
+  },
+  {
+   "row": 10,
+   "date": "11/11",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Lesson: Introduction to OneDrive/ GoogleDrive and Forms using Developer",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 11,
+   "date": "11/18",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Lesson: Introduction to Excel",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 12,
+   "date": "11/25",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Lesson: Excel Continue",
+    "Reading(s)": "",
+    "Due": "Assignment # 3 (3%)"
+   }
+  },
+  {
+   "row": 13,
+   "date": "12/2",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Review for Final Test",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 14,
+   "date": "12/9",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "In-Class Final Test # 3",
+    "Reading(s)": "",
+    "Due": "In-Class Final Test # 3 (35%) (95 Minutes)"
+   }
+  },
+  {
+   "row": 15,
+   "date": "12/16",
+   "page": 3,
+   "cells": {
+    "Day": "",
+    "Date": "",
+    "Agenda/Topic": "Final Exams in Other Course- Terms ends Wednesday, December 16",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  }
+ ]
+}

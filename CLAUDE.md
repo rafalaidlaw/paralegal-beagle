@@ -37,6 +37,9 @@ python validate.py          # must exit 0
   week — the worst failure mode here.
 - **Never re-add `week_no` from the printed syllabus.** Derive it from the date.
   LGL153's syllabus prints week "13" twice.
+- **Never trust a value because it appears somewhere in the syllabus.** It has to
+  appear in the row with the matching date. `validate.py` rule 8 enforces this;
+  it is the rule that catches an item filed on the wrong week.
 - **Don't feed textbook chapters or publisher PDFs to cloud AI tools.** Seneca's
   Generative AI Policy prohibits putting third-party copyrighted material into
   unapproved GenAI applications. Work from Rafael's own notes instead.
@@ -76,23 +79,41 @@ rows, one per weekly meeting — that is correct, not a duplicate.
 ## Extraction, if a syllabus changes
 
 ```
-python extract.py           # syllabi/ + handouts/ -> build/*.txt
+pip install pdfplumber      # needed by extract.py and validate.py only
+python extract.py           # syllabi/ -> build/*.rows.json  (+ .txt for reading)
 python validate.py
 ```
 
-`extract.py` uses **`pdftotext -table`**, and that choice is load-bearing. The
-`pdftotext` here is xpdf 4.00 from Git for Windows (`/mingw64/bin`), *not*
-poppler, so `-bbox-layout` does not exist. Six of the eight syllabi are
-Courseleaf/Apache-FOP output whose `Due` column cells float free of their rows:
+**Never go back to flattened text.** `pdftotext` reconstructs columns from
+whitespace but cannot tell you which ROW a wrapped line belongs to, and the first
+line of a cell lands under the previous row's last line. That produced a real,
+shipped error: LGL151's "QUIZ #1 (15%)" and "PRESENTATIONS BEGIN (15%)" are each
+the first line of their cell, and both were recorded a week early until Rafael
+caught the quiz.
 
-| LGL152 Midterm Test #1 | reported |
-|---|---|
-| `-layout` | week of 11/12 — **wrong by six weeks** |
-| `-table` | week of 10/1 — correct |
+`extract.py` now reads cell geometry into `build/<CODE>.rows.json`:
+
+- **LGL151** — bordered Word table, cells centred vertically. Rows come from the
+  WEEK column's border segments (~35pt wide); the topic column's look identical
+  but week 5 nests a bulleted sub-table that would shatter one week into eight.
+  Columns are the table's own vertical rules at x = 42.4 / 78.1 / 134.8 / 361.6 /
+  437.4 / 504.1.
+- **The six Courseleaf syllabi** — no ruling lines at all, cells top-aligned, so
+  each date anchors a row running to the next date. Columns come from the header
+  word positions.
+- **LGL153** — .docx, where `<w:tr>` is a real row.
+
+Two traps already hit and fixed, worth not re-introducing: the stop word must be
+case-sensitive `^Missed$` (a case-insensitive `feedback` alternative truncated
+LGL160 mid-cell at "All student feedback due", silently dropping its final exam),
+and the running page header sits at top≈47 while content starts at ≈100, so
+words above y=70 must be discarded or they leak into cells.
 
 Also: assessments hide in the **topic** column, not only the `Due` column.
 LGL153's tests appear *only* there (`Oct. 2 \| TEST 1: CHAPTERS 1-4 (30%)`), so a
-column-driven parser finds zero assessments for that course.
+column-driven parser finds zero assessments for that course. And a weight is
+sometimes stated on the row where work is HANDED OUT rather than where it is due
+(LGL225: "Assignment - 20%" on 11/11, "Assignment due" on 11/18).
 
 `reference/2026-09-11_integrity-in-action.pdf` is an open-badge certificate with
 no text layer — never parse it. `handouts/Presentation Instructions` carries

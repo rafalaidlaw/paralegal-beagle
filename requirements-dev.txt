@@ -1,0 +1,7 @@
+# Needed only to re-extract and verify the syllabi:
+#     python extract.py
+#     python validate.py
+#
+# The app itself (serve.py / start.bat) is Python standard library only and
+# needs none of this.
+pdfplumber>=0.11

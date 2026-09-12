@@ -14,6 +14,7 @@ cheapest integrity check available here.
 import collections
 import csv
 import datetime as dt
+import json
 import re
 import sys
 from pathlib import Path
@@ -95,12 +96,6 @@ if not (courses and schedule and assessments):
     raise SystemExit(2)
 
 codes = [c["code"] for c in courses]
-dumps = {}
-for code in codes:
-    p = BUILD / f"{code}.txt"
-    dumps[code] = norm(p.read_text(encoding="utf-8", errors="replace")) if p.exists() else None
-    if dumps[code] is None:
-        warn(f"{code}: build/{code}.txt missing -- provenance cannot be checked. Run extract.py.")
 
 
 # -- 1. assessment weights must reconcile to exactly 100% per course ---------
@@ -215,34 +210,104 @@ for r in schedule:
             f"(term week {week_no(d)}) -- week numbers must be derived from dates")
 
 
-# -- 8. provenance: the load-bearing values must occur in the source dump ----
-# This does not try to match whole cells: pdftotext interleaves wrapped columns,
-# so a multi-line "Reading(s)" cell is not contiguous in the dump. It checks the
-# values a wrong row would get wrong -- the date string, each chapter number,
-# each page range, each percentage.
+# -- 8. provenance: each value must occur in the MATCHING source row ---------
+# This is the rule that matters most, and the one an earlier version got wrong.
+# Checking that "QUIZ #1 (15%)" appears *somewhere* in LGL151 passes happily while
+# the quiz is filed a week early. build/<CODE>.rows.json reads each table by its
+# real cell boundaries, so the check can be: does this value appear in the row
+# with THIS date?
 prov_checked = prov_failed = 0
+
+
+def gt_rows(code):
+    path = BUILD / f"{code}.rows.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))["rows"]
+
+
+def row_text(gr):
+    return norm(gr["date"] + " " + " ".join(str(v) for v in gr["cells"].values()))
+
+
+def date_key(s):
+    """Compare dates loosely: 'Wed 9/9' vs '9/9', 'Beginning Sept. 8' vs 'Sept. 8'."""
+    s = re.sub(r"^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+", "", norm(s), flags=re.I)
+    s = re.sub(r"^Beginning\s+", "", s, flags=re.I)
+    return s.replace(".", "").lower().strip()
+
+
+truth = {c: gt_rows(c) for c in codes}
+for code, rows_gt in truth.items():
+    if rows_gt is None:
+        warn(f"{code}: build/{code}.rows.json missing -- provenance cannot be checked. "
+             f"Run extract.py.")
+
 for r in schedule:
-    dump = dumps.get(r["source_file"])
-    if not dump:
+    rows_gt = truth.get(r["source_file"])
+    if rows_gt is None:
         continue
     prov_checked += 1
-    if r["date_raw"] and norm(r["date_raw"]) not in dump:
+    want = date_key(r["date_raw"])
+    match = next((g for g in rows_gt if date_key(g["date"]) == want), None)
+    if match is None:
         prov_failed += 1
-        err(f"{r['id']}: date_raw '{r['date_raw']}' does not appear in build/{r['source_file']}.txt")
-    for rng in filter(None, r["pages"].split(";")):
-        if not page_range_in(rng, dump):
-            prov_failed += 1
-            err(f"{r['id']}: page range '{rng}' does not appear in build/{r['source_file']}.txt")
-    if r["weight_pct"] and f"{r['weight_pct']}%" not in dump:
-        prov_failed += 1
-        err(f"{r['id']}: weight '{r['weight_pct']}%' does not appear in build/{r['source_file']}.txt")
-
-for a in assessments:
-    dump = dumps.get(a["source_file"])
-    if not dump or not a["weight_pct"]:
+        err(f"{r['id']}: no row dated '{r['date_raw']}' exists in "
+            f"build/{r['source_file']}.rows.json")
         continue
-    if f"{a['weight_pct']}%" not in dump and f"{a['weight_pct']} %" not in dump:
-        err(f"{a['id']}: weight '{a['weight_pct']}%' does not appear in build/{a['source_file']}.txt")
+    text = row_text(match)
+
+    for ch in filter(None, r["chapters"].split(";")):
+        if not re.search(rf"\b{ch}\b", text):
+            prov_failed += 1
+            err(f"{r['id']}: chapter {ch} is not in the '{r['date_raw']}' row of the syllabus")
+    for rng in filter(None, r["pages"].split(";")):
+        if not page_range_in(rng, text):
+            prov_failed += 1
+            err(f"{r['id']}: page range '{rng}' is not in the '{r['date_raw']}' row")
+    if r["weight_pct"] and f"{r['weight_pct']}%" not in text:
+        # A weight is sometimes stated on the row where the work is HANDED OUT
+        # rather than the row where it is due -- LGL225 announces "Assignment -
+        # 20%" on 11/11 and the 11/18 row just says "Assignment due". That is
+        # the syllabus being terse, not the data being wrong, so only complain
+        # if the figure appears nowhere nearby.
+        near = [g for g in rows_gt
+                if abs(g["row"] - match["row"]) <= 1 and f"{r['weight_pct']}%" in row_text(g)]
+        if near:
+            info(f"{r['id']}: {r['weight_pct']}% is stated on the {near[0]['date']} row "
+                 f"(where it is handed out), not on '{r['date_raw']}' (where it is due)")
+        else:
+            prov_failed += 1
+            err(f"{r['id']}: a {r['weight_pct']}% item is recorded on '{r['date_raw']}', but no "
+                f"{r['weight_pct']}% appears in that row of the syllabus or either "
+                f"neighbour -- is it filed on the wrong week?")
+    if r["due_item"]:
+        # first distinctive word of the due item, e.g. QUIZ / MIDTERM / Assignment
+        head = next((w for w in re.findall(r"[A-Za-z#]+", r["due_item"]) if len(w) > 3), "")
+        if head and head.lower() not in text.lower():
+            prov_failed += 1
+            err(f"{r['id']}: due item '{r['due_item']}' is recorded on '{r['date_raw']}', but "
+                f"'{head}' does not appear in that row of the syllabus")
+
+# assessments must land on a row that actually carries their weight
+for a in assessments:
+    rows_gt = truth.get(a["source_file"])
+    if rows_gt is None or not a["weight_pct"]:
+        continue
+    target = a["due_date"] or a["due_week_of"]
+    rowmatch = next((r for r in schedule
+                     if r["course"] == a["course"] and r["class_date"] == target), None)
+    if rowmatch is None:
+        warn(f"{a['id']}: {target} is not a class date for {a['course']}")
+        continue
+    match = next((g for g in rows_gt if date_key(g["date"]) == date_key(rowmatch["date_raw"])), None)
+    if match and f"{a['weight_pct']}%" not in row_text(match):
+        near = [g for g in rows_gt
+                if abs(g["row"] - match["row"]) <= 1 and f"{a['weight_pct']}%" in row_text(g)]
+        if not near:
+            err(f"{a['id']} ({a['name']}): {a['weight_pct']}% is recorded on {target}, but "
+                f"{a['weight_pct']}% appears in neither that row of the syllabus nor either "
+                f"neighbour")
 
 
 # -- 9. schedule and assessments must agree -------------------------------
@@ -274,7 +339,7 @@ def section(title, items, bullet):
 
 print(f"Paralegal Beagle -- data check")
 print(f"  {len(courses)} courses, {len(schedule)} class meetings, {len(assessments)} assessments")
-print(f"  provenance: {prov_checked - prov_failed}/{prov_checked} schedule rows proved against build/")
+print(f"  provenance: {prov_checked - prov_failed}/{prov_checked} schedule rows matched to their own row in build/*.rows.json")
 
 section("ERRORS (fix before trusting the data)", errors, "x")
 section("WARNINGS (check these)", warns, "!")

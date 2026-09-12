@@ -1,0 +1,181 @@
+{
+ "course": "LGL153",
+ "source": "LGL153NPF Syllabus Fall 2026.docx",
+ "columns": [
+  "week",
+  "date",
+  "topic",
+  "reading",
+  "lso"
+ ],
+ "rows": [
+  {
+   "row": 1,
+   "date": "Sept. 11",
+   "page": 1,
+   "cells": {
+    "week": "1",
+    "date": "Sept. 11",
+    "topic": "Introduction Business Organizations",
+    "reading": "1-2",
+    "lso": "3, 44, 75, 176, 209, 210, 272"
+   }
+  },
+  {
+   "row": 2,
+   "date": "Sept. 18",
+   "page": 1,
+   "cells": {
+    "week": "2",
+    "date": "Sept. 18",
+    "topic": "Business Organizations cont’d",
+    "reading": "3",
+    "lso": "3, 44, 75, 176, 209, 210, 272"
+   }
+  },
+  {
+   "row": 3,
+   "date": "Sept. 25",
+   "page": 1,
+   "cells": {
+    "week": "3",
+    "date": "Sept. 25",
+    "topic": "Personal Property Law",
+    "reading": "4",
+    "lso": "3, 44, 75, 176, 209, 210,272"
+   }
+  },
+  {
+   "row": 4,
+   "date": "Oct. 2",
+   "page": 1,
+   "cells": {
+    "week": "4",
+    "date": "Oct. 2",
+    "topic": "TEST 1: CHAPTERS 1-4 (30%)",
+    "reading": "",
+    "lso": ""
+   }
+  },
+  {
+   "row": 5,
+   "date": "Oct. 9",
+   "page": 1,
+   "cells": {
+    "week": "5",
+    "date": "Oct. 9",
+    "topic": "Real Property Law",
+    "reading": "5",
+    "lso": "3, 44, 175"
+   }
+  },
+  {
+   "row": 6,
+   "date": "Oct. 16",
+   "page": 1,
+   "cells": {
+    "week": "6",
+    "date": "Oct. 16",
+    "topic": "Real Property Law cont’d Mortgages/Charges",
+    "reading": "5 6",
+    "lso": "3, 44, 175"
+   }
+  },
+  {
+   "row": 7,
+   "date": "Oct. 23",
+   "page": 1,
+   "cells": {
+    "week": "7",
+    "date": "Oct. 23",
+    "topic": "Mortgages/Charges",
+    "reading": "6",
+    "lso": "3, 44, 175"
+   }
+  },
+  {
+   "row": 8,
+   "date": "Oct. 30",
+   "page": 1,
+   "cells": {
+    "week": "8",
+    "date": "Oct. 30",
+    "topic": "STUDY WEEK",
+    "reading": "",
+    "lso": ""
+   }
+  },
+  {
+   "row": 9,
+   "date": "Nov. 6",
+   "page": 1,
+   "cells": {
+    "week": "9",
+    "date": "Nov. 6",
+    "topic": "Intellectual Property",
+    "reading": "7",
+    "lso": ""
+   }
+  },
+  {
+   "row": 10,
+   "date": "Nov. 13",
+   "page": 1,
+   "cells": {
+    "week": "10",
+    "date": "Nov. 13",
+    "topic": "TEST 2: CHAPTERS 5-7 (35%)",
+    "reading": "",
+    "lso": ""
+   }
+  },
+  {
+   "row": 11,
+   "date": "Nov. 20",
+   "page": 1,
+   "cells": {
+    "week": "11",
+    "date": "Nov. 20",
+    "topic": "Wills",
+    "reading": "8",
+    "lso": "3, 44, 272"
+   }
+  },
+  {
+   "row": 12,
+   "date": "Nov. 27",
+   "page": 1,
+   "cells": {
+    "week": "12",
+    "date": "Nov. 27",
+    "topic": "Estate Administration Powers of Attorney Exam Review",
+    "reading": "9-10",
+    "lso": "3, 44, 272"
+   }
+  },
+  {
+   "row": 13,
+   "date": "Dec. 4",
+   "page": 1,
+   "cells": {
+    "week": "13",
+    "date": "Dec. 4",
+    "topic": "Powers of Attorney Exam Review",
+    "reading": "10",
+    "lso": "3, 44, 272"
+   }
+  },
+  {
+   "row": 14,
+   "date": "Dec. 11",
+   "page": 1,
+   "cells": {
+    "week": "13",
+    "date": "Dec. 11",
+    "topic": "FINAL EXAM: CHAPTERS 8-10 (35%)",
+    "reading": "",
+    "lso": ""
+   }
+  }
+ ]
+}

@@ -1,0 +1,188 @@
+{
+ "course": "LGL156",
+ "source": "LGL 156 Syllabus - Fall 2026.pdf",
+ "columns": [
+  "Week of",
+  "Agenda/Topic",
+  "Reading(s)",
+  "Due"
+ ],
+ "rows": [
+  {
+   "row": 1,
+   "date": "9/9",
+   "page": 2,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 1: Introduction to Administrative Law The Legal System: Administrative Agencies and Tribunals Administrative Agencies and Tribunals LSO Competencies 2, 4, 5",
+    "Reading(s)": "Chapter 1: Introduction to Administrative Law The Legal System Chapter 2: Administrative Agencies and Tribunals",
+    "Due": ""
+   }
+  },
+  {
+   "row": 2,
+   "date": "9/16",
+   "page": 2,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 2: Chapter 3: Foundations of Administrative Law LSO Competencies 4, 5",
+    "Reading(s)": "Chapter 3: Foundations of Administrative Law",
+    "Due": ""
+   }
+  },
+  {
+   "row": 3,
+   "date": "9/23",
+   "page": 2,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 3: Foundations of Administrative Law continuation LSO Competencies 2, 3, 4, 5, 6 Procedural Fairness: Right To Be Heard",
+    "Reading(s)": "Chapter 4: Fairness: The Right to Be Heard Chapter 3: Foundations of Administrative Law",
+    "Due": ""
+   }
+  },
+  {
+   "row": 4,
+   "date": "9/30",
+   "page": 2,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 4: Completion of: Procedural Fairness: The Right to Be Heard (LSO Competencies 2, 4, 5, 6) Procedural Fairness, Part 2: Bias (LSO Competencies 2, 4, 6)",
+    "Reading(s)": "Chapter 4: Fairness: The Right to Be Heard Chapter 5: Fairness, Part 2: Bias",
+    "Due": ""
+   }
+  },
+  {
+   "row": 5,
+   "date": "10/7",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 5: Completion of: Procedural Fairness, Part 2: Bias (LSO Competencies 2, 4, 6)",
+    "Reading(s)": "Chapter 5: Fairness, Part 2: Bias",
+    "Due": "Quiz #1 worth 10% during in person class"
+   }
+  },
+  {
+   "row": 6,
+   "date": "10/14",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 6: The Charter and Quasi- Constitutional Laws and Their Relationship to Administrative Law LSO Competencies 1,6,7,8 Midterm Review -structure, areas of review",
+    "Reading(s)": "Chapter 6: The Charter and Quasi- Constitutional Laws and Their Relationship to Administrative Law",
+    "Due": ""
+   }
+  },
+  {
+   "row": 7,
+   "date": "10/21",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 7: MIDTERM (During in-person class this week)",
+    "Reading(s)": "",
+    "Due": "MIDTERM 40% (During in-person class this week)"
+   }
+  },
+  {
+   "row": 8,
+   "date": "10/28",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "",
+    "Reading(s)": "Study Week",
+    "Due": ""
+   }
+  },
+  {
+   "row": 9,
+   "date": "10/29",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "",
+    "Reading(s)": "Study Week",
+    "Due": ""
+   }
+  },
+  {
+   "row": 10,
+   "date": "11/4",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 9: Human Rights and Advocacy Before Civil Servants, Agencies and Tribunals: Procedures Before Hearings LSO Competencies 3, 5",
+    "Reading(s)": "Chapter 7: Advocacy Before Civil Servants, Agencies and Tribunals. Chapter 6: Human Rights",
+    "Due": ""
+   }
+  },
+  {
+   "row": 11,
+   "date": "11/11",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 10: Tribunal Procedures Before Hearings LSO Competencies 3, 5",
+    "Reading(s)": "Chapter 8: Tribunal Procedures Before Hearings",
+    "Due": ""
+   }
+  },
+  {
+   "row": 12,
+   "date": "11/18",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 11: Tribunal Procedures During Hearings and Control of Hearing Process LSO Competencies 1,3,5,6",
+    "Reading(s)": "Chapter 9: Tribunal Procedures During Hearings Chapter 11: Control of Hearing Process",
+    "Due": ""
+   }
+  },
+  {
+   "row": 13,
+   "date": "11/25",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 12: Conduct Outside the Hearing; Decision Making Procedures LSO Competencies 1, 2, 5, 9, 10",
+    "Reading(s)": "Chapter 12: Conduct Outside the Hearing Chapter 13: Decision Making Procedures",
+    "Due": "WRITTEN ASSIGNMENT DUE: worth 10%"
+   }
+  },
+  {
+   "row": 14,
+   "date": "12/2",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 13: Challenging Decisions Standard of Review: Enforcement of Orders LSO Competencies 1, 9",
+    "Reading(s)": "Chapter 14: Challenging Decisions and Standard of Review Chapter 15: Enforcement of Orders",
+    "Due": ""
+   }
+  },
+  {
+   "row": 15,
+   "date": "12/9",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 14: Exam Review",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 16,
+   "date": "12/16",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Week 15: Final Exam",
+    "Reading(s)": "",
+    "Due": "Final Exam 40%"
+   }
+  }
+ ]
+}

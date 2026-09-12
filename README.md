@@ -33,8 +33,9 @@ Your progress lives in `data/progress.csv` and survives everything else.
 
 ## Things worth knowing right now
 
-- **LGL151 Quiz #1 (15%) is the week of Mon 14 Sep.** The reading is Chapter 5,
-  the court system.
+- **LGL151 Quiz #1 (15%) is the week of Mon 21 Sep**, and the presentations start
+  the week after that. The syllabus states no scope; weeks 1–2 cover IRAC, the
+  legal professions (Ch 11) and the court system (Ch 5).
 - **LGL225's Immigration Reference Tool Kit gates the Sept 30 quiz (20%)** — the
   tool kit is the *only* material you're allowed to bring, so it has to be
   finished first. Get the IRCC forms from canada.ca, not a search engine; the
@@ -56,7 +57,7 @@ syllabi/      the 8 original syllabi, untouched
 handouts/     presentation instructions, immigration tool kit
 data/         the dataset -- plain CSV, opens in Excel
 notes/        your notes, plain Markdown
-build/        text dumps of the syllabi, for checking the data
+build/        each syllabus table read row by row -- what the data is checked against
 ```
 
 `data/` is the real thing; every screen is built from it. `data/schedule.csv`
@@ -74,8 +75,11 @@ python validate.py
 
 It checks the things that actually go wrong: that each course's weights still add
 to 100%, that no single item exceeds Seneca's 40% cap, that every date is inside
-the term and falls on that course's own meeting day, and that every figure still
-matches the source syllabus. It never edits anything — it just tells you.
+the term and falls on that course's own meeting day, and — most importantly —
+that every chapter, page range, deadline and percentage appears **in the row of
+the syllabus with that same date**. If you move an assessment to a week the
+syllabus doesn't put it in, it says so. It never edits anything; it just tells
+you.
 
 Then add a line to `data/changes.md` saying what changed and **where you heard
 it** (in class? on Blackboard? by email?). In November, when two sources
@@ -86,3 +90,9 @@ disagree, that line is the whole point.
 This was built from the syllabi as they were on **11 Sep 2026**. Syllabi change,
 and the change usually arrives in class or as a Blackboard announcement — not as
 a new PDF. Treat Learn@Seneca as the authority and this as the plan.
+
+If something here disagrees with your syllabus, **the syllabus wins** — tell me
+and I'll fix it. One real example is already in `data/changes.md`: LGL151's Quiz
+#1 and presentations were both recorded a week early, because each is the first
+line of its table cell and flattened text puts that under the previous week. The
+extractor and the validator were both rebuilt around that, but keep checking.

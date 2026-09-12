@@ -1,0 +1,177 @@
+{
+ "course": "LGL151",
+ "source": "LGL151 Syllabus -Fall 2026.pdf",
+ "columns": [
+  "week",
+  "topic",
+  "reading",
+  "lso"
+ ],
+ "rows": [
+  {
+   "row": 1,
+   "date": "Beginning Sept. 8",
+   "page": 1,
+   "cells": {
+    "week": "1",
+    "topic": "INTRODUCTION TO LEGAL ANALYSIS AND THE LEGAL PROFESSIONS Review Academic Integrity Assignment IRAC Method The Legal Professions",
+    "reading": "Chapter 11",
+    "lso": ""
+   }
+  },
+  {
+   "row": 2,
+   "date": "Sept. 14",
+   "page": 1,
+   "cells": {
+    "week": "2",
+    "topic": "THE COURT SYSTEM IN CANADA Organization and Function of Courts Role of the Judiciary Judicial independence",
+    "reading": "Chapter 5",
+    "lso": "171, 172, 170"
+   }
+  },
+  {
+   "row": 3,
+   "date": "Sept. 21",
+   "page": 1,
+   "cells": {
+    "week": "3",
+    "topic": "QUIZ #1 (15%) STRUCTURE OF GOVERNMENT IN CANADA Relationship between 3 branches of government in Canada Responsible government",
+    "reading": "Chapter 4 (pages 90-91)",
+    "lso": "167"
+   }
+  },
+  {
+   "row": 4,
+   "date": "Sept. 28",
+   "page": 1,
+   "cells": {
+    "week": "4",
+    "topic": "PRESENTATIONS BEGIN (15%) STRUCTURE OF GOVERNMENT IN CANADA (CONT’D) Executive Power Crown Immunity Limits of Executive Influence",
+    "reading": "Chapter 4 (pages 109- 117)",
+    "lso": "167"
+   }
+  },
+  {
+   "row": 5,
+   "date": "Oct. 05",
+   "page": 1,
+   "cells": {
+    "week": "5",
+    "topic": "SYSTEMS OF LAW • Civil Law System • Common Law System • use of precedent • stare decisis • arguing against precedent • Indigenous Legal Systems • Comparison of Legal systems",
+    "reading": "Chapter 2 Chapter 5 (pgs 144-145) Chapter 3 (pgs 60-62) Chapter 10 (pgs 295-298",
+    "lso": "168, 170"
+   }
+  },
+  {
+   "row": 6,
+   "date": "Oct. 12",
+   "page": 2,
+   "cells": {
+    "week": "6",
+    "topic": "LEGISLATIVE POWER: FEDERAL AND PROVINCIAL LAW-MAKING • How statutes are made and interpreted • Subordinate legislation • Parliamentary Supremacy",
+    "reading": "Chapter 4 ( pgs 90-91; 101- 103; 106-108) --pp. 122-124",
+    "lso": "167, 170"
+   }
+  },
+  {
+   "row": 7,
+   "date": "Oct. 19",
+   "page": 2,
+   "cells": {
+    "week": "7",
+    "topic": "MIDTERM (30%)",
+    "reading": "",
+    "lso": ""
+   }
+  },
+  {
+   "row": 8,
+   "date": "Oct. 26",
+   "page": 2,
+   "cells": {
+    "week": "8",
+    "topic": "STUDY WEEK - NO CLASSES",
+    "reading": "",
+    "lso": ""
+   }
+  },
+  {
+   "row": 9,
+   "date": "Nov. 02",
+   "page": 2,
+   "cells": {
+    "week": "9",
+    "topic": "TYPES OF LAW • Rule of Law • Divisions of Law • Private vs. Public Law • Procedural vs Substantive Law BUSINESS AND CONSUMER LAW • Repair & Storage Liens Act • Sale of Goods Act • Consumer Protection Act, 2002 • Competition Act • Food & Drugs Act PROPERTY LAW (Covered in LGL153: Le- gal Entities and Relationships)",
+    "reading": "Chapter 1 (pgs 17-20) Chapter 7 (pgs 184-185) Chapter 8 (pgs 238 -243) Chapter 7 (pgs 207-213)",
+    "lso": "169, 170 176, 177 175"
+   }
+  },
+  {
+   "row": 10,
+   "date": "Nov. 09",
+   "page": 2,
+   "cells": {
+    "week": "10",
+    "topic": "THE CONSTITUTION • History & Repatriation • Indigenous Issues • Division of Powers • Amending Formulae",
+    "reading": "Chapter 3 (pgs 70-83) Chapter 4 (pgs 91-101)",
+    "lso": "173, 172"
+   }
+  },
+  {
+   "row": 11,
+   "date": "Nov. 16",
+   "page": 3,
+   "cells": {
+    "week": "11",
+    "topic": "THE CHARTER • Civil Liberties and Human Rights • Application of the Charter • Overview of rights and freedoms • Remedies & Enforcement",
+    "reading": "Chapter 6",
+    "lso": "174"
+   }
+  },
+  {
+   "row": 12,
+   "date": "Nov. 23",
+   "page": 3,
+   "cells": {
+    "week": "12",
+    "topic": "THE CHARTER • THE CHARTER (Continued) • Conducting a charter analysis",
+    "reading": "",
+    "lso": "174"
+   }
+  },
+  {
+   "row": 13,
+   "date": "Nov. 30",
+   "page": 3,
+   "cells": {
+    "week": "13",
+    "topic": "APPLICATION OF THE CHARTER • Key court decisions interpreting the Charter (R. v. Oakes; R.v. Morgentaler; R. v. Therens; R. v. Big M Drug Mart Ltd.; Andrew v. Law Society of British Columbia; Canada (A.G.) v. Bedford; Schachter v. Canada; Carter v. Canada (A.G.); R. v. Cole; R. v. Spencer; R.v. Fearon; R.v. Jordan; R.v Kapp; Irwin Toy Ltd. v. Quebec (Attorney General); R. v. Marakah Conducting a s.24(2) analysis, the Grant Test",
+    "reading": "",
+    "lso": "174"
+   }
+  },
+  {
+   "row": 14,
+   "date": "Dec. 7",
+   "page": 3,
+   "cells": {
+    "week": "14",
+    "topic": "EXAM REVIEW",
+    "reading": "",
+    "lso": ""
+   }
+  },
+  {
+   "row": 15,
+   "date": "Dec. 14",
+   "page": 3,
+   "cells": {
+    "week": "15",
+    "topic": "FINAL EXAM (40%)",
+    "reading": "",
+    "lso": ""
+   }
+  }
+ ]
+}

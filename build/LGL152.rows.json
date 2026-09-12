@@ -1,0 +1,177 @@
+{
+ "course": "LGL152",
+ "source": "Contracts and Torts Syllabus Fall 2026.pdf",
+ "columns": [
+  "Week of",
+  "Agenda/Topic",
+  "Reading(s)",
+  "Due"
+ ],
+ "rows": [
+  {
+   "row": 1,
+   "date": "9/10",
+   "page": 2,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Contracts: An Introduction Formation of Contract: elements of a legally enforceable contract (Intention, Offer, Acceptance, Consideration, etc.) Cases: Balfour v. Balfour, Jones v. Padavatton, Carlill v. The Carbolic Smoke Ball Co., St. John Tugboat v. Irving Refinery",
+    "Reading(s)": "Chapters 9 and 10 LSO Competencies: 290, 291, 297",
+    "Due": ""
+   }
+  },
+  {
+   "row": 2,
+   "date": "9/17",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Formation of a Contracttttt (continued from above); Consideration, Gratuitous Promises, Estoppel, From and Writing ; Cases: central London Property Trust Ltd. v. High Tress House Ltd., Sargent v. Nicholson",
+    "Reading(s)": "Chapter 10 LSO Competencies: 297",
+    "Due": ""
+   }
+  },
+  {
+   "row": 3,
+   "date": "9/24",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Formation of Contract: legality, Statute of Frauds, Capacity; Minors, Incompetence; Cases: Nash v. Inman, Toronto Marlboro Major Junior A Hockey Club . Tonelli;",
+    "Reading(s)": "Chapter 11 and 12 LSO Competencies: 297",
+    "Due": ""
+   }
+  },
+  {
+   "row": 4,
+   "date": "10/1",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "MIDTERM TEST #1 (30%); Chapters 9-12; During in person class; Contract Interpretation: Classification of Contractual Provisions (Terms, Representations, Warranties and conditions), Parole Evidence Rule, Penalty Clauses, Privity, Vicarious Performance, Assignment, Discharge; Cases: Tilden Rent-a-Car v. Clendenning, Hirsch v. duBrule, Krell v. Henry, Taylor v. Caldwell",
+    "Reading(s)": "Chapter 13 LSO Competencies: 296, 298, 299, 300, 301",
+    "Due": ""
+   }
+  },
+  {
+   "row": 5,
+   "date": "10/8",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Discharge and Frustration; Cases: Taylor v. Caldwell",
+    "Reading(s)": "Chapter 15 LSO Competencies: 296, 298, 299, 300, 301",
+    "Due": ""
+   }
+  },
+  {
+   "row": 6,
+   "date": "10/15",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Contractual Defects: Misrepresentation, Mistake, Duress, Undue Influence, Unconscionability",
+    "Reading(s)": "Chapter 14 LSO Competencies: 296, 298, 299, 300",
+    "Due": ""
+   }
+  },
+  {
+   "row": 7,
+   "date": "10/22",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Breach of Contract, Remedies, Damages, Mitigation; Cases: Baxendale, Jarvis v. Swans Tours",
+    "Reading(s)": "Chapter 17 LSO Competencies: 296, 298, 299, 300, 301, 302, 303",
+    "Due": ""
+   }
+  },
+  {
+   "row": 8,
+   "date": "10/29",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "",
+    "Reading(s)": "Study Week",
+    "Due": ""
+   }
+  },
+  {
+   "row": 9,
+   "date": "10/30",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "",
+    "Reading(s)": "Study Week",
+    "Due": ""
+   }
+  },
+  {
+   "row": 10,
+   "date": "11/5",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Midterm Test #2: Chapters 11-15 and 17 (30%); Introduction to Tort Law: History, Types, Elements, Levels of Guilty Mentality; Intentional Torts: Assault, Battery, Intentional Infliction of Mental Suffering, False Imprisonment, Malicious Prosecution, Abuse of Process, Trespass to Land, Nuisance, Trespass to Chattels, Privacy, Intrusion Upon seclusion. Cases: Mallette v. Shulman, Prinzo V. Baycrest, Wilkinson v. Downton, Banyasz v. K-mart, Nelles v. Ontarion, Jones v. Tsige, Hill v. The Church of Scientology",
+    "Reading(s)": "Chapter 1, 2 and 3 LSO Competencies: 290, 291",
+    "Due": ""
+   }
+  },
+  {
+   "row": 11,
+   "date": "11/12",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Intentional Torts (continued). Defences to Intentional Torts: Consent, Self-defence, Defence of Others, Defence of Property, Provocation, Necessity, Legal Authority, Limitation Periods, Defences to Defamation, Anti-SLAPP Legislation",
+    "Reading(s)": "Chapters 2, 3, and 4; LSO Competencies 290, 291",
+    "Due": ""
+   }
+  },
+  {
+   "row": 12,
+   "date": "11/19",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Introduction to Negligence: Elements, Damages; Cases: Donoghue v. Stevenson, Mustapha v. Culligan Waters, Palsgraf v. Long Island Railway, Crocker v. Sundance, Snushall v. Fulsang",
+    "Reading(s)": "Chapter 5 LSO Competencies: 291, 294, 295, 296",
+    "Due": ""
+   }
+  },
+  {
+   "row": 13,
+   "date": "11/26",
+   "page": 4,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Defences to Negligence; Voluntary Assumption of Risk, Contributory Negligence, Limitation periods, Illegality, Multiple Tortfeasors (apportionment); Cases: Crocker v. Sundance, Snushall v. Fulsang",
+    "Reading(s)": "Chapter 6 LSO Competencies: 291, 294, 295, 296",
+    "Due": ""
+   }
+  },
+  {
+   "row": 14,
+   "date": "12/3",
+   "page": 4,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Special Cases of Liability: Occupier's Liability, Host Liability, product Liability, Strict Liability, Vicarious Liability, Limitations; Cases: Rylands v. Fletcher, Rsurfice Corp. v. Hanke, Jordan House v. Menow, Hunt v. Sutton House Realty, Childs v. Desormeaux, Rankin v. JJ",
+    "Reading(s)": "Chapter 7 and 8 LSO Competencies: 292, 293, 294",
+    "Due": ""
+   }
+  },
+  {
+   "row": 15,
+   "date": "12/10",
+   "page": 4,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Remedies: Purpose, Types; Cases: Andrews v. Grand and Toy, Arnold v. Teno, Thornton v. Prnce George School FINAL EXAM: in last in-person class: Chapters 1-8 (40%)",
+    "Reading(s)": "Chapter 8; LSO Competencies 292, 293, 294, 296",
+    "Due": ""
+   }
+  }
+ ]
+}

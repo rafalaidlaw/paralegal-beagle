@@ -1,0 +1,193 @@
+{
+ "course": "LGL225",
+ "source": "syllabi-2267-lgl225-npf-5370-loggedin.pdf",
+ "columns": [
+  "Day",
+  "Date",
+  "Agenda/Topic",
+  "Reading(s)",
+  "Due"
+ ],
+ "rows": [
+  {
+   "row": 1,
+   "date": "9/9",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Introduction Sources of law: IRPA, IRPR, Case law, policy Administration of Immigration, Refugee, and Citizenship Program Ministerial authority",
+    "Reading(s)": "Chapter 1 Chapter 2",
+    "Due": ""
+   }
+  },
+  {
+   "row": 2,
+   "date": "9/16",
+   "page": 2,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "11 grounds of inadmissibility Assigned Activity Locate information in the Immigration and Refugee Protection Regulations (Regulations). Create an immigration reference “Tool Kit” (instructions posted to course folder) Required for Quiz #1",
+    "Reading(s)": "Chapter 3 IRPA, s 34 IRPA, s 35 IRPA, s 36(1), 36(2), 37(1) IRPA, s 38 IRPA, s 39 IRPA, s 40 IRPA, s 41",
+    "Due": ""
+   }
+  },
+  {
+   "row": 3,
+   "date": "9/23",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Overcoming inadmissibility Rehabilitation Equivalency Deemed rehabilitation Counting time elapsed How to apply for rehabilitation",
+    "Reading(s)": "Chapter 3 IRPA, s 36(1) IRPA, s 36(2) IRPR, s 17 IRPR, s 18",
+    "Due": ""
+   }
+  },
+  {
+   "row": 4,
+   "date": "9/30",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Quiz - 20% Duration: 40 minutes",
+    "Reading(s)": "Materials allowed: Immigration Tool Kit Format: Multiple-choice, True or false, short answer.",
+    "Due": "Sept 30, 2026"
+   }
+  },
+  {
+   "row": 5,
+   "date": "10/7",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Permanent Residence Status General provisions Loss of PR status Residency obligation. Fundamentals for IAD.",
+    "Reading(s)": "Chapter 6 IRPA, s 28",
+    "Due": ""
+   }
+  },
+  {
+   "row": 6,
+   "date": "10/14",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Permanent Immigration - Family Class Programs Relationships in the context of family sponsorship Fundamentals for Immigration Appeal Division",
+    "Reading(s)": "Chapter 7 IRPR, 117(1) IRPR, 117(2) IRPR, 117(3)",
+    "Due": ""
+   }
+  },
+  {
+   "row": 7,
+   "date": "10/21",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Family Class cont'd Excluded relationships Sponsorship process Sponsor eligibility and required documents Bars to sponsorship Principal applicant eligibility and required documents Forms review will be integrated in lesson (see Immigration Reference kit for list of forms)",
+    "Reading(s)": "Chapter 7 IRPR, 117(9) Course resources on Blackboard",
+    "Due": ""
+   }
+  },
+  {
+   "row": 8,
+   "date": "10/28",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Study Week",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 9,
+   "date": "11/4",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Mid-term exam – 30% Duration: 90 minutes",
+    "Reading(s)": "Chapters 1,2,3,6, and 7 Permitted materials: Textbook, reference materials, forms and calculator. Format: Multiple-choice, True or false, short answers",
+    "Due": "November 4, 2026"
+   }
+  },
+  {
+   "row": 10,
+   "date": "11/11",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Humanitarian and Compassionate Grounds Typical cases Who cannot apply Case law Evidence Assignment - 20%",
+    "Reading(s)": "Chapter 9 IRPA, s 2",
+    "Due": "Nov. 18. 2026"
+   }
+  },
+  {
+   "row": 11,
+   "date": "11/18",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Economic Class Federal Skilled Worker (FSW) Program Points selection grid Federals Skilled Trades (FST) Canadian Experience Class (CEC) Eligibility requirements",
+    "Reading(s)": "Chapter 8 IRPR, s 75(1) IRPR, s 76(1) IRPR, 78(1) IRPR, s 79(1), (2), (3) IRPR, s 80(1) IRPR, s 81 IRPR, s 82(2) IRPR, s 83(1), (2), (5) IRPR, s 87.1(1), (2), (3) IRPR, s 87.2(1), (2), (3)",
+    "Due": "Assignment due"
+   }
+  },
+  {
+   "row": 12,
+   "date": "11/25",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Temporary Residence Status Visitors, Students and Workers General provisions and application requirements for • TRV, • eTA, • Super Visa TRV exemptions Study permit exemptions Work permit exemptions Post Graduate Work Permit Extensions & restorations Required documents",
+    "Reading(s)": "Chapter 4 and 5 IRPR, s 179 IRPR, s 190 IRPR, s 182 IRPR, s 7(1) IRPR, s 7(2) IRPA, s 29(3) IRPR, s 182 IRPR, s 185 IRPR, s 186 IRPR, s 188 IRPR, s 200 IRPR, s 213, 214, 215, 216, 217, 2018",
+    "Due": ""
+   }
+  },
+  {
+   "row": 13,
+   "date": "12/2",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "Citizenship Law Principles of becoming a Canadian citizen Naturalization process / Grant of citizenship General application requirements Renouncing & revoking citizenship",
+    "Reading(s)": "Chapter 10 CA, s 5(1)",
+    "Due": ""
+   }
+  },
+  {
+   "row": 14,
+   "date": "12/9",
+   "page": 3,
+   "cells": {
+    "Day": "Wed",
+    "Date": "",
+    "Agenda/Topic": "pending matters and Review",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 15,
+   "date": "12/16",
+   "page": 3,
+   "cells": {
+    "Day": "",
+    "Date": "",
+    "Agenda/Topic": "Final exam - 30% Duration: 2 hours",
+    "Reading(s)": "Chapters 3, 4,5, 6, 8, and 10 Format: Multiple-choice, True or false, short answer. Permitted materials: Textbook, reference materials, forms and calculator, tool kit",
+    "Due": "December 16, 2026"
+   }
+  }
+ ]
+}

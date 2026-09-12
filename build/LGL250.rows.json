@@ -1,0 +1,188 @@
+{
+ "course": "LGL250",
+ "source": "LGL 250 SPF 26-3 Courseleaf Syllabus.pdf",
+ "columns": [
+  "Week of",
+  "Agenda/Topic",
+  "Reading(s)",
+  "Due"
+ ],
+ "rows": [
+  {
+   "row": 1,
+   "date": "9/8",
+   "page": 2,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Introduction to legal research Purpose and basic steps of legal research Categories and sources of law Reading statutes and regulations LSO Competencies: 202, 204",
+    "Reading(s)": "Chapter 1 Chapter 3 (pp. 65-79)",
+    "Due": ""
+   }
+  },
+  {
+   "row": 2,
+   "date": "9/15",
+   "page": 2,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Citing and finding statutes and regulations (print) Introduction to finding statutes and regulations online LSO Competencies: 202, 204",
+    "Reading(s)": "Chapter 5 (pp. 107-116)",
+    "Due": ""
+   }
+  },
+  {
+   "row": 3,
+   "date": "9/22",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Hand out Case Brief Assignment Reading Cases LSO Competencies: 203, 205",
+    "Reading(s)": "Chapter 7 (147-154; 163-168) Chapter 10",
+    "Due": ""
+   }
+  },
+  {
+   "row": 4,
+   "date": "9/29",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Reading cases (cont'd) Case citations LSO Competencies: 203, 205",
+    "Reading(s)": "Chapter 8",
+    "Due": ""
+   }
+  },
+  {
+   "row": 5,
+   "date": "10/6",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Analyzing facts and researching a subject Midterm Test Review Case Brief Assignment Due - 10% LSO Competencies: 202, 203",
+    "Reading(s)": "Chapter 2",
+    "Due": "Case Brief Assignment - October 6"
+   }
+  },
+  {
+   "row": 6,
+   "date": "10/13",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Midterm Test - 35%",
+    "Reading(s)": "",
+    "Due": "Midterm Test - October 13"
+   }
+  },
+  {
+   "row": 7,
+   "date": "10/20",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Using Online Sources: Overview, Boolean Searches Boolean Searches LSO Competencies: 202, 203",
+    "Reading(s)": "Chapter 5 (pp. 117-119) Chapter 7 (pp. 154-162) Chapter 9",
+    "Due": ""
+   }
+  },
+  {
+   "row": 8,
+   "date": "10/27",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "",
+    "Reading(s)": "Study Week",
+    "Due": ""
+   }
+  },
+  {
+   "row": 9,
+   "date": "10/29",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "",
+    "Reading(s)": "Study Week",
+    "Due": ""
+   }
+  },
+  {
+   "row": 10,
+   "date": "11/3",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Hand out Research Assignment The Canadian Encyclopedic Digest (CED) (discuss print source briefly) Lawsource - Using the online version of the CED The Canadian Abridgment (CAD) Lawsource - Finding Statutes and Regulations LSO Competencies: 202, 203",
+    "Reading(s)": "Chapter 3 Chapter 4 (pp. 92-95)",
+    "Due": ""
+   }
+  },
+  {
+   "row": 11,
+   "date": "11/10",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Lawsource - Finding and updating cases and decisions Analyzing a research problem from start to finish LSO Competencies: 202, 203, 208",
+    "Reading(s)": "Chapter 2",
+    "Due": ""
+   }
+  },
+  {
+   "row": 12,
+   "date": "11/17",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Lexis Advance Quicklaw - Finding and updating cases; Finding statutes and regulations LSO Competencies: 202, 203",
+    "Reading(s)": "Chapter 9 Chapter 4 (pp. 96-100)",
+    "Due": ""
+   }
+  },
+  {
+   "row": 13,
+   "date": "11/24",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Finding statutes and regulations using government sites LSO Competencies: 202",
+    "Reading(s)": "Chapter 4 (pp. 80-104)",
+    "Due": ""
+   }
+  },
+  {
+   "row": 14,
+   "date": "12/1",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Research Assignment Due - 20% CanLII - Finding and updating cases; Finding statutes and regulations Generative AI and Legal Research Legal writing - Memo of Law/ Correspondence Paralegal Competencies: 202, 203, 206, 207, 208",
+    "Reading(s)": "Chapter 9 Chapter 4 (pp.88-92) Chapter 11",
+    "Due": "Research Assignment - December 1"
+   }
+  },
+  {
+   "row": 15,
+   "date": "12/8",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Final Exam Review",
+    "Reading(s)": "",
+    "Due": ""
+   }
+  },
+  {
+   "row": 16,
+   "date": "12/15",
+   "page": 3,
+   "cells": {
+    "Week of": "",
+    "Agenda/Topic": "Final Exam - December 15",
+    "Reading(s)": "",
+    "Due": "Final Exam - 35%"
+   }
+  }
+ ]
+}
