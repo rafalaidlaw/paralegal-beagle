@@ -90,3 +90,20 @@ were checked by breaking the data on purpose and watching them fail.
 
 Two "mismatches" the sweep reported were the PDF's `ﬁ` ligature in
 "Yousseﬁ" / "ﬁlici" — the data's ordinary spelling is correct.
+
+## 2026-09-13 — LGL160 Oral Presentation: Rafael's slot
+
+| field | old | new |
+|---|---|---|
+| due_date | *(blank; week of 2026-10-07, precision `week`)* | 2026-11-25 (Wed, week 12), precision `exact` |
+| source_file | LGL160 | announced |
+| note | "You must be ready to present in ANY class from this week onward…" | slot and topic: **Peacebuilders International (Toronto)**, Wed 25 Nov |
+
+**Authority:** reported by Rafael on 13 Sep 2026. He did not say whether it came
+from class, Blackboard or email — worth noting here when known.
+
+The syllabus itself only says presentations begin the week of 10/7 and continue
+through the term, and `schedule.csv` keeps that wording on the week-5 row. The
+assessment now carries his actual slot, which is what the deadline views and the
+crunch load should reflect. `source_file: announced` tells `validate.py` not to
+look for this date in the syllabus.
