@@ -129,62 +129,69 @@ from page 1, not metadata.
 python serve.py             # http://127.0.0.1:8787 , or double-click start.bat
 ```
 
-Standard library only. Binds 127.0.0.1. Views: This Week, Term Grid, Crunch,
-Exams, Courses, Notes, Cases, Review. There is **no build step** — edit
+Standard library only. Binds 127.0.0.1. There is **no build step** — edit
 `app/*` and refresh. Rafael has asked "did you build it?" before; the answer is
 that a refresh is the build.
 
-Routes are hash-based and bookmarkable: `#exams`, `#courses/LGL225`,
-`#week/7`. The header has an auto/light/dark toggle and Term Grid has a
-deadlines-only density toggle, both in `localStorage` and both read before the
-first paint by an inline script in `index.html` so neither flashes the wrong
-state on load.
+Views, in the sidebar: This Week, Deadlines, Term Grid, Crunch, Courses, Notes,
+Cases, Review. Routes are hash-based and bookmarkable: `#deadlines`,
+`#courses/LGL225`, `#week/7`. `#exams` is kept as an alias of `#deadlines` so
+old bookmarks land. The sidebar footer has an auto/light/dark toggle and a
+Roomy/Compact density toggle; both live in `localStorage` and are read before
+the first paint by an inline script in `index.html`.
 
 `serve.py` serves exactly three static files — `/`, `/app.css`, `/app.js` —
-with no asset route and no content-type map. So **no font file, image or SVG
-sprite can be added without changing the server**, which is why the type system
-uses only faces already installed on Windows 11.
+with no asset route. So **no font file, image or SVG can be added without
+changing the server**, which is why the type uses only faces installed on
+Windows 11.
 
-## The interface — things that were measured, not guessed
+## The interface — where the look came from, and what was measured
 
-Redone on 12 Sep 2026 after Rafael asked for it to look better. Do not undo
-these without re-measuring; each one was verified in a real browser and several
-contradict what looks reasonable in a stylesheet.
+On 13 Sep 2026 Rafael designed the app in **Claude Design** and chose to adopt
+the whole look. The export is preserved in `reference/claude-design/` with a
+README of what was taken and what had to change. The look is the Modernist
+system: flat, ruled, square corners, a sidebar with counts, one red accent,
+grotesque headings. Do not soften it back toward panels and rounded corners;
+that was the previous design and he asked for this one.
 
-- **Font families that actually resolve.** All six Sitka optical sizes resolve
-  as family names (`Sitka Text/Small/Subheading/Heading/Display/Banner`), even
-  though the registry lists only `Sitka Text` from `SitkaVF.ttf`. So do
-  `Segoe UI Variable Text`, `... Small` and `... Display`. **Bare
-  `"Segoe UI Variable"` does NOT resolve** — it falls through to the next stack
-  entry — so never add it as a fallback slot; it is dead weight that looks
-  correct. `Aptos` and `Inter` are not installed. Re-check with
-  `tools/measure.mjs` before trusting any new family name.
-- **Serif carries identity only** — view titles, course titles, exam names,
-  case names, Notes prose. It never enters a table cell, a chip, a button or a
-  date.
-- **Contrast is measured, never asserted.** `python tools/contrast.py` prints
-  every pair. The old dark `--ink3` (#837e75) was 4.1:1 and was the body copy of
-  This Week; it is now #9a958c at 5.7:1. `--ink4` is **decorative only** and
-  fails AA by design — never put content in it.
-- **Text on a heat cell is always `--ink`.** At the ramp's cap, `--ink2`
-  measures about 3:1 and `--ink3` about 2:1. This is why `--heat-cap` exists and
-  why magnitude above the cap is carried by cell height instead of more colour.
-- **Never name a component class after an assessment type.** `.exam` for the
-  Exams card collided with `.tag.exam` for the type chip — both match
-  `class="tag exam"`, and the card's padding won on source order, so every exam
-  chip rendered 43px tall instead of 21. The card is `.examcard` now.
-- **A phone layout is checked with `tools/probe.mjs`, not with a screenshot.**
+These facts were verified in a real browser. Several contradict what looks
+reasonable in a stylesheet; re-measure before undoing any of them.
+
+- **Bahnschrift stands in for Archivo** (Archivo is a Google Font; the app is
+  offline). Bahnschrift resolves and its **weight axis works**, verified by
+  ink coverage — a width test misleads because its advance widths stay
+  constant across weights, a DIN trait that is handy in tables. **Never name
+  `"Bahnschrift SemiBold"` as a family**: that locks the weight. Bare
+  `"Segoe UI Variable"` does NOT resolve; its Text/Small/Display variants do.
+  Check any new family with `tools/measure.mjs`.
+- **The red is two tokens.** `--accent` is the bright red and is a MARK only:
+  rails, bars, fills, numbers of 22px and up (3:1 is the floor there). In
+  light mode it measures 3.8:1 on the page, so it must never carry body
+  text. `--accent-text` is the deep red for words. `tools/contrast.py` checks
+  each against its own floor.
+- **Red means stakes**: an exam or test, the very next graded item, a heavy
+  week, the current week, the active view. Quizzes, assignments and
+  presentations are ink. A course is told apart by its own hue as a 3px rail
+  or a dot beside its mono code — never by red.
+- **`tools/contrast.py` strips comments before parsing.** A note like
+  "3.8 on --bg: marks only" read as a declaration and silently swallowed the
+  `--accent-text` line after it. That is why the comment beside a token must
+  never contain `--name:`.
+- **The Term Grid is 1100px wide minimum**, which fits beside the 238px
+  sidebar at 1440. The reference used 1260 and cut off the eighth column.
+  Chips inside grid cells wrap; everywhere else they do not.
+- **A phone layout is checked with `tools/probe.mjs`, not a screenshot.**
   Chrome's `--window-size` does not reliably set the CSS viewport in headless
-  mode, which produced phone screenshots that looked badly clipped when the page
-  was in fact clean at 412px. `tools/shot.mjs` sets the viewport and the colour
-  scheme over the DevTools protocol and can be trusted.
+  mode. `tools/shot.mjs` sets it over the DevTools protocol and is trustworthy.
+  The sidebar folds into a top band under 900px; the reference itself
+  overflowed at 412 because it never did this.
+- **12px is the floor for anything with content.** The reference used 10.5px
+  and 11px labels; the app holds 12.
+- **Never name a component class after an assessment type.** `.exam` on a card
+  collided with `.tag.exam` on a chip once and doubled every exam chip's
+  height.
 - **Native `<select>` is as wide as its widest option.** The note picker holds
-  121 class meetings and was 544px, the only real horizontal overflow on a
-  phone. It needs `max-width: 100%`.
-- **Colour is never the only carrier.** The eight course hues all clear 4.5:1 on
-  both dark grounds, but they are close in luminance, so the mono course code
-  always sits beside the dot or rail, and a `forced-colors` block drops every
-  tint and leaves the size channel.
+  121 class meetings; it needs `max-width: 100%`.
 
 ## A week-precision deadline has TWO horizons
 

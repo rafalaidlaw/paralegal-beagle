@@ -4,3 +4,6 @@ __pycache__/
 build/pages/
 
 shots/
+
+# the raw Claude Design export; its useful parts live in reference/claude-design/
+Paralegal Study Website Redesign.zip

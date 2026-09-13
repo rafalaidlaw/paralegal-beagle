@@ -18,32 +18,39 @@ window to stop it.
 There is nothing to build or install. If you change something in this folder,
 just refresh the page.
 
-## The tabs
+## The screens
 
-| Tab | What it's for |
+They are listed down the left side, each with a count beside it.
+
+| Screen | What it's for |
 |---|---|
-| **This Week** | Start here. It opens with the four things that matter: how many days until the next graded item, how many of this week's chapters you have read, how many you are behind, and which week ahead is the heaviest. Then the whole term as one strip of fifteen blocks you can click. Then your readings, grouped by the class they belong to, beside a list of what is due. |
-| **Term Grid** | All fifteen weeks by all eight courses on one screen. Holidays, study week and the drop deadline get their own rows. There is a button to hide the chapter numbers when you only want to see deadlines. |
-| **Crunch** | How much of your final grade falls due each week, added up across all eight courses, drawn as a bar per week and coloured by course. Nobody else can produce this for you — each professor sees only their own course. |
-| **Exams** | Every exam, test and quiz: the date, the weight, and **exactly which chapters it covers** where the syllabus says so. Where it doesn't, it says so instead of guessing. |
-| **Courses** | One course at a time: the details, your grade standing, every assessment, and the full schedule with tick-offs. |
-| **Notes** | Your reading notes, filed by course and week. Plain Markdown files in `notes/` — write them here or in any editor. |
+| **This Week** | Start here. One sentence at the top says how many chapters there are this week and how far off the next graded item is. Then the next three deadlines with a big day count each, your readings for the week class by class, and the whole term as fifteen bars down the right. |
+| **Deadlines** | Every graded item in date order, month by month: what it covers where the syllabus says, when it lands, what it is worth. |
+| **Term Grid** | All fifteen weeks by all eight courses on one screen. Holidays, study week and the drop deadline get their own rows. A button hides the chapter numbers when you only want deadlines. |
+| **Crunch** | How much of your final grade falls due each week, added up across all eight courses, one bar per week coloured by course. Nobody else can produce this for you: each professor sees only their own course. |
+| **Courses** | One course at a time: the details, your grade standing, every assessment with a box to enter the mark, and the full schedule with tick-offs. |
+| **Notes** | Your reading notes, filed by course and week. Plain Markdown files in `notes/`. Write them here or in any editor. |
 | **Cases** | Case briefs with style of cause, citation, CanLII link, and whether you have actually verified it. |
 | **Review** | The questions the syllabi left open. Worth one sitting to clear. |
 
 ## Getting around
 
-- Click the circle beside a chapter to cycle it: not started → in progress →
-  done. **All done** clears a whole course's week at once. Your progress lives
-  in `data/progress.csv` and survives everything else.
+- Click the box beside a chapter to cycle it: not started → in progress →
+  done. **All done** clears a whole class at once. Your progress lives in
+  `data/progress.csv` and survives everything else.
 - On This Week, **‹ week** and **week ›** step through the term. The `[` and `]`
   keys do the same. **Back to this week** returns you to today.
-- Click any week in the term strip to jump to it. Click a course code anywhere
-  to open that course.
-- The **auto / light / dark** button in the top right follows Windows by
-  default, or you can pin it either way. It remembers your choice.
-- Every tab has its own web address, so you can bookmark one. `#exams` opens
-  Exams; `#courses/LGL225` opens Immigration Law; `#week/7` opens week 7.
+- Click any bar in the term runway to jump to that week. Click a course code
+  anywhere to open that course.
+- **Auto / Light / Dark** at the bottom of the sidebar follows Windows by
+  default, or pins it either way. **Roomy / Compact** tightens the rows.
+- Every screen has its own web address, so you can bookmark one. `#deadlines`
+  opens Deadlines; `#courses/LGL225` opens Immigration Law; `#week/7` opens
+  week 7.
+- On a phone the sidebar folds into a strip across the top.
+
+The look was designed in Claude Design and rebuilt here to run offline. The
+export it came from is in `reference/claude-design/`.
 
 ## Things worth knowing right now
 
@@ -64,7 +71,7 @@ just refresh the page.
 - **Your exams are mostly not cumulative, but read each one literally.** LGL153
   splits cleanly (1–4, 5–7, 8–10). LGL152's Test #2 re-covers chapters 11–12.
   LGL225's final re-covers chapters 3 and 6 and skips 1, 2, 7 and 9. Eleven
-  exams and tests don't say at all — see the Review tab.
+  exams and tests don't say at all — see the Review screen.
 - **LGL225's midterm and final are open book.** That changes how to study for
   it: build the lookup, don't memorise.
 

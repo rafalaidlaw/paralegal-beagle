@@ -12,9 +12,10 @@ Rules it enforces:
   * anything carrying content clears 4.5:1
   * --ink4 is decorative only (dashes, rules, disabled glyphs) and is
     expected to fail; it is reported separately, not as an error
-  * text on a heat cell must be --ink; at the ramp's cap --ink2 is about 3:1
-  * a course hue must clear 4.5:1 on --surf1 and --surf2, and must not be
-    confusable with the accent
+  * --accent-text is the only red that may carry words: 4.5:1 everywhere
+  * --accent is a mark (rails, bars, >=22px bold numbers): 3:1 is its floor,
+    and in light mode it measures ~3.8 on the page, so it never carries text
+  * a course hue must clear 4.5:1 on --surf and --surf2
 """
 import io
 import itertools
@@ -74,6 +75,9 @@ def clean(v):
     return v.split("/*")[0].strip()
 
 css = CSS.read_text(encoding="utf-8")
+# Comments first: a note like "3.8 on --bg: marks only" reads as a declaration
+# and swallows the one after it. It silently dropped --accent-text once.
+css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
 light = {k: clean(v) for k, v in block(css, ":root {").items()}
 dark = {k: clean(v) for k, v in block(css, ':root[data-theme="dark"]').items()}
 
@@ -93,23 +97,22 @@ def resolve(palette, key, seen=None):
 
 HUES = ["--c-lgl151", "--c-lgl152", "--c-lgl153", "--c-lgl154",
         "--c-lgl156", "--c-lgl160", "--c-lgl225", "--c-lgl250"]
-SURFACES = ["--bg", "--surf1", "--surf2", "--surf3"]
+SURFACES = ["--bg", "--surf", "--surf2", "--surf3"]
 CONTENT_INKS = ["--ink", "--ink2", "--ink3"]
-SEMANTIC = ["--accent", "--now", "--hot", "--warn", "--cool", "--ok"]
+TEXT_ACCENTS = ["--accent-text"]      # the only red that may carry words
+MARK_ACCENTS = ["--accent"]           # bright red: rails, bars, >=22px numbers; 3:1 floor
 
 problems = []
 
 def report(name, palette):
     P = {k: resolve(palette, k) for k in
-         SURFACES + CONTENT_INKS + ["--ink4"] + SEMANTIC + HUES}
-    cap = clean(palette.get("--heat-cap", light.get("--heat-cap", "50%"))).rstrip("%")
-    cap = float(cap)
+         SURFACES + CONTENT_INKS + ["--ink4"] + TEXT_ACCENTS + MARK_ACCENTS + HUES}
 
-    print(f"\n{'=' * 76}\n{name}   (heat cap {cap:g}%)\n{'=' * 76}")
+    print("\n" + "=" * 76 + "\n" + name + "\n" + "=" * 76)
 
     print("content ink on each surface — all must clear 4.5")
     for ink in CONTENT_INKS:
-        row = f"  {ink:<8}"
+        row = f"  {ink:<14}"
         for s in SURFACES:
             v = cr(P[ink], P[s])
             row += f"  {s[2:]}={v:5.2f}{'' if v >= 4.5 else '  FAIL'}"
@@ -117,36 +120,38 @@ def report(name, palette):
                 problems.append(f"{name}: {ink} on {s} is {v:.2f}")
         print(row)
 
-    row = "  --ink4  "
+    row = "  --ink4        "
     for s in SURFACES:
         row += f"  {s[2:]}={cr(P['--ink4'], P[s]):5.2f}"
     print(row + "   (decorative only — expected to fail, never put content in it)")
 
-    print("semantic text on panel surfaces — all must clear 4.5")
-    for k in SEMANTIC:
-        row = f"  {k:<9}"
-        for s in ("--surf1", "--surf2", "--surf3"):
+    print("the accent as TEXT — must clear 4.5 on every surface")
+    for k in TEXT_ACCENTS:
+        row = f"  {k:<14}"
+        for s in SURFACES:
             v = cr(P[k], P[s])
             row += f"  {s[2:]}={v:5.2f}{'' if v >= 4.5 else '  FAIL'}"
             if v < 4.5:
                 problems.append(f"{name}: {k} on {s} is {v:.2f}")
         print(row)
 
-    print(f"heat ramp — color-mix(--accent i*{cap:g}%, --surf2); the label must stay legible")
-    for i in (0.25, 0.5, 0.75, 1.0):
-        cell = mix(P["--accent"], P["--surf2"], i * cap)
-        vi, v2 = cr(P["--ink"], cell), cr(P["--ink2"], cell)
-        flag = "" if vi >= 4.5 else "  FAIL"
-        print(f"  i={i:<5} cell={cell}  --ink={vi:5.2f}{flag}   --ink2={v2:5.2f} <- do not use")
-        if vi < 4.5:
-            problems.append(f"{name}: --ink on the heat cell at i={i} is {vi:.2f}")
+    print("the accent as a MARK (rails, bars, >=22px bold numbers) — 3.0 is the floor")
+    for k in MARK_ACCENTS:
+        row = f"  {k:<14}"
+        for s in SURFACES:
+            v = cr(P[k], P[s])
+            row += f"  {s[2:]}={v:5.2f}{'' if v >= 3.0 else '  FAIL'}"
+            if v < 3.0:
+                problems.append(f"{name}: {k} as a mark on {s} is {v:.2f}")
+        print(row)
+    print("  (body-size words never go in --accent; that is what --accent-text is for)")
 
     print("course hues as text or marks")
     for k in HUES:
-        a, b = cr(P[k], P["--surf1"]), cr(P[k], P["--surf2"])
+        a, b = cr(P[k], P["--surf"]), cr(P[k], P["--surf2"])
         acc = cr(P[k], P["--accent"])
         flag = "" if min(a, b) >= 4.5 else "  FAIL"
-        print(f"  {k[2:]:<9} {P[k]}  surf1={a:5.2f} surf2={b:5.2f}{flag}   vs accent={acc:4.2f}")
+        print(f"  {k[2:]:<9} {P[k]}  surf={a:5.2f} surf2={b:5.2f}{flag}   vs accent={acc:4.2f}")
         if min(a, b) < 4.5:
             problems.append(f"{name}: {k} is {min(a, b):.2f} on a panel")
     worst = min((cr(P[a], P[b]), a, b) for a, b in itertools.combinations(HUES, 2))

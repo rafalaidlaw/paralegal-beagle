@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#201e1d;--ink2:#605d5d;--ink3:#7d7979;
+  --bg:#f3f2f2;--surf:#ffffff;--surf2:#eae9e9;--surf3:#f8f4f4;
+  --line:#e2dede;--rule:#bab6b6;
+  --accent:#ec3013;--accent-deep:#ae1800;--accent-tint:#fff2ef;
+  --rowpad:14px;--secpad:28px;
+}
+:root[data-pb-theme="dark"]{
+  --ink:#f3f2f2;--ink2:#bab6b6;--ink3:#9b9797;
+  --bg:#161514;--surf:#201e1d;--surf2:#2d2b2b;--surf3:#252322;
+  --line:#383534;--rule:#4f4c4b;
+  --accent:#ff563c;--accent-deep:#ff9783;--accent-tint:#33201c;
+}
+:root[data-pb-density="compact"]{--rowpad:8px;--secpad:18px}
+body{margin:0;background:#f3f2f2;-webkit-font-smoothing:antialiased}
+:root[data-pb-theme="dark"] body{background:#161514}
+a{color:var(--accent-deep);text-underline-offset:3px}
+a:hover{color:var(--accent)}
+*{box-sizing:border-box}
+button{font-family:inherit}
+::selection{background:color-mix(in srgb,var(--accent) 28%,transparent)}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</helmet>
+
+<div style="display:grid;grid-template-columns:238px minmax(0,1fr);min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Archivo',system-ui,sans-serif;font-size:15px;line-height:1.55">
+
+  <aside style="border-right:2px solid var(--rule);background:var(--surf);position:sticky;top:0;align-self:start;height:100vh;display:flex;flex-direction:column;min-width:0">
+    <div style="padding:20px 18px 16px;border-bottom:2px solid var(--rule)">
+      <div style="font:800 16px/1.05 'Archivo',system-ui,sans-serif;letter-spacing:.01em;text-transform:uppercase">Paralegal<br>Beagle</div>
+      <div style="margin-top:7px;font-size:12px;color:var(--ink3)">Fall 2026 · PLEA accelerated</div>
+    </div>
+
+    <div style="padding:13px 18px 15px;border-bottom:1px solid var(--line)">
+      <div style="font:700 10.5px 'Archivo',system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Current week</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px">
+        <span style="font:800 38px/0.85 'Archivo',system-ui,sans-serif;letter-spacing:-.035em;color:var(--accent)">01</span>
+        <span style="font:700 14px 'Archivo',system-ui,sans-serif;color:var(--ink3)">of 15</span>
+      </div>
+      <div style="margin-top:6px;font-size:12.5px;color:var(--ink2)">Mon 7 — Sun 13 Sep</div>
+    </div>
+
+    <nav style="flex:1;overflow-y:auto;padding:6px 0 10px;min-height:0">
+      <div style="font:700 10.5px 'Archivo',system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);padding:12px 18px 5px">Now</div>
+      <sc-for list="{{navNow}}" as="item" hint-placeholder-count="2">
+        <button onClick="{{item.go}}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;border-left:3px solid {{item.bar}};background:{{item.bg}};color:{{item.fg}};font-size:14px;font-weight:{{item.fw}};padding:8px 16px 8px 15px;cursor:pointer" style-hover="background:var(--surf2)">
+          <span>{{item.label}}</span>
+          <span style="font:700 11px ui-monospace,Menlo,monospace;color:{{item.countFg}}">{{item.count}}</span>
+        </button>
+      </sc-for>
+      <div style="font:700 10.5px 'Archivo',system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);padding:16px 18px 5px">The term</div>
+      <sc-for list="{{navTerm}}" as="item" hint-placeholder-count="3">
+        <button onClick="{{item.go}}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;border-left:3px solid {{item.bar}};background:{{item.bg}};color:{{item.fg}};font-size:14px;font-weight:{{item.fw}};padding:8px 16px 8px 15px;cursor:pointer" style-hover="background:var(--surf2)">
+          <span>{{item.label}}</span>
+          <span style="font:700 11px ui-monospace,Menlo,monospace;color:{{item.countFg}}">{{item.count}}</span>
+        </button>
+      </sc-for>
+      <div style="font:700 10.5px 'Archivo',system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);padding:16px 18px 5px">My work</div>
+      <sc-for list="{{navWork}}" as="item" hint-placeholder-count="3">
+        <button onClick="{{item.go}}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;border-left:3px solid {{item.bar}};background:{{item.bg}};color:{{item.fg}};font-size:14px;font-weight:{{item.fw}};padding:8px 16px 8px 15px;cursor:pointer" style-hover="background:var(--surf2)">
+          <span>{{item.label}}</span>
+          <span style="font:700 11px ui-monospace,Menlo,monospace;color:{{item.countFg}}">{{item.count}}</span>
+        </button>
+      </sc-for>
+    </nav>
+
+    <div style="border-top:2px solid var(--rule);padding:12px 18px 14px;display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;gap:8px">
+        <button onClick="{{toggleTheme}}" style="flex:1;border:1px solid var(--line);background:transparent;color:var(--ink);font:700 12px 'Archivo',system-ui,sans-serif;padding:6px 8px;text-align:left;cursor:pointer" style-hover="background:var(--surf2)">{{themeLabel}}</button>
+        <button onClick="{{toggleDensity}}" style="flex:1;border:1px solid var(--line);background:transparent;color:var(--ink);font:700 12px 'Archivo',system-ui,sans-serif;padding:6px 8px;text-align:left;cursor:pointer" style-hover="background:var(--surf2)">{{densityLabel}}</button>
+      </div>
+      <div style="font-size:11.5px;color:var(--ink3);line-height:1.45">8 courses · 121 classes<br>35 graded items · 110 readings</div>
+    </div>
+  </aside>
+
+  <main style="min-width:0;display:flex;flex-direction:column">
+    <header style="padding:22px var(--secpad) 16px;border-bottom:2px solid var(--rule);display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;background:var(--surf)">
+      <div style="min-width:0">
+        <h1 style="margin:0;font:800 30px/1.05 'Archivo',system-ui,sans-serif;letter-spacing:-.025em">{{title}}</h1>
+        <p style="margin:6px 0 0;font-size:13.5px;color:var(--ink2);max-width:70ch">{{subtitle}}</p>
+      </div>
+      <div style="font:700 11px 'Archivo',system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);white-space:nowrap">Sun 13 Sep 2026</div>
+    </header>
+
+    <sc-if value="{{isWeek}}" hint-placeholder-val="{{true}}">
+      <div>
+        <section style="border-bottom:2px solid var(--rule);background:var(--surf)">
+          <div style="padding:15px var(--secpad) 9px;font:700 10.5px 'Archivo',system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">What lands next — nothing is due inside the next 7 days</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));border-top:1px solid var(--line)">
+            <sc-for list="{{dueNext}}" as="d" hint-placeholder-count="3">
+              <div style="padding:16px var(--secpad) 20px;border-right:1px solid var(--line);border-left:3px solid {{d.edge}};min-width:0">
+                <div style="display:flex;align-items:baseline;gap:7px">
+                  <span style="font:800 44px/0.85 'Archivo',system-ui,sans-serif;letter-spacing:-.04em;color:{{d.tone}}">{{d.days}}</span>
+                  <span style="font:700 11.5px 'Archivo',system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">days</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin:12px 0 5px">
+                  <span style="font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.03em;padding:2px 5px;border:1px solid var(--line);color:var(--ink2)">{{d.code}}</span>
+                  <span style="font:700 10.5px 'Archivo',system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:{{d.tone}}">{{d.type}}</span>
+                </div>
+                <div style="font:800 19px/1.2 'Archivo',system-ui,sans-serif;letter-spacing:-.012em">{{d.name}}</div>
+                <div style="margin-top:5px;font-size:13px;color:var(--ink2)">{{d.when}} · worth {{d.weightLabel}}</div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 292px">
+          <section style="min-width:0">
+            <div style="padding:18px var(--secpad) 8px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <h2 style="margin:0;font:800 21px/1.1 'Archivo',system-ui,sans-serif;letter-spacing:-.02em">Readings for week 1</h2>
+              <div style="font:700 12.5px ui-monospace,Menlo,monospace;color:var(--ink2)">{{readLabel}}</div>
+            </div>
+            <sc-for list="{{readingCourses}}" as="c" hint-placeholder-count="7">
+              <article style="padding:var(--rowpad) var(--secpad);border-top:1px solid var(--line);display:grid;grid-template-columns:92px minmax(0,1fr);gap:16px;min-width:0">
+                <div>
+                  <div style="font:700 12px ui-monospace,Menlo,monospace;letter-spacing:.02em">{{c.code}}</div>
+                  <div style="margin-top:5px;font-size:12px;color:var(--ink3)">{{c.date}}</div>
+                </div>
+                <div style="min-width:0">
+                  <div style="font:800 15.5px/1.3 'Archivo',system-ui,sans-serif">{{c.name}}</div>
+                  <p style="margin:5px 0 11px;font-size:13.5px;color:var(--ink2);max-width:64ch;text-wrap:pretty">{{c.topic}}</p>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    <sc-for list="{{c.items}}" as="it" hint-placeholder-count="2">
+                      <button onClick="{{it.toggle}}" style="display:flex;align-items:center;gap:8px;border:1px solid {{it.border}};background:{{it.bg}};color:{{it.fg}};padding:6px 11px;cursor:pointer;font:600 13px 'Archivo',system-ui,sans-serif" style-hover="border-color:var(--accent)">
+                        <span style="width:12px;height:12px;display:block;border:2px solid {{it.mark}};background:{{it.fill}}"></span>
+                        <span>{{it.label}}</span>
+                        <span style="font-size:11px;font-weight:500;color:var(--ink3)">{{it.pages}}</span>
+                      </button>
+                    </sc-for>
+                    <sc-if value="{{c.noReading}}">
+                      <span style="font-size:13px;color:var(--ink3)">No textbook reading — lesson work in class</span>
+                    </sc-if>
+                  </div>
+                </div>
+              </article>
+            </sc-for>
+            <div style="padding:16px var(--secpad) 40px;border-top:2px solid var(--rule);font-size:13px;color:var(--ink2)">Nothing outstanding from earlier weeks — you are level with week 1.</div>
+          </section>
+
+          <aside style="border-left:2px solid var(--rule);min-width:0">
+            <div style="padding:18px 16px 10px">
+              <h2 style="margin:0;font:800 15px/1.15 'Archivo',system-ui,sans-serif;letter-spacing:-.01em">Term runway</h2>
+              <p style="margin:6px 0 0;font-size:12px;color:var(--ink2);line-height:1.45">Share of your final grade falling due each week. Click a week to open the grid.</p>
+            </div>
+            <sc-for list="{{weeks}}" as="w" hint-placeholder-count="15">
+              <button onClick="{{w.go}}" style="display:grid;grid-template-columns:26px minmax(0,1fr) 40px;align-items:center;gap:9px;width:100%;border:0;border-top:1px solid var(--line);background:{{w.bg}};padding:7px 16px;cursor:pointer;text-align:left" style-hover="background:var(--surf2)">
+                <span style="font:700 11.5px ui-monospace,Menlo,monospace;color:{{w.numFg}}">{{w.no}}</span>
+                <span style="display:block;height:9px;background:var(--surf2)">
+                  <span style="display:block;height:100%;width:{{w.barPct}};background:{{w.barColor}}"></span>
+                </span>
+                <span style="font:800 12px 'Archivo',system-ui,sans-serif;text-align:right;color:{{w.pctFg}}">{{w.pctLabel}}</span>
+              </button>
+            </sc-for>
+            <div style="border-top:2px solid var(--rule);padding:14px 16px 30px">
+              <div style="font:700 10.5px 'Archivo',system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Peak</div>
+              <div style="margin-top:5px;font:800 17px 'Archivo',system-ui,sans-serif;color:var(--accent-deep)">Week 15 · 180%</div>
+              <div style="margin-top:4px;font-size:12px;color:var(--ink2);line-height:1.45">Five finals in one week, 14 Dec. Week 14 (110%) and week 7 (101%) are next.</div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isGrid}}">
+      <div>
+        <div style="padding:12px var(--secpad);border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surf)">
+          <button onClick="{{toggleDeadlinesOnly}}" style="border:1px solid var(--line);background:{{deadlinesBg}};color:{{deadlinesFg}};font:700 12px 'Archivo',system-ui,sans-serif;padding:6px 11px;cursor:pointer" style-hover="border-color:var(--accent)">{{deadlinesLabel}}</button>
+          <span style="font-size:12.5px;color:var(--ink3)">Chapters in mono, graded items ruled in red. An em dash is a class with nothing assigned.</span>
+        </div>
+        <div style="overflow-x:auto">
+          <div style="min-width:1260px">
+            <div style="display:grid;grid-template-columns:74px repeat(8,minmax(0,1fr));border-bottom:2px solid var(--rule);position:sticky;top:0;background:var(--surf);z-index:2">
+              <div style="padding:10px 8px;font:700 10.5px 'Archivo',system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Week</div>
+              <sc-for list="{{courses}}" as="co" hint-placeholder-count="8">
+                <div style="padding:10px 10px;border-left:1px solid var(--line);min-width:0">
+                  <div style="font:700 12px ui-monospace,Menlo,monospace">{{co.code}}</div>
+                  <div style="margin-top:3px;font-size:11px;line-height:1.3;color:var(--ink3)">{{co.short}}</div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-for list="{{gridRows}}" as="r" hint-placeholder-count="15">
+              <div>
+                <sc-if value="{{r.note}}">
+                  <div style="padding:5px var(--secpad);background:var(--surf2);border-bottom:1px solid var(--line);font-size:12px;color:var(--ink2)">{{r.note}}</div>
+                </sc-if>
+                <div style="display:grid;grid-template-columns:74px repeat(8,minmax(0,1fr));border-bottom:1px solid var(--line);background:{{r.bg}}">
+                  <div style="padding:10px 8px;border-left:3px solid {{r.edge}}">
+                    <div style="font:800 14px 'Archivo',system-ui,sans-serif;color:{{r.numFg}}">{{r.no}}</div>
+                    <div style="margin-top:2px;font-size:11px;color:var(--ink3)">{{r.date}}</div>
+                  </div>
+                  <sc-for list="{{r.cells}}" as="cell" hint-placeholder-count="8">
+                    <div style="padding:9px 10px;border-left:1px solid var(--line);min-width:0;display:flex;flex-direction:column;gap:6px">
+                      <sc-if value="{{cell.showCh}}">
+                        <div style="font:500 12.5px ui-monospace,Menlo,monospace;color:var(--ink2)">{{cell.ch}}</div>
+                      </sc-if>
+                      <sc-for list="{{cell.dues}}" as="d" hint-placeholder-count="0">
+                        <div>
+                          <span style="display:inline-block;border:1px solid {{d.tone}};color:{{d.tone}};padding:2px 6px;font:700 11.5px 'Archivo',system-ui,sans-serif;line-height:1.35">{{d.name}} <span style="font-weight:800;white-space:nowrap">{{d.weightLabel}}</span></span>
+                          <sc-if value="{{d.scope}}">
+                            <div style="margin-top:3px;font-size:11px;color:var(--ink3)">{{d.scope}}</div>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <div style="height:48px"></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isCrunch}}">
+      <div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));border-bottom:2px solid var(--rule);background:var(--surf)">
+          <sc-for list="{{crunchStats}}" as="s" hint-placeholder-count="4">
+            <div style="padding:16px var(--secpad) 18px;border-right:1px solid var(--line);min-width:0">
+              <div style="font:700 10.5px 'Archivo',system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">{{s.label}}</div>
+              <div style="margin-top:7px;font:800 30px/1 'Archivo',system-ui,sans-serif;letter-spacing:-.03em;color:{{s.tone}}">{{s.value}}</div>
+              <div style="margin-top:6px;font-size:12.5px;color:var(--ink2)">{{s.note}}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:18px var(--secpad) 6px">
+          <h2 style="margin:0;font:800 21px/1.1 'Archivo',system-ui,sans-serif;letter-spacing:-.02em">Grade falling due, week by week</h2>
+          <p style="margin:7px 0 0;font-size:13.5px;color:var(--ink2);max-width:70ch;text-wrap:pretty">Each bar is one week, each block one graded item, sized by its weight. Exams and tests are ruled in red; assignments, quizzes and presentations in ink. An even spread would be 7.1% a week.</p>
+        </div>
+        <sc-for list="{{weeks}}" as="w" hint-placeholder-count="15">
+          <div>
+            <sc-if value="{{w.note}}">
+              <div style="padding:5px var(--secpad);background:var(--surf2);border-top:1px solid var(--line);font-size:12px;color:var(--ink2)">{{w.note}}</div>
+            </sc-if>
+            <div style="display:grid;grid-template-columns:104px minmax(0,1fr) 56px;align-items:center;gap:14px;padding:9px var(--secpad);border-top:1px solid var(--line);background:{{w.bg}}">
+              <div style="min-width:0">
+                <div style="font:800 13px 'Archivo',system-ui,sans-serif;color:{{w.numFg}}">Week {{w.no}}</div>
+                <div style="font-size:11px;color:var(--ink3)">{{w.date}}</div>
+              </div>
+              <div style="display:flex;height:22px;background:var(--surf2);min-width:0">
+                <sc-for list="{{w.segs}}" as="s" hint-placeholder-count="0">
+                  <span style="display:block;height:100%;width:{{s.w}};background:{{s.color}};border-right:2px solid var(--bg)"></span>
+                </sc-for>
+              </div>
+              <div style="font:800 14px 'Archivo',system-ui,sans-serif;text-align:right;color:{{w.pctFg}}">{{w.pctLabel}}</div>
+            </div>
+            <sc-if value="{{w.hasItems}}">
+              <div style="display:flex;flex-wrap:wrap;gap:7px;padding:0 var(--secpad) 12px 132px">
+                <sc-for list="{{w.items}}" as="i" hint-placeholder-count="0">
+                  <span style="display:inline-flex;align-items:baseline;gap:6px;border:1px solid {{i.tone}};color:{{i.tone}};padding:2px 7px;font:700 11.5px 'Archivo',system-ui,sans-serif">
+                    <span style="font-family:ui-monospace,Menlo,monospace;font-size:10.5px">{{i.code}}</span>
+                    <span>{{i.name}}</span>
+                    <span style="font-weight:800">{{i.weightLabel}}</span>
+                  </span>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div style="height:48px"></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isExams}}">
+      <div>
+        <div style="padding:14px var(--secpad);border-bottom:1px solid var(--line);background:var(--surf)">
+          <p style="margin:0;font-size:13.5px;color:var(--ink2);max-width:78ch;text-wrap:pretty">Scope is shown only where a syllabus states it. <strong style="color:var(--ink)">Not stated</strong> means ask the professor — eight of twenty-three name their chapters, and the rest carry no guarantee that the exam is forward-looking.</p>
+        </div>
+        <sc-for list="{{examMonths}}" as="m" hint-placeholder-count="4">
+          <section>
+            <div style="padding:14px var(--secpad) 8px;border-top:2px solid var(--rule);font:700 11px 'Archivo',system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)">{{m.label}}</div>
+            <sc-for list="{{m.items}}" as="e" hint-placeholder-count="5">
+              <article style="display:grid;grid-template-columns:88px minmax(0,1fr) 150px 78px;gap:16px;align-items:start;padding:var(--rowpad) var(--secpad);border-top:1px solid var(--line);border-left:3px solid {{e.edge}};min-width:0">
+                <div>
+                  <div style="font:700 11.5px ui-monospace,Menlo,monospace">{{e.code}}</div>
+                  <div style="margin-top:4px;font:700 10px 'Archivo',system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:{{e.tone}}">{{e.type}}</div>
+                </div>
+                <div style="min-width:0">
+                  <div style="font:800 16px/1.25 'Archivo',system-ui,sans-serif">{{e.name}}</div>
+                  <div style="margin-top:3px;font-size:12.5px;color:var(--ink3)">{{e.course}}</div>
+                  <div style="margin-top:7px;font-size:13px;color:var(--ink2)">{{e.scope}}</div>
+                </div>
+                <div style="font-size:12.5px;color:var(--ink2)">
+                  <div style="font-weight:700;color:var(--ink)">{{e.dateLabel}}</div>
+                  <div style="margin-top:3px">{{e.countdown}}</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font:800 22px/1 'Archivo',system-ui,sans-serif;letter-spacing:-.03em;color:{{e.tone}}">{{e.weightLabel}}</div>
+                  <div style="margin-top:4px;font-size:11px;color:var(--ink3)">of course</div>
+                </div>
+              </article>
+            </sc-for>
+          </section>
+        </sc-for>
+        <div style="height:48px"></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isStub}}">
+      <div style="padding:26px var(--secpad) 60px;max-width:72ch">
+        <div style="border-left:3px solid var(--accent);padding:2px 0 2px 16px">
+          <h2 style="margin:0;font:800 19px/1.2 'Archivo',system-ui,sans-serif">Not redesigned in this pass</h2>
+          <p style="margin:8px 0 0;font-size:14px;color:var(--ink2);text-wrap:pretty">{{stubNote}}</p>
+        </div>
+        <p style="margin:22px 0 0;font-size:13.5px;color:var(--ink2);text-wrap:pretty">This pass rebuilt the three screens you open daily — This Week, Term Grid and Crunch — plus Deadlines. Say the word and this one comes next in the same system.</p>
+        <button onClick="{{goWeek}}" style="margin-top:20px;border:0;background:var(--accent);color:#fff;font:800 13px 'Archivo',system-ui,sans-serif;padding:10px 14px;cursor:pointer;text-align:left" style-hover="background:var(--accent-deep)">Back to This Week</button>
+      </div>
+    </sc-if>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;\&quot;light\&quot; | \&quot;dark\&quot;&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;comfortable&quot;,&quot;compact&quot;],&quot;default&quot;:&quot;comfortable&quot;,&quot;tsType&quot;:&quot;\&quot;comfortable\&quot; | \&quot;compact\&quot;&quot;,&quot;section&quot;:&quot;Appearance&quot;}}">
+class Component extends DCLogic {
+  state = { view: "week", read: {}, theme: null, density: null, deadlinesOnly: false };
+
+  TODAY = new Date("2026-09-13T00:00:00");
+
+  COURSES = [
+    ["LGL151", "Introduction to the Legal System for Paralegals", "Introduction to the Legal System"],
+    ["LGL152", "Contracts and Torts for Paralegals", "Contracts and Torts"],
+    ["LGL153", "Legal Entities and Relationships", "Legal Entities and Relationships"],
+    ["LGL154", "Computer Applications for Paralegals I", "Computer Applications I"],
+    ["LGL156", "Administrative Law for Paralegals", "Administrative Law"],
+    ["LGL160", "Legal Drafting and Communication", "Legal Drafting and Communication"],
+    ["LGL225", "Immigration Law", "Immigration Law"],
+    ["LGL250", "Legal Research for Paralegals", "Legal Research"]
+  ];
+
+  WEEK1 = [
+    ["LGL151", "Tue 8 Sep", "Introduction to legal analysis and the legal professions; review Academic Integrity Assignment; IRAC method", [["11", ""]]],
+    ["LGL152", "Thu 10 Sep", "Contracts: an introduction. Formation of contract — intention, offer, acceptance, consideration. Balfour v Balfour; Carlill v Carbolic Smoke Ball", [["9", ""], ["10", ""]]],
+    ["LGL153", "Fri 11 Sep", "Introduction. Business organizations", [["1", ""], ["2", ""]]],
+    ["LGL154", "Wed 9 Sep", "Introduction to the course. Lesson: symbols, watermarks, footnotes, endnotes, tables", []],
+    ["LGL156", "Wed 9 Sep", "Introduction to administrative law. The legal system: administrative agencies and tribunals", [["1", ""], ["2", ""]]],
+    ["LGL160", "Wed 9 Sep", "Effective legal writing: audience, purpose, plain language, point first. Grammar, punctuation, syntax, active/passive voice", [["1", ""], ["2", ""]]],
+    ["LGL225", "Wed 9 Sep", "Sources of law: IRPA, IRPR, case law, policy. Administration of the Immigration, Refugee and Citizenship Program", [["1", ""], ["2", ""]]],
+    ["LGL250", "Tue 8 Sep", "Introduction to legal research. Purpose and basic steps. Categories and sources of law. Reading statutes and regulations", [["1", ""], ["3", "pp. 65–79"]]]
+  ];
+
+  /* [course, name, type, weight, iso, precision, scope] */
+  ITEMS = [
+    ["LGL151", "Quiz #1", "quiz", 15, "2026-09-21", "week", ""],
+    ["LGL160", "In-class quiz", "quiz", 15, "2026-09-23", "week", ""],
+    ["LGL154", "Assignment # 1", "assignment", 6, "2026-09-23", "exact", ""],
+    ["LGL160", "Presentation outlines due", "milestone", null, "2026-09-28", "exact", "Hard deadline, noon — feeds the 10% oral presentation"],
+    ["LGL151", "Case Presentation", "presentation", 15, "2026-09-28", "week", "Law Society Tribunal decision from CanLII, 5 minutes, one cue card"],
+    ["LGL225", "Immigration Reference Tool Kit", "milestone", null, "2026-09-30", "exact", "The only material allowed in the 30 Sep quiz"],
+    ["LGL225", "Quiz", "quiz", 20, "2026-09-30", "exact", "Chapters 1–3 and inadmissibility — not stated explicitly"],
+    ["LGL152", "Midterm Test #1", "test", 30, "2026-10-01", "week", "Chapters 9, 10, 11, 12 — stated"],
+    ["LGL153", "Test 1", "test", 30, "2026-10-02", "exact", "Chapters 1, 2, 3, 4 — stated"],
+    ["LGL250", "Case Brief Assignment", "assignment", 10, "2026-10-06", "exact", ""],
+    ["LGL154", "In-Class Test # 1", "test", 20, "2026-10-07", "exact", "Not stated — covers the lessons to date, 95 minutes"],
+    ["LGL156", "Quiz #1", "quiz", 10, "2026-10-07", "week", "Not stated — reading is ch 5, Fairness Part 2: Bias"],
+    ["LGL160", "Oral Presentation", "presentation", 10, "2026-10-07", "week", "Be ready to present in any class from this week on"],
+    ["LGL250", "Midterm Test", "test", 35, "2026-10-13", "exact", "Not stated — ch 1, 3, 5, 7, 8, 10 and 2 assigned by then"],
+    ["LGL151", "Midterm", "exam", 30, "2026-10-19", "week", "Not stated — ask Prof. Boyle"],
+    ["LGL154", "Assignment # 2", "assignment", 6, "2026-10-21", "exact", ""],
+    ["LGL156", "Midterm", "exam", 40, "2026-10-21", "week", "Not stated — chapters 1–6 covered by then"],
+    ["LGL160", "Midterm Test", "exam", 25, "2026-10-21", "week", "Not stated — ask Prof. Youssefi"],
+    ["LGL154", "In-Class Test # 2", "test", 30, "2026-11-04", "exact", "Not stated — 95 minutes"],
+    ["LGL225", "Mid-term exam", "exam", 30, "2026-11-04", "exact", "Chapters 1, 2, 3, 6, 7 — stated. Open book, 90 minutes"],
+    ["LGL152", "Midterm Test #2", "test", 30, "2026-11-05", "week", "Chapters 11–15 and 17 — stated. Re-covers 11–12"],
+    ["LGL153", "Test 2", "test", 35, "2026-11-13", "exact", "Chapters 5, 6, 7 — stated"],
+    ["LGL225", "Assignment", "assignment", 20, "2026-11-18", "exact", ""],
+    ["LGL160", "Drafting Assignment", "assignment", 15, "2026-11-18", "week", ""],
+    ["LGL154", "Assignment # 3", "assignment", 3, "2026-11-25", "exact", ""],
+    ["LGL156", "Written Assignment", "assignment", 10, "2026-11-25", "week", ""],
+    ["LGL250", "Research Assignment", "assignment", 20, "2026-12-01", "exact", ""],
+    ["LGL154", "In-Class Final Test # 3", "test", 35, "2026-12-09", "exact", "Not stated — 95 minutes"],
+    ["LGL152", "Final Exam", "exam", 40, "2026-12-10", "week", "Chapters 1–8 of the torts text — stated"],
+    ["LGL153", "Final Exam", "exam", 35, "2026-12-11", "exact", "Chapters 8, 9, 10 — stated"],
+    ["LGL151", "Final Exam", "exam", 40, "2026-12-14", "week", "Not stated — ask Prof. Boyle"],
+    ["LGL250", "Final Exam", "exam", 35, "2026-12-15", "exact", "Not stated — ask Prof. Sherman"],
+    ["LGL156", "Final Exam", "exam", 40, "2026-12-16", "week", "Not stated — ask Prof. Omar"],
+    ["LGL160", "Final Exam", "exam", 35, "2026-12-16", "week", "Not stated — ask Prof. Youssefi"],
+    ["LGL225", "Final exam", "exam", 30, "2026-12-16", "exact", "Chapters 3, 4, 5, 6, 8, 10 — stated. Open book, 2 hours"]
+  ];
+
+  WEEKS = [
+    { no: 1, date: "7 Sep", pct: 0, note: "Labour Day — Seneca closed, Mon 7 Sep", ch: ["11", "9, 10", "1, 2", "", "1, 2", "1, 2", "1, 2", "1, 3"] },
+    { no: 2, date: "14 Sep", pct: 0, ch: ["5", "10", "3", "", "3", "2, 3", "3", "5"] },
+    { no: 3, date: "21 Sep", pct: 36, ch: ["4", "11, 12", "4", "", "3, 4", "3", "3", "7, 10"] },
+    { no: 4, date: "28 Sep", pct: 95, ch: ["4", "13", "", "", "4, 5", "1, 8", "", "8"] },
+    { no: 5, date: "5 Oct", pct: 50, ch: ["2, 3, 5, 10", "15", "5", "", "5", "3, 7, 8", "6", "2"] },
+    { no: 6, date: "12 Oct", pct: 35, note: "Thanksgiving — Seneca closed, Mon 12 Oct", ch: ["4", "14", "5, 6", "", "6", "", "7", ""] },
+    { no: 7, date: "19 Oct", pct: 101, ch: ["", "17", "6", "", "", "", "7", "5, 7, 9"] },
+    { no: 8, date: "26 Oct", pct: null, study: true, ch: ["", "", "", "", "", "", "", ""] },
+    { no: 9, date: "2 Nov", pct: 90, ch: ["1, 7, 8", "1, 2, 3", "7", "", "6, 7", "10", "", "3, 4"] },
+    { no: 10, date: "9 Nov", pct: 35, note: "Last day to drop without academic penalty — Fri 13 Nov", ch: ["3, 4", "2, 3, 4", "", "", "8", "9", "9", "2"] },
+    { no: 11, date: "16 Nov", pct: 35, ch: ["6", "5", "8", "", "9, 11", "11", "8", "4, 9"] },
+    { no: 12, date: "23 Nov", pct: 13, ch: ["", "6", "9, 10", "", "12, 13", "", "4, 5", "4"] },
+    { no: 13, date: "30 Nov", pct: 20, ch: ["", "7, 8", "10", "", "14, 15", "", "10", "4, 9, 11"] },
+    { no: 14, date: "7 Dec", pct: 110, ch: ["", "8", "", "", "", "", "", ""] },
+    { no: 15, date: "14 Dec", pct: 180, ch: ["", "no class", "no class", "", "", "", "", ""] }
+  ];
+
+  /* which term week each graded item falls in */
+  WEEK_OF = {
+    "2026-09-21": 3, "2026-09-23": 3, "2026-09-28": 4, "2026-09-30": 4, "2026-10-01": 4,
+    "2026-10-02": 4, "2026-10-06": 5, "2026-10-07": 5, "2026-10-13": 6, "2026-10-19": 7,
+    "2026-10-21": 7, "2026-11-04": 9, "2026-11-05": 9, "2026-11-13": 10, "2026-11-18": 11,
+    "2026-11-25": 12, "2026-12-01": 13, "2026-12-09": 14, "2026-12-10": 14, "2026-12-11": 14,
+    "2026-12-14": 15, "2026-12-15": 15, "2026-12-16": 15
+  };
+
+  VIEWS = {
+    week: ["This Week", "Thirteen chapters across seven courses, and the first graded item eight days out."],
+    exams: ["Deadlines", "Every graded item in date order — what it covers, when it lands, what it is worth."],
+    grid: ["Term Grid", "Fifteen weeks against eight courses. The one view no single syllabus can give you."],
+    crunch: ["Crunch", "Where the term stacks up. Three weeks carry more than a full course's worth of grade."],
+    courses: ["Courses", "Per-course syllabus, standing and schedule."],
+    notes: ["Notes", "Reading notes in Markdown, indexed per class meeting."],
+    cases: ["Cases", "Case briefs with McGill-style citations and CanLII links."],
+    review: ["Review", "Twenty-five open questions the syllabi left ambiguous."]
+  };
+
+  STUBS = {
+    courses: "The Courses screen still runs the old layout: syllabus facts, standing and the full schedule table per course.",
+    notes: "The Notes screen still runs the old layout: a course picker, a class-meeting picker and the Markdown index.",
+    cases: "The Cases screen still runs the old layout: the add-case form and the case-brief list.",
+    review: "The Review screen still runs the old layout: 25 open questions grouped by why they are open."
+  };
+
+  componentDidMount() { this.apply(); }
+  componentDidUpdate() { this.apply(); }
+  apply() {
+    const r = document.documentElement;
+    r.dataset.pbTheme = this.theme();
+    r.dataset.pbDensity = this.density();
+  }
+  theme() { return this.state.theme || this.props.theme || "light"; }
+  density() { return this.state.density || this.props.density || "comfortable"; }
+
+  days(iso) { return Math.round((new Date(iso + "T00:00:00") - this.TODAY) / 86400000); }
+  cname(code) { const c = this.COURSES.find(x => x[0] === code); return c ? c[1] : code; }
+  tone(type) { return (type === "exam" || type === "test") ? "var(--accent-deep)" : "var(--ink)"; }
+  fmt(iso, precision) {
+    const d = new Date(iso + "T00:00:00");
+    const m = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()];
+    const wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()];
+    return precision === "week" ? "week of " + d.getDate() + " " + m : wd + " " + d.getDate() + " " + m;
+  }
+
+  nav(id, label, count) {
+    const on = this.state.view === id;
+    return {
+      label, count, go: () => this.setState({ view: id }),
+      bar: on ? "var(--accent)" : "transparent",
+      bg: on ? "var(--accent-tint)" : "transparent",
+      fg: on ? "var(--ink)" : "var(--ink2)",
+      countFg: on ? "var(--accent-deep)" : "var(--ink3)",
+      fw: on ? 800 : 500
+    };
+  }
+
+  renderVals() {
+    const v = this.state.view;
+    const meta = this.VIEWS[v] || this.VIEWS.week;
+    const upcoming = this.ITEMS.map(i => ({ i, d: this.days(i[4]) })).filter(x => x.d >= 0).sort((a, b) => a.d - b.d);
+
+    const dueNext = upcoming.slice(0, 3).map((x, n) => {
+      const [code, name, type, w, iso, prec] = x.i;
+      return {
+        days: x.d, code, name, type,
+        when: this.fmt(iso, prec),
+        weightLabel: w ? w + "% of the course" : "no separate weight",
+        tone: n === 0 ? "var(--accent)" : "var(--ink)",
+        edge: n === 0 ? "var(--accent)" : "transparent"
+      };
+    });
+
+    const readItems = [];
+    const readingCourses = this.WEEK1.map(([code, date, topic, chs]) => ({
+      code, date, topic, name: this.cname(code), noReading: chs.length === 0,
+      items: chs.map(([ch, pages]) => {
+        const key = code + "-" + ch;
+        readItems.push(key);
+        const done = !!this.state.read[key];
+        return {
+          key, pages, label: "ch " + ch, done,
+          toggle: () => this.setState(s => ({ read: Object.assign({}, s.read, { [key]: !s.read[key] }) })),
+          border: done ? "var(--accent)" : "var(--line)",
+          bg: done ? "var(--accent-tint)" : "var(--surf)",
+          fg: done ? "var(--accent-deep)" : "var(--ink)",
+          mark: done ? "var(--accent)" : "var(--ink3)",
+          fill: done ? "var(--accent)" : "transparent"
+        };
+      })
+    }));
+    const readDone = readItems.filter(k => this.state.read[k]).length;
+
+    const itemsByWeek = {};
+    this.ITEMS.forEach(([code, name, type, w, iso]) => {
+      const wk = this.WEEK_OF[iso];
+      if (!wk) return;
+      (itemsByWeek[wk] = itemsByWeek[wk] || []).push({
+        code, name, weightLabel: w ? w + "%" : "—", weight: w || 0, tone: this.tone(type),
+        color: (type === "exam" || type === "test") ? "var(--accent)" : "var(--ink2)"
+      });
+    });
+
+    const weeks = this.WEEKS.map(w => {
+      const items = (itemsByWeek[w.no] || []).slice().sort((a, b) => b.weight - a.weight);
+      const total = w.pct;
+      const peak = total !== null && total >= 90;
+      const segs = items.filter(i => i.weight).map(i => ({
+        w: Math.max(2, (i.weight / 180) * 100) + "%", color: i.color, label: i.code + " " + i.name
+      }));
+      return {
+        no: w.no, date: w.date, note: w.note || "", segs, items, hasItems: items.length > 0,
+        pctLabel: total === null ? "—" : (total === 0 ? "0" : total + "%"),
+        barPct: total === null ? "0%" : Math.min(100, (total / 180) * 100) + "%",
+        barColor: peak ? "var(--accent)" : "var(--ink2)",
+        bg: w.no === 1 ? "var(--accent-tint)" : "transparent",
+        numFg: w.no === 1 ? "var(--accent-deep)" : "var(--ink2)",
+        pctFg: peak ? "var(--accent-deep)" : "var(--ink2)",
+        go: () => this.setState({ view: "grid" })
+      };
+    });
+
+    const duesByWeekCourse = {};
+    this.ITEMS.forEach(([code, name, type, w, iso, prec, scope]) => {
+      const wk = this.WEEK_OF[iso];
+      if (!wk) return;
+      const k = wk + "|" + code;
+      (duesByWeekCourse[k] = duesByWeekCourse[k] || []).push({
+        name, weightLabel: w ? w + "%" : "due", tone: this.tone(type),
+        scope: /stated$/.test(scope || "") ? scope.replace(" — stated", " — stated") : ""
+      });
+    });
+
+    const gridRows = this.WEEKS.map(w => ({
+      no: w.no, date: w.date, note: w.note || "",
+      bg: w.no === 1 ? "var(--accent-tint)" : "transparent",
+      edge: w.no === 1 ? "var(--accent)" : "transparent",
+      numFg: w.no === 1 ? "var(--accent-deep)" : "var(--ink)",
+      cells: this.COURSES.map((co, idx) => {
+        const dues = duesByWeekCourse[w.no + "|" + co[0]] || [];
+        let ch = w.study ? "study week" : (w.ch[idx] || (dues.length ? "" : "—"));
+        return { ch, showCh: !this.state.deadlinesOnly && !!ch, dues };
+      })
+    }));
+
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const examMonths = [];
+    this.ITEMS.filter(i => ["exam", "test", "quiz"].indexOf(i[2]) >= 0).forEach(([code, name, type, w, iso, prec, scope]) => {
+      const d = new Date(iso + "T00:00:00");
+      const label = monthNames[d.getMonth()] + " 2026";
+      let m = examMonths.find(x => x.label === label);
+      if (!m) examMonths.push(m = { label, items: [] });
+      const dd = this.days(iso);
+      m.items.push({
+        code, name, type, course: this.cname(code),
+        weightLabel: w + "%", tone: this.tone(type),
+        edge: (type === "exam" || type === "test") ? "var(--accent)" : "var(--line)",
+        dateLabel: this.fmt(iso, prec),
+        countdown: "in " + dd + " days",
+        scope: scope || "Scope not stated — ask your professor"
+      });
+    });
+
+    const crunchStats = [
+      { label: "Heaviest week", value: "180%", note: "Week 15, 14 Dec — five finals", tone: "var(--accent)" },
+      { label: "Weeks with two big items", value: "5", note: "Two or more worth 20% or more", tone: "var(--ink)" },
+      { label: "Weeks with nothing due", value: "2", note: "Of fifteen — the rest carry weight", tone: "var(--ink)" },
+      { label: "Weights accounted for", value: "100%", note: "Every course adds up, across 35 items", tone: "var(--ink)" }
+    ];
+
+    return {
+      title: meta[0], subtitle: meta[1],
+      isWeek: v === "week", isGrid: v === "grid", isCrunch: v === "crunch", isExams: v === "exams",
+      isStub: !!this.STUBS[v], stubNote: this.STUBS[v] || "",
+      goWeek: () => this.setState({ view: "week" }),
+      navNow: [this.nav("week", "This Week", "13"), this.nav("exams", "Deadlines", "35")],
+      navTerm: [this.nav("grid", "Term Grid", "15"), this.nav("crunch", "Crunch", "3"), this.nav("courses", "Courses", "8")],
+      navWork: [this.nav("notes", "Notes", "0"), this.nav("cases", "Cases", "0"), this.nav("review", "Review", "25")],
+      dueNext, readingCourses, readLabel: readDone + " of 13 done",
+      weeks, gridRows, examMonths, crunchStats,
+      courses: this.COURSES.map(c => ({ code: c[0], short: c[2] })),
+      themeLabel: this.theme() === "dark" ? "◐ Dark" : "◑ Light",
+      densityLabel: this.density() === "compact" ? "⇕ Compact" : "⇕ Roomy",
+      toggleTheme: () => this.setState({ theme: this.theme() === "dark" ? "light" : "dark" }),
+      toggleDensity: () => this.setState({ density: this.density() === "compact" ? "comfortable" : "compact" }),
+      deadlinesLabel: this.state.deadlinesOnly ? "Showing deadlines only" : "Show deadlines only",
+      deadlinesBg: this.state.deadlinesOnly ? "var(--accent-tint)" : "transparent",
+      deadlinesFg: this.state.deadlinesOnly ? "var(--accent-deep)" : "var(--ink)",
+      toggleDeadlinesOnly: () => this.setState(s => ({ deadlinesOnly: !s.deadlinesOnly }))
+    };
+  }
+}
+
+</script>
+</body>
+</html>
