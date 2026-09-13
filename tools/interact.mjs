@@ -88,6 +88,20 @@ check("chapter tick: done -> blank", after.v === "", after.v);
 srv = await (await fetch("http://127.0.0.1:8787/api/data")).json();
 check("clearing removes the row, no ghost", !srv.progress.some((p) => p.reading_id === rid && p.status), srv.progress);
 
+// ---------------------------------------------------------------- scroll stays put
+// A tick re-renders the view; it must not throw you back to the top.
+await go("week");
+const lastChip = (await evalJs(`(() => { const c = [...document.querySelectorAll('.chch[data-reading]')]; const e = c[c.length - 1]; e.scrollIntoView({ block: "center" }); return e.dataset.reading; })()`)).v;
+await sleep(300);
+const yBefore = (await evalJs(`window.scrollY`)).v;
+await click(`[data-reading="${lastChip}"]`); await sleep(900);
+const yAfter = (await evalJs(`window.scrollY`)).v;
+check("ticking a chapter keeps the scroll position", yBefore > 200 && Math.abs(yAfter - yBefore) < 4, { yBefore, yAfter });
+await click(`[data-reading="${lastChip}"]`); await sleep(600);
+await click(`[data-reading="${lastChip}"]`); await sleep(600);   // back to blank
+await evalJs(`document.querySelector('#nav a[data-view="crunch"]').click()`); await sleep(1200);
+check("switching screens goes to the top", (await evalJs(`window.scrollY`)).v === 0, (await evalJs(`window.scrollY`)).v);
+
 // ---------------------------------------------------------------- master tick
 // Every POST must settle before one re-render, or the last write can lose the
 // race. Week 5 has a four-chapter meeting (LGL151 ch 2,3,5,10). Week 15 looks

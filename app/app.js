@@ -199,10 +199,17 @@ function paintChrome() {
 /* ------------------------------------------------------------ router */
 const VIEWS = {};
 const ALIAS = { exams: "deadlines" };
+let renderedView = null;
+/* Re-rendering replaces the whole view, so the scroll position has to be put
+   back on purpose. A change of SCREEN goes to the top; a tick, a mark, a
+   target change or a week step re-renders in place and stays where you were. */
 function render() {
   paintChrome();
+  const y = window.scrollY;
   main.innerHTML = VIEWS[state.view]();
-  window.scrollTo(0, 0);
+  if (state.view !== renderedView) window.scrollTo(0, 0);
+  else window.scrollTo(0, y);
+  renderedView = state.view;
 }
 function routeFromHash() {
   const raw = (location.hash || "").replace(/^#/, "");
