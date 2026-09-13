@@ -110,7 +110,7 @@ if (master) {
 
 // ---------------------------------------------------------------- week nav
 await go("week");
-const wkText = () => evalJs(`document.querySelector('.gtools > b')?.textContent.trim()`);
+const wkText = () => evalJs(`document.querySelector('.wknav b')?.textContent.trim()`);
 check("lands on the current week", /Week 1 of 15/.test((await wkText()).v || ""), (await wkText()).v);
 await click("#wk-next"); await sleep(1200);
 check("next-week button steps forward", /Week 2 of 15/.test((await wkText()).v || ""), (await wkText()).v);
@@ -156,11 +156,19 @@ const chVisible = () => evalJs(`getComputedStyle(document.querySelector('.gcell 
 check("term grid shows chapters by default", (await chVisible()).v !== "none", (await chVisible()).v);
 await click("#deadlines-only"); await sleep(900);
 check("deadlines-only hides the chapter runs", (await chVisible()).v === "none", (await chVisible()).v);
-check("density persisted", (await evalJs(`localStorage.getItem("beagle-density")`)).v === "compact", null);
+check("deadlines-only persisted on its own key", (await evalJs(`localStorage.getItem("beagle-deadlines-only")`)).v === "1", null);
 await go("grid");   // reload: must not flash the wide layout
-check("density survives a reload", (await chVisible()).v === "none", (await chVisible()).v);
-await click("#density"); await sleep(900);   // the sidebar switch is the same setting
-check("the sidebar density toggle turns it back", (await chVisible()).v !== "none", (await chVisible()).v);
+check("deadlines-only survives a reload", (await chVisible()).v === "none", (await chVisible()).v);
+await click("#deadlines-only"); await sleep(900);
+check("toggling deadlines-only back shows chapters", (await chVisible()).v !== "none", (await chVisible()).v);
+// the sidebar's Roomy/Compact switch is a SEPARATE setting: row spacing only
+await click("#density"); await sleep(600);
+const dens = await evalJs(`JSON.stringify({attr: document.documentElement.dataset.density || "", ls: localStorage.getItem("beagle-density"), ch: getComputedStyle(document.querySelector('.gcell .ch')).display})`);
+const dj = JSON.parse(dens.v);
+check("compact density sets the attribute and persists", dj.attr === "compact" && dj.ls === "compact", dj);
+check("compact density does not hide the chapter runs", dj.ch !== "none", dj);
+await click("#density"); await sleep(600);
+check("density toggles back to roomy", (await evalJs(`document.documentElement.dataset.density || ""`)).v === "", null);
 
 // ---------------------------------------------------------------- deep links
 await go("courses/LGL225");

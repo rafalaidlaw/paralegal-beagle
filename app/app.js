@@ -58,6 +58,7 @@ const course = (code) => D.courses.find((c) => c.code === code) || {};
 const courseName = (code) => course(code).name || code;
 const isDone = (prog, id) => (prog[id]?.status || "") === "done";
 
+const HEAVY = 90;          /* a week carrying this much grade or more is ruled in red */
 const pill = (code) =>
   `<a class="course-pill" data-c="${esc(code)}" href="#courses/${esc(code)}" title="${esc(courseName(code))}">${esc(code)}</a>`;
 const typeWord = (t) => `<span class="type ${esc(t)}">${esc(t)}</span>`;
@@ -119,6 +120,8 @@ function cycleTheme() {
   paintChrome();
 }
 const isCompact = () => LS.get("beagle-density") === "compact";
+const isDeadlinesOnly = () => LS.get("beagle-deadlines-only") === "1";
+function toggleDeadlinesOnly() { LS.set("beagle-deadlines-only", isDeadlinesOnly() ? "" : "1"); render(); }
 function toggleDensity() {
   const now = isCompact() ? "" : "compact";
   LS.set("beagle-density", now);
@@ -130,7 +133,7 @@ function toggleDensity() {
 /* ------------------------------------------------------------ chrome */
 const VIEW_META = {
   week: ["This Week", () => weekSubtitle()],
-  deadlines: ["Deadlines", () => "Every graded item in date order — what it covers, when it lands, what it is worth."],
+  deadlines: ["Deadlines", () => "Every graded item and hard milestone in date order — what it covers, when it lands, what it is worth."],
   grid: ["Term Grid", () => `Fifteen weeks against ${words(D.courses.length)} courses. The one view no single syllabus can give you.`],
   crunch: ["Crunch", () => crunchSubtitle()],
   courses: ["Courses", () => "Per-course syllabus, standing and schedule."],
@@ -155,8 +158,8 @@ function weekSubtitle() {
 }
 function crunchSubtitle() {
   const ranked = crunchWeeks().filter((x) => x.load).sort((a, b) => b.load - a.load);
-  const heavy = ranked.filter((x) => x.load >= 100).length;
-  return `Where the term stacks up. ${heavy ? `${cap(words(heavy))} week${heavy === 1 ? " carries" : "s carry"} more than a full course's worth of grade.` : `Heaviest is week ${ranked[0].w} at ${ranked[0].load}%.`}`;
+  const heavy = ranked.filter((x) => x.load >= HEAVY).length;
+  return `Where the term stacks up. ${heavy ? `${cap(words(heavy))} week${heavy === 1 ? " carries" : "s carry"} close to a full course's worth of grade, or more.` : `Heaviest is week ${ranked[0].w} at ${ranked[0].load}%.`}`;
 }
 
 function counts() {
@@ -165,7 +168,7 @@ function counts() {
     week: D.readings.filter((r) => r.week_no === wk).length,
     deadlines: D.assessments.length,
     grid: LAST_WEEK(),
-    crunch: crunchWeeks().filter((x) => x.load >= 100).length,
+    crunch: crunchWeeks().filter((x) => x.load >= HEAVY).length,
     courses: D.courses.length,
     notes: D.notes.length,
     cases: D.cases.length,
@@ -185,7 +188,8 @@ function paintChrome() {
   $("#vtitle").textContent = title;
   $("#vsub").textContent = sub();
   $("#todaychip").textContent = fmtLong(today());
-  $("#footstats").innerHTML = `${D.courses.length} courses · ${D.schedule.length} classes<br>${D.assessments.length} graded items · ${D.readings.length} readings`;
+  const weighted = D.assessments.filter((a) => a.weight_pct).length;
+  $("#footstats").innerHTML = `${D.courses.length} courses · ${D.schedule.length} classes<br>${D.assessments.length} items, ${weighted} carry weight · ${D.readings.length} readings`;
   const tb = $("#theme"); if (tb) tb.textContent = THEME_LABEL[currentTheme()];
   const db = $("#density"); if (db) { db.textContent = isCompact() ? "⇕ Compact" : "⇕ Roomy"; db.setAttribute("aria-pressed", String(isCompact())); }
 }
@@ -222,12 +226,12 @@ VIEWS.week = () => {
   let h = "";
 
   /* ---- week stepper ---------------------------------------------- */
-  h += `<div class="gtools">
+  h += `<div class="gtools"><span class="wknav">
     <button id="wk-prev" class="ghost" ${wk <= 1 ? "disabled" : ""} title="Previous week ( [ )">‹ ${wk > 1 ? "week " + (wk - 1) : "week"}</button>
     <b>Week ${wk} of ${last}</b>
+    <button id="wk-next" class="ghost" ${wk >= last ? "disabled" : ""} title="Next week ( ] )">${wk < last ? "week " + (wk + 1) : "week"} ›</button></span>
     <span class="quiet">${fmt(weekMonday(wk))} – ${fmt(plus(weekMonday(wk), 6))}</span>
-    ${wk !== nowWk ? `<button id="wk-today" class="ghost">back to this week</button>` : `<span class="tag ok">this week</span>`}
-    <button id="wk-next" class="ghost" ${wk >= last ? "disabled" : ""} title="Next week ( ] )">${wk < last ? "week " + (wk + 1) : "week"} ›</button>
+    ${wk !== nowWk ? `<button id="wk-today" class="ghost">back to this week</button>` : `<span class="quiet">this week</span>`}
     ${holidayNote(wk)}
   </div>`;
 
@@ -285,10 +289,11 @@ VIEWS.week = () => {
       <div style="min-width:0">
         <div class="rhead"><h3>${esc(courseName(m.course))}</h3>
           ${chs.length > 1 ? `<button class="ghost" data-master="${chs.map((r) => esc(r.id)).join(",")}" data-to="${doneN === chs.length ? "not_started" : "done"}">${doneN === chs.length ? "clear all" : "all done"}</button>` : ""}</div>
-        ${m.topic ? `<p class="topic">${esc(m.topic)}</p>` : ""}
+        ${m.topic && !sameText(m.topic, m.due_item) ? `<p class="topic">${esc(m.topic)}</p>` : ""}
         ${m.due_item ? `<div style="margin:0 0 10px"><span class="tag ${esc(m.due_type)}">${esc(m.due_item)}</span></div>` : ""}
         <div class="chips">${chs.map((r) => chapterChip(r, prog[r.id])).join("")}
           ${!chs.length ? `<span class="quiet">${m.reading_raw ? esc(m.reading_raw) : "No chapter reading listed for this class."}</span>` : ""}</div>
+        ${unpairedNote(chs)}
         ${m.note ? `<div class="meta">${esc(m.note)}</div>` : ""}
         ${m.confidence && m.confidence !== "high" ? `<div class="meta"><span class="tag unstated">check this row against the PDF</span></div>` : ""}
       </div>
@@ -313,7 +318,7 @@ VIEWS.week = () => {
   const ranked = weeks.filter((x) => x.load).sort((a, b) => b.load - a.load);
   h += `<aside><div class="ahead"><h2>Term runway</h2><p>Share of your final grade falling due each week. Click a week to open it.</p></div>`;
   for (const x of weeks) {
-    const cls = [x.w === nowWk ? "now" : "", x.load >= 50 ? "hot" : "", x.isBreak ? "break" : ""].filter(Boolean).join(" ");
+    const cls = [x.w === nowWk ? "now" : "", x.load >= HEAVY ? "hot" : "", x.isBreak ? "break" : ""].filter(Boolean).join(" ");
     h += `<a class="runway ${cls}" href="#week/${x.w}" title="${esc(x.isBreak ? "Study week" : x.load ? x.items.map((a) => `${a.course} ${a.name} ${a.weight_pct}%`).join("; ") : "nothing due")}">
       <span class="no">${x.w}</span>
       <span class="trk"><i style="width:${x.isBreak ? 0 : (x.load / max * 100).toFixed(1)}%"></i></span>
@@ -336,10 +341,18 @@ function holidayNote(wk) {
   return bits.length ? `<span class="quiet">${esc(bits.join(" · "))}</span>` : "";
 }
 
+/* Ranges the syllabus lists for a class without attaching them to a chapter
+   are shown once, in words, under the chips -- not on every chip, where
+   "ch 1 class pp. 65-79" read as Chapter 1's pages. */
+function unpairedNote(chs) {
+  const u = chs.find((r) => r.all_pages);
+  return u ? `<div class="meta">The syllabus lists pages ${esc(list(u.all_pages))} for this class without saying which chapter they belong to.</div>` : "";
+}
+const sameText = (a, b) => !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
+
 function chapterChip(r, p, showWeek) {
   const s = p?.status || "";
-  const pages = r.pages ? `<span class="pg">pp. ${esc(list(r.pages))}</span>`
-    : r.all_pages ? `<span class="pg" title="The syllabus lists these page ranges for the whole class without saying which chapter each belongs to">class pp. ${esc(list(r.all_pages))}</span>` : "";
+  const pages = r.pages ? `<span class="pg">pp. ${esc(list(r.pages))}</span>` : "";
   const label = `Chapter ${r.chapter}${r.pages ? `, pages ${list(r.pages)}` : ""} — ${s === "done" ? "done" : s === "in_progress" ? "in progress" : "not started"}`;
   return `<button class="chch" data-s="${esc(s)}" data-reading="${esc(r.id)}" aria-label="${esc(label)}" title="not started → in progress → done">
     <span class="box"></span><span class="lab">ch ${esc(r.chapter)}</span>${pages}${showWeek ? `<span class="pg">wk ${r.week_no}</span>` : ""}</button>`;
@@ -373,7 +386,7 @@ function deadlineRow(a, isNext, extra) {
   const meta = [a.materials_allowed, a.format, a.duration].filter(Boolean).join(" · ");
   return `<article class="drow ${esc(a.type)} ${isNext ? "next" : ""} ${isOverdue(a) ? "past" : ""}" data-c="${esc(a.course)}" id="dl-${esc(a.id)}">
     <div class="key"><div class="code">${esc(a.course)}</div><div class="type ${esc(a.type)}">${esc(a.type)}</div></div>
-    <div style="min-width:0"><h3>${esc(a.name)}</h3><div class="course">${esc(courseName(a.course))}</div>
+    <div class="dbody" style="min-width:0"><h3>${esc(a.name)}</h3><div class="course">${esc(courseName(a.course))}</div>
       <div class="scope">${scopeLine(a)}</div>${meta ? `<div class="scope quiet">${esc(meta)}</div>` : ""}</div>
     <div class="when"><b>${whenLabel(a)}</b><div>${relLabel(a)}</div></div>
     <div class="weight">${extra || `<b>${a.weight_pct ? a.weight_pct + "%" : "—"}</b><span>${a.weight_pct ? "of course" : "no weight"}</span>`}</div>
@@ -385,9 +398,9 @@ VIEWS.grid = () => {
   const codes = D.courses.map((c) => c.code);
   const nowWk = nowWeek(), last = LAST_WEEK();
   let h = `<div class="gtools">
-    <button id="deadlines-only" aria-pressed="${isCompact()}">${isCompact() ? "showing deadlines only" : "show deadlines only"}</button>
+    <button id="deadlines-only" aria-pressed="${isDeadlinesOnly()}">${isDeadlinesOnly() ? "showing deadlines only" : "show deadlines only"}</button>
     <span class="quiet">Chapters in mono, exams and tests ruled in red. An em dash is a class with nothing assigned; a hatched cell is a week with no class.</span></div>`;
-  h += `<div class="gridwrap"><div class="grid">
+  h += `<div class="gridwrap"><div class="grid ${isDeadlinesOnly() ? "deadlines-only" : ""}">
     <div class="grow head"><div class="gwk lbl">Week</div>${codes.map((c) => `<div class="gcell" data-c="${esc(c)}">
       <a class="code" href="#courses/${esc(c)}" style="text-decoration:none;color:inherit">${esc(c)}</a><div class="short">${esc(courseName(c))}</div></div>`).join("")}</div>`;
   for (let w = 1; w <= last; w++) {
@@ -404,12 +417,14 @@ VIEWS.grid = () => {
       if (rows.every((r) => r.due_type === "study_week")) { h += `<div class="gcell break">study week</div>`; continue; }
       const chapters = [...new Set(D.readings.filter((r) => r.course === code && r.week_no === w).map((r) => r.chapter))];
       const dues = D.assessments.filter((a) => a.course === code && a.week_no === w);
+      const unsure = rows.find((r) => r.confidence && r.confidence !== "high");
       let cell = chapters.length ? `<div class="ch">ch ${chapters.join(", ")}</div>` : "";
       for (const a of dues) {
-        cell += `<div><span class="tag ${esc(a.type)}">${esc(a.name)}${a.weight_pct ? ` <b>${a.weight_pct}%</b>` : ""}</span>
+        cell += `<div><span class="tag ${esc(a.type)}">${esc(a.name)} <b>${a.weight_pct ? a.weight_pct + "%" : "due"}</b></span>
           ${a.scope_chapters ? `<div class="cov">covers ch ${esc(list(a.scope_chapters))}</div>` : ""}</div>`;
       }
-      h += `<div class="gcell">${cell || `<span class="muted">—</span>`}</div>`;
+      if (unsure) cell += `<div><span class="tag unstated" title="${esc(unsure.note || "confidence: " + unsure.confidence)}">check</span></div>`;
+      h += `<div class="gcell ${unsure ? "unsure" : ""}">${cell || `<span class="muted">—</span>`}</div>`;
     }
     h += `</div>`;
   }
@@ -446,6 +461,7 @@ VIEWS.crunch = () => {
   const ranked = weeks.filter((x) => x.load).sort((a, b) => b.load - a.load);
   const twoHeavy = weeks.filter((x) => x.heavy >= 2);
   const free = weeks.filter((x) => !x.load && !x.isBreak);
+  const breaks = weeks.filter((x) => x.isBreak).length;
   const flat = 100 / weeks.filter((x) => !x.isBreak).length;
   const bad = D.courses.map((c) => c.code).filter((code) => Math.abs(
     D.assessments.filter((a) => a.course === code).reduce((s, a) => s + Number(a.weight_pct || 0), 0) - 100) > 0.5);
@@ -453,7 +469,7 @@ VIEWS.crunch = () => {
   let h = `<div class="stats">
     <div class="stat"><span class="lbl">Heaviest week</span><div class="v red">${ranked[0].load}%</div><div class="n">week ${ranked[0].w}, ${fmtShort(weekMonday(ranked[0].w))}</div></div>
     <div class="stat"><span class="lbl">Weeks with two big items</span><div class="v">${twoHeavy.length}</div><div class="n">two or more worth 20% or more</div></div>
-    <div class="stat"><span class="lbl">Weeks with nothing due</span><div class="v">${free.length}</div><div class="n">of ${weeks.length} — the rest carry weight</div></div>
+    <div class="stat"><span class="lbl">Weeks with nothing due</span><div class="v">${free.length}</div><div class="n">of ${weeks.length} — ${weeks.length - free.length - breaks} carry weight, ${breaks} study week</div></div>
     <div class="stat"><span class="lbl">Weights accounted for</span><div class="v">${bad.length ? "check" : "100%"}</div>
       <div class="n">${bad.length ? `these courses do not add up: ${bad.join(", ")}` : `every course adds up, across ${D.assessments.length} items`}</div></div>
   </div>`;
@@ -466,16 +482,16 @@ VIEWS.crunch = () => {
     Object.keys(D.term.holidays).forEach((d) => { if (d >= mon && d <= plus(mon, 6)) marks.push(`${D.term.holidays[d]}, ${fmt(d)}`); });
     if (D.term.drop_deadline >= mon && D.term.drop_deadline <= plus(mon, 6)) marks.push(`${D.term.drop_deadline_label}, ${fmt(D.term.drop_deadline)}`);
     if (marks.length) h += `<div class="note">${esc(marks.join(" · "))}</div>`;
-    const cls = [x.w === nowWk ? "now" : "", x.load >= 50 ? "hot" : "", x.isBreak ? "break" : ""].filter(Boolean).join(" ");
+    const cls = [x.w === nowWk ? "now" : "", x.load >= HEAVY ? "hot" : "", x.isBreak ? "break" : ""].filter(Boolean).join(" ");
     h += `<div class="cw ${cls}"><div><div class="wkl">Week ${x.w}</div><div class="wkd">${fmtShort(mon)}</div></div>
       <div class="bars" title="${esc(x.isBreak ? "Study week" : x.load ? x.items.map((a) => `${a.course} ${a.name} ${a.weight_pct}%`).join("; ") : "nothing due")}">
         <span class="flat" style="--flat:${(flat / max * 100).toFixed(2)}%"></span>
-        <span style="display:flex;width:${(x.load / max * 100).toFixed(2)}%">${x.items.map((a) =>
-          `<span class="seg" data-c="${esc(a.course)}" style="--v:${Number(a.weight_pct) || 1}" title="${esc(a.course + " " + a.name + " " + (a.weight_pct || "no") + "%")}"></span>`).join("")}</span>
+        <span style="display:flex;width:${(x.load / max * 100).toFixed(2)}%">${x.items.filter((a) => Number(a.weight_pct) > 0).map((a) =>
+          `<span class="seg" data-c="${esc(a.course)}" style="--v:${Number(a.weight_pct)}" title="${esc(a.course + " " + a.name + " " + a.weight_pct + "%")}"></span>`).join("")}</span>
       </div>
       <div class="pct">${x.load ? x.load + "%" : x.isBreak ? "—" : "0"}</div></div>`;
     if (x.items.length) h += `<div class="citems">${x.items.map((a) =>
-      `<span class="citem ${esc(a.type)}" data-c="${esc(a.course)}"><span class="code">${esc(a.course)}</span><span>${esc(a.name)}</span><span style="font-weight:800">${a.weight_pct ? a.weight_pct + "%" : ""}</span></span>`).join("")}</div>`;
+      `<span class="citem ${esc(a.type)}" data-c="${esc(a.course)}"><span class="code">${esc(a.course)}</span><span>${esc(a.name)}</span><span style="font-weight:800">${a.weight_pct ? a.weight_pct + "%" : "due"}</span></span>`).join("")}</div>`;
   }
   return h + legend() + `<div class="spacer"></div>`;
 };
@@ -511,16 +527,16 @@ VIEWS.courses = () => {
         <dt>Meets</dt><dd>${c.meeting_days ? esc(c.meeting_days) : `<span class="tag unstated">not stated</span>`}</dd>
         <dt>Textbook</dt><dd>${c.textbook ? `${esc(c.textbook)}<div class="quiet">${esc(c.textbook_author)}${c.textbook_isbn ? " · ISBN " + esc(c.textbook_isbn) : ""}</div>` : `<span class="tag unstated">not named in syllabus</span>`}</dd>
         ${c.class_nbr ? `<dt>Class nbr</dt><dd>${esc(c.class_nbr)}${c.section ? " · section " + esc(c.section) : ""}</dd>` : ""}
-        <dt>Reading</dt><dd>${reads.length ? `${readDone} of ${reads.length} chapters read<div class="bar" style="margin-top:5px;max-width:240px"><i style="width:${readDone / reads.length * 100}%"></i></div>` : `<span class="tag unstated">no chapters listed</span>`}</dd>
+        <dt>Reading</dt><dd>${reads.length ? `${readDone} of ${reads.length} readings done<div class="bar" style="margin-top:5px;max-width:240px"><i style="width:${readDone / reads.length * 100}%"></i></div>` : `<span class="tag unstated">no readings listed</span>`}</dd>
       </dl>
       ${c.note ? `<div class="callout" style="margin:14px 0 0">${esc(c.note)}</div>` : ""}
     </div>
     <div class="pad"><h2>Standing</h2>
-      <div class="stats" style="border:0;margin:12px 0 0;background:transparent;row-gap:18px">
-        <div class="stat" style="padding:0 16px 0 0"><span class="lbl">Graded so far</span><div class="v">${gradedWeight}%</div><div class="n">of the course marked</div></div>
-        <div class="stat" style="padding:0 16px"><span class="lbl">Average on it</span><div class="v">${standing === null ? "—" : standing.toFixed(1) + "%"}</div><div class="n">${standing === null ? "nothing marked yet" : `${banked.toFixed(1)} points banked`}</div></div>
-        <div class="stat" style="padding:0 16px"><span class="lbl">Still to come</span><div class="v">${remaining}%</div><div class="n">${items.length - graded.length} item${items.length - graded.length === 1 ? "" : "s"} unmarked</div></div>
-        <div class="stat" style="padding:0 0 0 16px;border:0"><span class="lbl">Need on the rest</span>
+      <div class="stats standing">
+        <div class="stat"><span class="lbl">Graded so far</span><div class="v">${gradedWeight}%</div><div class="n">of the course marked</div></div>
+        <div class="stat"><span class="lbl">Average on it</span><div class="v">${standing === null ? "—" : standing.toFixed(1) + "%"}</div><div class="n">${standing === null ? "nothing marked yet" : `${banked.toFixed(1)} points banked`}</div></div>
+        <div class="stat"><span class="lbl">Still to come</span><div class="v">${remaining}%</div><div class="n">${items.length - graded.length} item${items.length - graded.length === 1 ? "" : "s"} unmarked</div></div>
+        <div class="stat"><span class="lbl">Need on the rest</span>
           <div class="v ${needed !== null && needed > 85 && gradedWeight > 0 ? "red" : ""}">${gradedWeight > 0 ? (needed === null ? "—" : needed <= 0 ? "secured" : needed > 100 ? "out of reach" : needed.toFixed(1) + "%") : "—"}</div>
           <div class="n">${gradedWeight > 0 ? `to finish on ${state.target}%` : "enter your first mark and this fills in"}</div></div>
       </div>
@@ -546,11 +562,12 @@ VIEWS.courses = () => {
     h += `<article class="rrow ${r.week_no === nowWeek() ? "now" : ""}" data-c="${esc(code)}">
       <div class="key"><div class="code" style="font-family:var(--sans);font-size:13px">${fmt(r.class_date)}</div><div class="wk">week ${r.week_no}</div></div>
       <div style="min-width:0">
-        ${isBreak ? `<span class="tag">study week</span>` : `<p class="topic" style="margin-top:0;color:var(--ink)">${esc(r.topic)}</p>`}
+        ${isBreak ? `<span class="tag">study week</span>` : (sameText(r.topic, r.due_item) ? "" : `<p class="topic" style="margin-top:0;color:var(--ink)">${esc(r.topic)}</p>`)}
         ${r.note ? `<div class="meta" style="margin-bottom:8px">${esc(r.note)}</div>` : ""}
         <div class="chips">${rd.map((x) => chapterChip(x, prog[x.id])).join("")}
           ${!rd.length && r.reading_raw ? `<span class="quiet">${esc(r.reading_raw)}</span>` : ""}
           ${r.due_item ? `<span class="tag ${esc(r.due_type)}">${esc(r.due_item)}</span>` : ""}</div>
+        ${unpairedNote(rd)}
       </div></article>`;
   }
   return h + `<div class="rfoot">The verbatim syllabus wording is kept in <code>reading_raw</code> and <code>date_raw</code> in <code>data/schedule.csv</code>, so any figure here traces back to a page of the original PDF.</div>`;
@@ -561,10 +578,10 @@ VIEWS.notes = () => {
   const byCourse = {};
   D.notes.forEach((n) => (byCourse[n.course || "—"] ||= []).push(n));
   let h = `<div class="gtools">
-    <select id="newnote-course" aria-label="Course for the new note">${D.courses.map((c) => `<option value="${esc(c.code)}">${esc(c.code)} — ${esc(c.name)}</option>`).join("")}</select>
+    <select id="newnote-course" aria-label="Course for the new note">${D.courses.map((c) => `<option value="${esc(c.code)}" ${c.code === (state.noteCourse || D.courses[0].code) ? "selected" : ""}>${esc(c.code)} — ${esc(c.name)}</option>`).join("")}</select>
     <select id="newnote-row" aria-label="Class meeting to base the note on"><option value="">— blank note —</option>
-      ${D.courses.map((c) => { const rows = D.schedule.filter((r) => r.course === c.code && r.due_type !== "study_week"); return rows.length
-        ? `<optgroup label="${esc(c.code)} — ${esc(c.name)}">${rows.map((r) => `<option value="${esc(r.id)}">${fmtShort(r.class_date)} · wk ${r.week_no} · ${esc(r.topic.slice(0, 60))}</option>`).join("")}</optgroup>` : ""; }).join("")}
+      ${D.schedule.filter((r) => r.course === (state.noteCourse || D.courses[0].code) && r.due_type !== "study_week")
+        .map((r) => `<option value="${esc(r.id)}">${fmtShort(r.class_date)} · wk ${r.week_no} · ${esc(r.topic.slice(0, 60))}</option>`).join("")}
     </select>
     <button id="newnote" class="primary">+ New note</button>
     <span class="quiet">Plain Markdown under <code>notes/&lt;COURSE&gt;/</code>. Write them here or in any editor.</span></div>`;
@@ -631,13 +648,14 @@ function md(src) {
 VIEWS.cases = () => {
   let h = `<div class="pad" style="border-bottom:2px solid var(--rule);background:var(--surf)">
     <p class="sub2" style="max-width:78ch">LGL151, LGL152 and LGL250 all assign heavy case reading. Cite to the <b>McGill Guide</b>, not Bluebook — the habit is cheaper to build now than to unlearn.
-      <b>Verified</b> means you have opened the decision yourself on CanLII: nothing goes into graded work until that column says yes.</p>
-    <div class="cols" style="margin-top:12px;gap:14px">
-      <div class="field" style="border:0"><label for="c-style">Style of cause</label><input id="c-style" placeholder="Jones v Tsige" style="width:100%"></div>
-      <div class="field" style="border:0"><label for="c-cite">Citation</label><input id="c-cite" placeholder="2012 ONCA 32" style="width:100%"></div>
-      <div class="field" style="border:0"><label for="c-url">CanLII URL</label><input id="c-url" placeholder="https://canlii.ca/t/…" style="width:100%"></div>
-      <div class="field" style="border:0"><label for="c-course">Course</label><select id="c-course" style="width:100%">${D.courses.map((c) => `<option value="${esc(c.code)}">${esc(c.code)} — ${esc(c.name)}</option>`).join("")}</select></div>
-    </div><button id="c-add" class="primary">+ Add case</button></div>`;
+      <b>Verified</b> means you have opened the decision yourself on CanLII: nothing goes into graded work until its Verified box is ticked.</p>
+    <div class="caseform">
+      <div class="field"><label for="c-style">Style of cause</label><input id="c-style" placeholder="Jones v Tsige" style="width:100%"></div>
+      <div class="field"><label for="c-cite">Citation</label><input id="c-cite" placeholder="2012 ONCA 32" style="width:100%"></div>
+      <div class="field"><label for="c-url">CanLII URL</label><input id="c-url" placeholder="https://canlii.ca/t/…" style="width:100%"></div>
+      <div class="field"><label for="c-course">Course</label><select id="c-course" style="width:100%"><option value="">— choose course —</option>${D.courses.map((c) => `<option value="${esc(c.code)}">${esc(c.code)} — ${esc(c.name)}</option>`).join("")}</select></div>
+      <button id="c-add" class="primary">+ Add case</button>
+    </div></div>`;
   if (!D.cases.length) {
     return h + `<div class="empty"><div class="lead"><h2>No cases yet</h2><p>Add the first one you are assigned. Style of cause is the only required field — citation and CanLII link can follow once you have looked the decision up.</p></div></div>`;
   }
@@ -656,17 +674,21 @@ VIEWS.cases = () => {
 function reviewItems() {
   const out = [];
   const FLAG = /confirm|unconfirmed|clash|check|ask|closed|before this row|previous week/i;
+  /* One row per assessment: an unstated exam scope that also carries a note
+     is one question with a note, not two questions. */
   for (const a of D.assessments) {
+    const base = { who: `${a.course} ${a.name}`, sub: courseName(a.course), code: a.course, weight: a.weight_pct, when: a.due_resolved, prec: a.date_precision, raw: a.due_date_raw };
     if (["exam", "test"].includes(a.type) && a.scope_source !== "stated")
-      out.push({ kind: "Exam scope not stated", who: `${a.course} ${a.name}`, sub: courseName(a.course), code: a.course, weight: a.weight_pct, when: a.due_resolved, what: "", raw: a.due_date_raw });
-    if (a.confidence && a.confidence !== "high")
-      out.push({ kind: "Low confidence", who: `${a.course} ${a.name}`, sub: courseName(a.course), code: a.course, weight: a.weight_pct, when: a.due_resolved, what: a.note, raw: a.due_date_raw });
+      out.push({ kind: "Exam scope not stated", what: a.note && FLAG.test(a.note) ? a.note : "", ...base });
+    else if (a.confidence && a.confidence !== "high")
+      out.push({ kind: "Low confidence", what: a.note, ...base });
     else if (a.note && FLAG.test(a.note))
-      out.push({ kind: "Worth confirming", who: `${a.course} ${a.name}`, sub: courseName(a.course), code: a.course, weight: a.weight_pct, when: a.due_resolved, what: a.note, raw: a.due_date_raw });
+      out.push({ kind: "Worth confirming", what: a.note, ...base });
   }
   for (const r of D.schedule) {
     if ((r.confidence && r.confidence !== "high") || (r.note && FLAG.test(r.note)))
-      out.push({ kind: "Schedule row", who: `${r.course} ${fmtShort(r.class_date)}`, sub: courseName(r.course), code: r.course, weight: "", when: r.class_date, what: r.note, raw: r.date_raw });
+      out.push({ kind: "Schedule row", who: `${r.course} ${(r.topic || fmtShort(r.class_date)).slice(0, 90)}`, sub: courseName(r.course), code: r.course, weight: "", when: r.class_date, what: r.note,
+        raw: [r.date_raw, r.reading_raw].filter(Boolean).join(" — ") });
   }
   for (const c of D.courses) {
     if (c.note && FLAG.test(c.note)) out.push({ kind: "Course detail", who: c.name, sub: "", code: c.code, weight: "", when: "", what: c.note, raw: "" });
@@ -697,14 +719,14 @@ VIEWS.review = () => {
     if (!g || !g.length) continue;
     const hasWeight = g.some((i) => i.weight), hasWhen = g.some((i) => i.when), hasWhat = g.some((i) => i.what), hasRaw = g.some((i) => i.raw);
     h += `<div class="month lbl">${esc(kind)} · ${g.length}</div>${GROUP_NOTE[kind] ? `<p class="quiet" style="padding:0 var(--secpad) 6px">${esc(GROUP_NOTE[kind])}</p>` : ""}
-      <div class="scroll" style="padding:0 var(--secpad)"><table class="rtable"><thead><tr><th scope="col" style="width:78px">Course</th><th scope="col">Item</th>
+      <div class="scroll" style="padding:0 var(--secpad)"><table class="rtable revtable"><thead><tr><th scope="col" style="width:78px">Course</th><th scope="col">Item</th>
       ${hasWeight ? '<th scope="col" class="num" style="width:64px">Weight</th>' : ""}${hasWhen ? '<th scope="col" style="width:96px">When</th>' : ""}${hasWhat || hasRaw ? '<th scope="col">Detail</th>' : ""}</tr></thead><tbody>`;
     for (const i of g) {
       const item = i.who.replace(i.code, "").trim() || i.who;
       h += `<tr data-c="${esc(i.code)}"><td>${pill(i.code)}</td><td><b>${esc(item)}</b>${i.sub ? `<div class="quiet">${esc(i.sub)}</div>` : ""}</td>
         ${hasWeight ? `<td class="num" data-label="Weight">${i.weight ? i.weight + "%" : "—"}</td>` : ""}
-        ${hasWhen ? `<td class="nowrap quiet" data-label="When">${i.when ? fmtShort(i.when) : "—"}</td>` : ""}
-        ${hasWhat || hasRaw ? `<td>${i.what ? esc(i.what) : ""}${i.raw ? `<details><summary>what the syllabus printed</summary><div class="raw">${esc(i.raw)}</div></details>` : ""}</td>` : ""}</tr>`;
+        ${hasWhen ? `<td class="nowrap quiet" data-label="When">${i.when ? (i.prec && i.prec !== "exact" ? "wk of " : "") + fmtShort(i.when) : "—"}</td>` : ""}
+        ${hasWhat || hasRaw ? `<td>${i.what ? esc(i.what) : ""}${i.raw ? `<details><summary>source text</summary><div class="raw">${esc(i.raw)}</div></details>` : ""}</td>` : ""}</tr>`;
     }
     h += `</tbody></table></div>`;
   }
@@ -735,7 +757,7 @@ document.addEventListener("click", async (e) => {
   if (e.target.id === "wk-prev") { state.week = clampWeek(shownWeek() - 1); location.hash = `week/${state.week}`; return; }
   if (e.target.id === "wk-next") { state.week = clampWeek(shownWeek() + 1); location.hash = `week/${state.week}`; return; }
   if (e.target.id === "wk-today") { state.week = null; location.hash = "week"; render(); return; }
-  if (e.target.id === "deadlines-only") { toggleDensity(); return; }
+  if (e.target.id === "deadlines-only") { toggleDeadlinesOnly(); return; }
   if (e.target.id === "newnote") {
     const code = $("#newnote-course").value, rowId = $("#newnote-row").value;
     const row = D.schedule.find((r) => r.id === rowId);
@@ -746,6 +768,7 @@ document.addEventListener("click", async (e) => {
   if (e.target.id === "c-add") {
     const style = $("#c-style").value.trim();
     if (!style) { alert("Style of cause is required."); return; }
+    if (!$("#c-course").value) { alert("Choose the course this case belongs to."); return; }
     const j = await post("/api/case", { style_of_cause: style, citation: $("#c-cite").value.trim(), canlii_url: $("#c-url").value.trim(),
       course: $("#c-course").value, status: "stub", verified: "no", week_of: D.today });
     D.cases = j.cases; render(); return;
@@ -755,6 +778,7 @@ document.addEventListener("click", async (e) => {
 });
 document.addEventListener("change", async (e) => {
   if (e.target.id === "csel") { state.course = e.target.value; location.hash = `courses/${e.target.value}`; return; }
+  if (e.target.id === "newnote-course") { state.noteCourse = e.target.value; render(); return; }
   if (e.target.id === "tgt") { state.target = Number(e.target.value) || 70; render(); return; }
   const g = e.target.closest("[data-grade]");
   if (g) { const j = await post("/api/grade", { assessment_id: g.dataset.grade, earned_pct: g.value }); D.grades = j.grades; render(); return; }

@@ -124,22 +124,68 @@ def derive_readings(schedule, assessments):
             scope = scope_by_week.get((r["course"], r["week_no"]))
             if scope and scope == set(chapters):
                 continue
-        for i, ch in enumerate(chapters):
+        per_chapter, unpaired = pair_pages(r["reading_raw"], chapters, pages)
+        for ch in chapters:
             out.append({
                 "id": f"{r['id']}-ch{ch}",
                 "course": r["course"],
                 "class_date": r["class_date"],
                 "week_no": int(r["week_no"]),
                 "chapter": ch,
-                # Pages only attach one-to-one when the counts line up. Guessing
-                # which range belongs to which chapter would be fabrication.
-                "pages": pages[i] if len(pages) == len(chapters) else "",
-                "all_pages": ";".join(pages) if len(pages) != len(chapters) else "",
+                "pages": per_chapter.get(ch, ""),
+                "all_pages": unpaired,
                 "topic": r["topic"],
                 "reading_raw": r["reading_raw"],
                 "schedule_id": r["id"],
             })
     return out
+
+
+# The closing bracket is optional at the end of the cell: LGL151 week 5 prints
+# "Chapter 10 (pgs 295-298" and stops, and without that tolerance the range
+# was dropped on the floor.
+_CH_PAGES = re.compile(
+    r"Chapters?\s*(\d+)\s*\(\s*\*?\s*(?:pgs?|pages?|pp)\.?\s*([\d\s;,\-–]+?)\s*(?:\)|$)", re.I)
+
+
+def pair_pages(reading_raw, chapters, pages):
+    """Which page range belongs to which chapter -- in the syllabus's own words.
+
+    Returns ({chapter: "a-b;c-d"}, unpaired) where unpaired is the ranges that
+    could not be attached to a chapter, joined with ";", or "".
+
+    Three cases, in order:
+      1. One range per chapter: positional, as printed.
+      2. One chapter: every range is its range.
+      3. The cell names the chapter beside its pages -- "Chapter 3 (pp. 65-79)",
+         "Chapter 5 (pgs 144-145) Chapter 3 (pgs 60-62)" -- so read that. This
+         is not a guess; it is the printed attachment. Chapters the cell gives
+         no pages for get none.
+    Anything else stays unpaired and is shown once for the class, never
+    stamped on every chapter: "ch 1 class pp. 65-79" read as Chapter 1's
+    pages, which the syllabus never said.
+    """
+    if not pages:
+        return {}, ""
+    if len(pages) == len(chapters):
+        return dict(zip(chapters, pages)), ""
+    if len(chapters) == 1:
+        return {chapters[0]: ";".join(pages)}, ""
+    found = {}
+    for m in _CH_PAGES.finditer(reading_raw or ""):
+        ch = m.group(1)
+        if ch not in chapters:
+            continue
+        rng = re.sub(r"\s+", "", m.group(2)).replace("–", "-").replace(",", ";").strip(";")
+        found.setdefault(ch, []).append(rng)
+    if found:
+        # Any range the cell did NOT attach to a chapter stays visible as
+        # unpaired. Dropping it would be the silent loss this project exists
+        # to prevent.
+        claimed = {r for v in found.values() for r in ";".join(v).split(";")}
+        leftover = [p for p in pages if p not in claimed]
+        return {ch: ";".join(v) for ch, v in found.items()}, ";".join(leftover)
+    return {}, ";".join(pages)
 
 
 def resolve_due(a):
