@@ -6,14 +6,12 @@
 <title>Paralegal Beagle</title>
 <link rel="stylesheet" href="app.css">
 <script>
-  /* Read theme and density before the first paint so an explicit choice
-     never flashes the other state. ?theme= wins, for screenshot checks. */
+  /* Read the theme before the first paint so an explicit choice never
+     flashes the other state. ?theme= wins, for screenshot checks. */
   try {
     var q = new URLSearchParams(location.search).get("theme");
     var t = q || localStorage.getItem("beagle-theme") || "light";   /* light is the default; "auto" follows Windows */
     if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
-    var d = localStorage.getItem("beagle-density");
-    if (d === "compact") document.documentElement.dataset.density = d;
   } catch (e) {}
 </script>
 </head>
@@ -49,7 +47,6 @@
     <div class="sidefoot">
       <div class="row">
         <button id="theme" class="flex" title="Theme: follow Windows / light / dark">◐ Auto</button>
-        <button id="density" class="flex" title="Row spacing">⇕ Roomy</button>
       </div>
       <div class="footstats" id="footstats"></div>
     </div>

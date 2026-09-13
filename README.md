@@ -50,7 +50,7 @@ They are listed down the left side, each with a count beside it.
   anywhere to open that course.
 - The theme button at the bottom of the sidebar cycles **Light**, **Dark**,
   and **Auto**, which follows Windows. It starts on Light and remembers your
-  choice. **Roomy / Compact** tightens the rows.
+  choice.
 - Every screen has its own web address, so you can bookmark one. `#deadlines`
   opens Deadlines; `#courses/LGL225` opens Immigration Law; `#week/7` opens
   week 7.

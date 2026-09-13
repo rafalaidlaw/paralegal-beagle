@@ -118,7 +118,7 @@ async function post(path, body) {
   return j;
 }
 
-/* ------------------------------------------------------------ theme + density */
+/* ------------------------------------------------------------ theme */
 /* Light is the default. Rafael's Windows is in dark mode and he asked for
    light regardless, so "auto" (follow Windows) is a choice, not the start. */
 const THEMES = ["light", "dark", "auto"];
@@ -131,16 +131,8 @@ function cycleTheme() {
   if (r) { if (next === "auto") delete r.dataset.theme; else r.dataset.theme = next; }
   paintChrome();
 }
-const isCompact = () => LS.get("beagle-density") === "compact";
 const isDeadlinesOnly = () => LS.get("beagle-deadlines-only") === "1";
 function toggleDeadlinesOnly() { LS.set("beagle-deadlines-only", isDeadlinesOnly() ? "" : "1"); render(); }
-function toggleDensity() {
-  const now = isCompact() ? "" : "compact";
-  LS.set("beagle-density", now);
-  const r = root();
-  if (r) { if (now) r.dataset.density = now; else delete r.dataset.density; }
-  render();
-}
 
 /* ------------------------------------------------------------ chrome */
 const VIEW_META = {
@@ -203,7 +195,6 @@ function paintChrome() {
   const weighted = D.assessments.filter((a) => a.weight_pct).length;
   $("#footstats").innerHTML = `${D.courses.length} courses · ${D.schedule.length} classes<br>${D.assessments.length} items, ${weighted} carry weight · ${D.readings.length} readings`;
   const tb = $("#theme"); if (tb) tb.textContent = THEME_LABEL[currentTheme()];
-  const db = $("#density"); if (db) { db.textContent = isCompact() ? "⇕ Compact" : "⇕ Roomy"; db.setAttribute("aria-pressed", String(isCompact())); }
 }
 
 /* ------------------------------------------------------------ router */
@@ -234,7 +225,6 @@ function routeFromHash() {
 }
 window.addEventListener("hashchange", () => { routeFromHash(); render(); });
 $("#theme").addEventListener("click", cycleTheme);
-$("#density").addEventListener("click", toggleDensity);
 
 /* ==================================================================== WEEK */
 VIEWS.week = () => {

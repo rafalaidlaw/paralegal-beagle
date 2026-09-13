@@ -1,6 +1,6 @@
 // Exercise the interactive paths a static render cannot reach: ticking a
 // chapter, the per-course master tick, the theme toggle, week stepping by
-// button and by key, the density toggle, and deep links.
+// button and by key, the deadlines-only switch, and deep links.
 //
 // Updated 13 Sep 2026 for the sidebar layout: the week label lives in the
 // stepper row, the term strip became the runway, the READ counter sits in the
@@ -186,7 +186,7 @@ await click("#theme"); await sleep(250);
 t = JSON.parse((await themeState()).v);
 check("theme cycles back to light", t.attr === "light" && t.ls === "light", t);
 
-// ---------------------------------------------------------------- density
+// ---------------------------------------------------------------- deadlines only
 await go("grid");
 const chVisible = () => evalJs(`getComputedStyle(document.querySelector('.gcell .chips')).display`);
 const lsoVisible = () => evalJs(`getComputedStyle(document.querySelector('.gcell .lso')).display`);
@@ -200,14 +200,9 @@ check("deadlines-only survives a reload", (await chVisible()).v === "none", (awa
 await click("#deadlines-only"); await sleep(900);
 check("toggling deadlines-only back shows chapters", (await chVisible()).v !== "none", (await chVisible()).v);
 check("...and the competency lines", (await lsoVisible()).v !== "none", (await lsoVisible()).v);
-// the sidebar's Roomy/Compact switch is a SEPARATE setting: row spacing only
-await click("#density"); await sleep(600);
-const dens = await evalJs(`JSON.stringify({attr: document.documentElement.dataset.density || "", ls: localStorage.getItem("beagle-density"), ch: getComputedStyle(document.querySelector('.gcell .chips')).display})`);
-const dj = JSON.parse(dens.v);
-check("compact density sets the attribute and persists", dj.attr === "compact" && dj.ls === "compact", dj);
-check("compact density does not hide the chapter runs", dj.ch !== "none", dj);
-await click("#density"); await sleep(600);
-check("density toggles back to roomy", (await evalJs(`document.documentElement.dataset.density || ""`)).v === "", null);
+// the spacing toggle is gone (compact is the only spacing now); the sidebar
+// footer holds the theme button alone
+check("no density button in the sidebar", (await evalJs(`document.querySelector('#density')`)).v === null, null);
 
 // ---------------------------------------------------------------- one tick, every view
 // The Term Grid carries the same chips as This Week and Courses, all reading

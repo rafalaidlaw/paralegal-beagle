@@ -136,9 +136,11 @@ that a refresh is the build.
 Views, in the sidebar: This Week, Deadlines, Term Grid, Crunch, Courses, Notes,
 Cases, Review. Routes are hash-based and bookmarkable: `#deadlines`,
 `#courses/LGL225`, `#week/7`. `#exams` is kept as an alias of `#deadlines` so
-old bookmarks land. The sidebar footer has a theme toggle and a Roomy/Compact
-density toggle; both live in `localStorage` and are read before the first
-paint by an inline script in `index.html`.
+old bookmarks land. The sidebar footer has a theme toggle; the choice lives
+in `localStorage` and is read before the first paint by an inline script in
+`index.html`. There was also a Roomy/Compact spacing toggle; Rafael chose
+compact for good on 13 Sep 2026, so `--rowpad`/`--secpad` are 8/18 and the
+button is gone. Do not bring it back.
 
 **Light is the default theme.** Rafael's Windows is in dark mode and he asked
 for light regardless (13 Sep 2026), so with no stored choice `index.html`

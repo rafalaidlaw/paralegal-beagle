@@ -16,7 +16,7 @@ Rafael never needs to run any of this to use the tracker.
 | `probe.mjs` | Reports every element that sticks out past the viewport, ignoring anything inside a deliberate scroll container. This is how you check a phone layout — **not** by looking at a screenshot. |
 | `shot.mjs` | Screenshots each view at 1440px dark, 1440px light and 412px dark, setting the CSS viewport and the colour scheme over the DevTools protocol. |
 | `measure.mjs` | Prints the box, font, padding and resolved family of any selector. Use it when something looks wrong but you cannot tell why. |
-| `interact.mjs` | Clicks through the things a static render cannot reach: the chapter tick through its three states, the per-course master tick, the theme toggle against both system schemes, week stepping by button and by key, the density toggle across a reload, deep links, and the sort toggle; a tick made in the Term Grid showing on This Week and Courses (and back), the grid's sideways scroll surviving a tick, and the LSO competency lines on all three. Asserts against the server, so it proves persistence too. |
+| `interact.mjs` | Clicks through the things a static render cannot reach: the chapter tick through its three states, the per-course master tick, the theme toggle against both system schemes, week stepping by button and by key, the deadlines-only switch across a reload, deep links, and the sort toggle; a tick made in the Term Grid showing on This Week and Courses (and back), the grid's sideways scroll surviving a tick, and the LSO competency lines on all three. Asserts against the server, so it proves persistence too. |
 | `contrast.py` | WCAG 2.1 contrast for every pair in the palette. No third-party code. |
 
 ## Running them
