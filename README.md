@@ -26,7 +26,7 @@ They are listed down the left side, each with a count beside it.
 |---|---|
 | **This Week** | Start here. One sentence at the top says how many chapters there are this week and how far off the next graded item is. Then the next three deadlines with a big day count each, your readings for the week class by class, and the whole term as fifteen bars down the right. |
 | **Deadlines** | Every graded item in date order, month by month: what it covers where the syllabus says, when it lands, what it is worth. |
-| **Term Grid** | All fifteen weeks by all eight courses on one screen. Holidays, study week and the drop deadline get their own rows. A button hides the chapter numbers when you only want deadlines. |
+| **Term Grid** | All fifteen weeks by all eight courses on one screen, with a tick box beside every chapter. Holidays, study week and the drop deadline get their own rows. A button hides the chapters when you only want deadlines. |
 | **Crunch** | How much of your final grade falls due each week, added up across all eight courses, one bar per week coloured by course. Nobody else can produce this for you: each professor sees only their own course. |
 | **Courses** | One course at a time: the details, your grade standing, every assessment with a box to enter the mark, and the full schedule with tick-offs. |
 | **Notes** | Your reading notes, filed by course and week. Plain Markdown files in `notes/`. Write them here or in any editor. |
@@ -36,8 +36,14 @@ They are listed down the left side, each with a count beside it.
 ## Getting around
 
 - Click the box beside a chapter to cycle it: not started → in progress →
-  done. **All done** clears a whole class at once. Your progress lives in
-  `data/progress.csv` and survives everything else.
+  done. The same box appears on This Week, Courses and the Term Grid, and a
+  tick made on any of them shows on all three. **All done** clears a whole
+  class at once. Your progress lives in `data/progress.csv` and survives
+  everything else.
+- **LSO competencies** are the numbered items from the Law Society of
+  Ontario's paralegal competency list that a syllabus attaches to each class.
+  Six syllabi give them; they appear under the chapters wherever those are
+  listed. Only the numbers are in the syllabi, so only the numbers are shown.
 - On This Week, **‹ week** and **week ›** step through the term. The `[` and `]`
   keys do the same. **Back to this week** returns you to today.
 - Click any bar in the term runway to jump to that week. Click a course code

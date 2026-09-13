@@ -216,9 +216,10 @@ let renderedView = null;
 function render() {
   paintChrome();
   const y = window.scrollY;
+  const x = $(".gridwrap")?.scrollLeft || 0;     /* the Term Grid scrolls sideways below 1338px */
   main.innerHTML = VIEWS[state.view]();
   if (state.view !== renderedView) window.scrollTo(0, 0);
-  else window.scrollTo(0, y);
+  else { window.scrollTo(0, y); if (x) { const g = $(".gridwrap"); if (g) g.scrollLeft = x; } }
   renderedView = state.view;
 }
 function routeFromHash() {
@@ -313,6 +314,7 @@ VIEWS.week = () => {
         <div class="chips">${chs.map((r) => chapterChip(r, prog[r.id])).join("")}
           ${!chs.length ? `<span class="quiet">${m.reading_raw ? esc(m.reading_raw) : "No chapter reading listed for this class."}</span>` : ""}</div>
         ${unpairedNote(chs)}
+        ${lsoLine(m)}
         ${m.note ? `<div class="meta">${esc(m.note)}</div>` : ""}
         ${m.confidence && m.confidence !== "high" ? `<div class="meta"><span class="tag unstated">check this row against the PDF</span></div>` : ""}
       </div>
@@ -369,6 +371,18 @@ function unpairedNote(chs) {
 }
 const sameText = (a, b) => !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
 
+/* Six syllabi print "LSO Competencies: 202, 204" beside a class's readings:
+   the numbered items of the Law Society of Ontario's paralegal competency
+   list. The syllabi give the numbers and nothing else, so that is what is
+   shown, in the order each syllabus prints them. LGL154 and LGL225 list
+   none. Written with the class, not the chapter, because that is how the
+   syllabi attach them. */
+const LSO_TITLE = "Law Society of Ontario paralegal competencies, numbered as in the syllabus";
+function lsoLine(r, short) {
+  if (!r.lso_nums) return "";
+  return `<div class="lso${short ? "" : " meta"}" title="${LSO_TITLE}">${short ? "LSO" : "LSO competencies"} ${esc(list(r.lso_nums))}</div>`;
+}
+
 function chapterChip(r, p, showWeek) {
   const s = p?.status || "";
   const pages = r.pages ? `<span class="pg">pp. ${esc(list(r.pages))}</span>` : "";
@@ -415,10 +429,12 @@ function deadlineRow(a, isNext, extra) {
 /* ==================================================================== GRID */
 VIEWS.grid = () => {
   const codes = D.courses.map((c) => c.code);
+  const prog = progressMap();
   const nowWk = nowWeek(), last = LAST_WEEK();
   let h = `<div class="gtools">
     <button id="deadlines-only" aria-pressed="${isDeadlinesOnly()}">${isDeadlinesOnly() ? "showing deadlines only" : "show deadlines only"}</button>
-    <span class="quiet">Chapters in mono, exams and tests ruled in red. An em dash is a class with nothing assigned; a hatched cell is a week with no class.</span></div>`;
+    <span class="quiet">Tick a chapter here as you read it; the same tick shows on This Week and Courses. LSO numbers are the competencies the syllabus lists for that class.
+      Exams and tests are ruled in red. An em dash is a class with nothing assigned; a hatched cell is a week with no class.</span></div>`;
   h += `<div class="gridwrap"><div class="grid ${isDeadlinesOnly() ? "deadlines-only" : ""}">
     <div class="grow head"><div class="gwk lbl">Week</div>${codes.map((c) => `<div class="gcell" data-c="${esc(c)}">
       <a class="code" href="#courses/${esc(c)}" style="text-decoration:none;color:inherit">${esc(c)}</a><div class="short">${esc(courseName(c))}</div></div>`).join("")}</div>`;
@@ -437,18 +453,17 @@ VIEWS.grid = () => {
       const reads = D.readings.filter((r) => r.course === code && r.week_no === w);
       const dues = D.assessments.filter((a) => a.course === code && a.week_no === w);
       const unsure = rows.find((r) => r.confidence && r.confidence !== "high");
-      /* Where the syllabus gives pages, the grid shows them beside the chapter,
-         one chapter per line; where it gives none, the chapters share a line. */
-      let cell = !reads.length ? ""
-        : reads.some((r) => r.pages)
-          ? reads.map((r) => `<div class="ch">ch ${esc(r.chapter)}${r.pages ? ` <span class="pg">pp. ${esc(list(r.pages))}</span>` : ""}</div>`).join("")
-          : `<div class="ch">ch ${[...new Set(reads.map((r) => r.chapter))].join(", ")}</div>`;
+      /* One tick chip per chapter -- the same chip as This Week and Courses,
+         reading the same progress row, so a tick made anywhere shows here. */
+      let cell = reads.length ? `<div class="chips">${reads.map((r) => chapterChip(r, prog[r.id])).join("")}</div>`
+        : (dues.length || unsure) ? "" : `<span class="muted">—</span>`;     /* a class with nothing assigned */
+      cell += rows.map((r) => lsoLine(r, true)).join("");
       for (const a of dues) {
         cell += `<div><span class="tag ${esc(a.type)}">${esc(a.name)}${weightTag(a) ? ` <b>${weightTag(a)}</b>` : ""}</span>
           ${a.scope_chapters ? `<div class="cov">covers ch ${esc(list(a.scope_chapters))}</div>` : ""}</div>`;
       }
       if (unsure) cell += `<div><span class="tag unstated" title="${esc(unsure.note || "confidence: " + unsure.confidence)}">check</span></div>`;
-      h += `<div class="gcell ${unsure ? "unsure" : ""}">${cell || `<span class="muted">—</span>`}</div>`;
+      h += `<div class="gcell ${unsure ? "unsure" : ""}">${cell}</div>`;
     }
     h += `</div>`;
   }
@@ -592,6 +607,7 @@ VIEWS.courses = () => {
           ${!rd.length && r.reading_raw ? `<span class="quiet">${esc(r.reading_raw)}</span>` : ""}
           ${r.due_item ? `<span class="tag ${esc(r.due_type)}">${esc(r.due_item)}</span>` : ""}</div>
         ${unpairedNote(rd)}
+        ${lsoLine(r)}
       </div></article>`;
   }
   return h + `<div class="rfoot">The verbatim syllabus wording is kept in <code>reading_raw</code> and <code>date_raw</code> in <code>data/schedule.csv</code>, so any figure here traces back to a page of the original PDF.</div>`;

@@ -328,6 +328,7 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
 .rrow h3 { margin: 0; }
 .rrow .topic { margin: 5px 0 11px; font-size: 13.5px; color: var(--ink2); max-width: 64ch; }
 .rrow .meta { margin-top: 4px; font-size: 12.5px; color: var(--ink3); }
+.rrow .lso { margin-top: 8px; }
 .rhead { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; }
 .rfoot { padding: var(--s4) var(--secpad) 40px; border-top: 2px solid var(--rule); font-size: 13px; color: var(--ink2); }
 
@@ -435,15 +436,28 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
 .gwk .n { font: 700 14px var(--sans); }
 .grow.now .gwk .n { color: var(--accent-text); }
 .gwk .d { margin-top: 2px; font-size: 12px; color: var(--ink3); white-space: nowrap; }
-.gcell .ch { font: 500 12.5px var(--mono); color: var(--ink2); }
-.gcell .ch + .ch { margin-top: -3px; }
-.gcell .ch .pg { font: 400 12px var(--sans); color: var(--ink3); }
+/* chapters in a cell are the same tick chips as This Week, packed tight:
+   box, then the chapter in mono beside it, then the pages under the chapter.
+   The border only shows on hover; the negative margin keeps the text on the
+   cell's own padding line while leaving the hover box room. */
+.gcell .chips { flex-direction: column; gap: 1px; }
+.gcell .chch {
+  display: grid; grid-template-columns: 12px minmax(0, 1fr); column-gap: 6px; align-items: center;
+  padding: 3px 6px; margin: 0 -6px; border-color: transparent; white-space: normal;
+  font: 500 12.5px/1.3 var(--mono); color: var(--ink2);
+}
+.gcell .chch .box { grid-column: 1; grid-row: 1; }
+.gcell .chch .lab { grid-column: 2; grid-row: 1; }
+.gcell .chch .pg { grid-column: 2; grid-row: 2; font: 400 12px/1.3 var(--sans); }
+.gcell .chch[data-s="done"] { border-color: transparent; }
+.gcell .chch:hover { border-color: var(--accent); }
+.gcell .lso { font-size: 12px; line-height: 1.35; color: var(--ink3); }
 .gcell .cov { margin-top: 3px; font-size: 12px; color: var(--ink3); }
 .gcell .tag { white-space: normal; }   /* a long name wraps inside its cell instead of spilling into the next */
 .gcell.break { color: var(--ink3); font-size: 12px; justify-content: center; }
 .gcell.off { background: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--ink4) 16%, transparent) 5px 10px); color: var(--ink3); font-size: 12px; justify-content: center; }
 .gnote { padding: 5px var(--secpad); background: var(--surf2); border-bottom: 1px solid var(--line); font-size: 12px; color: var(--ink2); }
-.grid.deadlines-only .gcell .ch, .grid.deadlines-only .gcell .cov { display: none; }
+.grid.deadlines-only .gcell .chips, .grid.deadlines-only .gcell .lso, .grid.deadlines-only .gcell .cov { display: none; }
 /* the one medium-confidence class meeting must not look like the 120 confirmed ones */
 .gcell.unsure { box-shadow: inset 3px 0 0 var(--ink4); }
 .gtools { padding: 12px var(--secpad); border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--surf); }
@@ -574,6 +588,7 @@ details > summary:hover { color: var(--accent-text); }
   .mhead { padding: 14px 16px 12px; }
   h1 { font-size: 24px; }
   .chch { padding: 8px 11px; }
+  .gcell .chch { padding: 6px 6px; }
   .statebtn { width: 34px; height: 34px; }
 
   .rtable { min-width: 0; }

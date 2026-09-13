@@ -188,23 +188,73 @@ check("theme cycles back to light", t.attr === "light" && t.ls === "light", t);
 
 // ---------------------------------------------------------------- density
 await go("grid");
-const chVisible = () => evalJs(`getComputedStyle(document.querySelector('.gcell .ch')).display`);
+const chVisible = () => evalJs(`getComputedStyle(document.querySelector('.gcell .chips')).display`);
+const lsoVisible = () => evalJs(`getComputedStyle(document.querySelector('.gcell .lso')).display`);
 check("term grid shows chapters by default", (await chVisible()).v !== "none", (await chVisible()).v);
 await click("#deadlines-only"); await sleep(900);
 check("deadlines-only hides the chapter runs", (await chVisible()).v === "none", (await chVisible()).v);
+check("deadlines-only hides the competency lines too", (await lsoVisible()).v === "none", (await lsoVisible()).v);
 check("deadlines-only persisted on its own key", (await evalJs(`localStorage.getItem("beagle-deadlines-only")`)).v === "1", null);
 await go("grid");   // reload: must not flash the wide layout
 check("deadlines-only survives a reload", (await chVisible()).v === "none", (await chVisible()).v);
 await click("#deadlines-only"); await sleep(900);
 check("toggling deadlines-only back shows chapters", (await chVisible()).v !== "none", (await chVisible()).v);
+check("...and the competency lines", (await lsoVisible()).v !== "none", (await lsoVisible()).v);
 // the sidebar's Roomy/Compact switch is a SEPARATE setting: row spacing only
 await click("#density"); await sleep(600);
-const dens = await evalJs(`JSON.stringify({attr: document.documentElement.dataset.density || "", ls: localStorage.getItem("beagle-density"), ch: getComputedStyle(document.querySelector('.gcell .ch')).display})`);
+const dens = await evalJs(`JSON.stringify({attr: document.documentElement.dataset.density || "", ls: localStorage.getItem("beagle-density"), ch: getComputedStyle(document.querySelector('.gcell .chips')).display})`);
 const dj = JSON.parse(dens.v);
 check("compact density sets the attribute and persists", dj.attr === "compact" && dj.ls === "compact", dj);
 check("compact density does not hide the chapter runs", dj.ch !== "none", dj);
 await click("#density"); await sleep(600);
 check("density toggles back to roomy", (await evalJs(`document.documentElement.dataset.density || ""`)).v === "", null);
+
+// ---------------------------------------------------------------- one tick, every view
+// The Term Grid carries the same chips as This Week and Courses, all reading
+// one progress row, so a tick made in the grid must show on the other two.
+// `rid` was cycled to blank at the top of this run.
+await go("grid");
+const gridState = async () => (await evalJs(`document.querySelector('.gcell [data-reading="${rid}"]')?.dataset.s`)).v;
+check("the grid shows a tick chip for the first reading", (await gridState()) === "", await gridState());
+await click(`.gcell [data-reading="${rid}"]`); await sleep(900);
+check("ticking in the grid: blank -> in_progress", (await gridState()) === "in_progress", await gridState());
+await go("week");
+check("the same tick shows on This Week", (await stateOf()) === "in_progress", await stateOf());
+await go(`courses/${rid.slice(0, 6)}`);
+check("the same tick shows on Courses", (await stateOf()) === "in_progress", await stateOf());
+await click(`[data-reading="${rid}"]`); await sleep(700);     // done, ticked on Courses this time
+await go("grid");
+check("a tick made on Courses shows in the grid", (await gridState()) === "done", await gridState());
+await click(`.gcell [data-reading="${rid}"]`); await sleep(900);   // back to blank
+check("the grid clears it again", (await gridState()) === "", await gridState());
+
+// below 1338px the grid scrolls sideways; a tick re-renders it and must not
+// throw the scroller back to the left edge
+await send("Emulation.setDeviceMetricsOverride", { width: 1000, height: 900, deviceScaleFactor: 1, mobile: false }, S);
+await go("grid");
+const xSet = (await evalJs(`(() => { const g = document.querySelector('.gridwrap'); g.scrollLeft = 260; return g.scrollLeft; })()`)).v;
+await click(`.gcell [data-reading="${rid}"]`); await sleep(900);
+const xAfter = (await evalJs(`document.querySelector('.gridwrap').scrollLeft`)).v;
+check("ticking in a scrolled grid keeps the sideways scroll", xSet === 260 && xAfter === 260, { xSet, xAfter });
+await click(`.gcell [data-reading="${rid}"]`); await sleep(600);
+await click(`.gcell [data-reading="${rid}"]`); await sleep(600);   // back to blank
+await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1200, deviceScaleFactor: 1, mobile: false }, S);
+
+// ---------------------------------------------------------------- competencies
+// Six syllabi print "LSO Competencies: n, n" beside a class's readings; the
+// numbers travel with the schedule row and are shown wherever its chapters are.
+await go("week/2");
+const lsoWeek = await evalJs(`[...document.querySelectorAll('.rrow .lso')].map(e => e.textContent.trim())`);
+check("This Week lists a class's LSO competencies", (lsoWeek.v || []).includes("LSO competencies 171, 172, 170"), lsoWeek.v);
+await go("courses/LGL151");
+const lsoCourse = await evalJs(`[...document.querySelectorAll('.rrow .lso')].map(e => e.textContent.trim())`);
+check("Courses lists them on the schedule rows", (lsoCourse.v || []).includes("LSO competencies 171, 172, 170"), lsoCourse.v);
+await go("grid");
+const lsoGrid = await evalJs(`JSON.stringify({ n: document.querySelectorAll('.gcell .lso').length, first: document.querySelector('.gcell .lso')?.textContent.trim() })`);
+const lg = JSON.parse(lsoGrid.v);
+check("the grid carries them in short form", lg.n >= 60 && /^LSO \d+(, \d+)*$/.test(lg.first || ""), lg);
+const lsoNone = await evalJs(`[...document.querySelectorAll('.grow:not(.head)')].some(r => r.children[4].querySelector('.lso'))`);
+check("LGL154 lists none, so its column shows none", lsoNone.v === false, lsoNone.v);
 
 // ---------------------------------------------------------------- deep links
 await go("courses/LGL225");

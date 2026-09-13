@@ -198,6 +198,15 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   height.
 - **Native `<select>` is as wide as its widest option.** The note picker holds
   121 class meetings; it needs `max-width: 100%`.
+- **One chip, every view.** A chapter's tick box is `chapterChip()` on This
+  Week, Courses and the Term Grid alike, keyed by the reading id, so one
+  click anywhere is one row in `progress.csv` and every view agrees. The
+  grid restyles the chip (`.gcell .chch`); it does not have its own. A
+  re-render also puts back the grid's sideways scroll, not only `scrollY`.
+- **LSO competencies are numbers only.** The syllabi print "LSO
+  Competencies: 202, 204" per class meeting (`lso_nums`, shown by
+  `lsoLine()` in the syllabus's own order). No syllabus gives the wording
+  behind a number, so the app never does either — that would be invented.
 
 ## A week-precision deadline has TWO horizons
 
@@ -228,6 +237,7 @@ Checked on 12 Sep 2026; re-check rather than assume if the CSVs have moved on.
 | Courses with no instructor named | one — LGL153 |
 | Most chapters in one class meeting | 4 (LGL151 week 5) |
 | Readings in week 15 | **none** — its chapter numbers are the final exam's scope, which `derive_readings` excludes on purpose |
+| Class meetings listing LSO competencies | **65 of 121** — six courses; LGL154 and LGL225 list none |
 
 Two consequences for the UI. The weight-sum warning is **dormant defence**: it
 is correct and cheap, but it will not fire, so never put a figure like "97%" in
