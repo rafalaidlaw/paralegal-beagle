@@ -7,9 +7,22 @@
 // readings section head, and the Exams view became Deadlines (with #exams
 // kept as an alias so old bookmarks still land).
 import { spawn } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+
+// This suite ticks real chapters through the real API, which writes
+// data/progress.csv -- Rafael's own record. It once cycled a chapter he had
+// ticked, and the file was then reset by hand as if it were test residue,
+// losing a second tick. So: snapshot the file first, put it back on exit no
+// matter how the run ends, and never assume the file starts empty.
+const PROGRESS = "C:/Users/Rafael/Desktop/Paralegal-Beagle/data/progress.csv";
+const progressBefore = readFileSync(PROGRESS, "utf8");
+function restoreProgress() {
+  try { writeFileSync(PROGRESS, progressBefore, "utf8"); } catch (e) { console.log("could not restore progress.csv: " + e.message); }
+}
+process.on("exit", restoreProgress);
+process.on("SIGINT", () => { restoreProgress(); process.exit(130); });
 
 const PORT = 9490;
 const profile = mkdtempSync(join(tmpdir(), "int-"));
@@ -65,28 +78,32 @@ function check(name, ok, detail) {
 // ---------------------------------------------------------------- reading tick
 await go("week");
 const firstChip = ".chch[data-reading]";
-let before = await evalJs(`document.querySelector('${firstChip}').dataset.s`);
 const rid = (await evalJs(`document.querySelector('${firstChip}').dataset.reading`)).v;
+// Rafael may have ticked this chapter himself. Cycle it to blank so the
+// three-state walk starts from a known place; the snapshot restores his real
+// state when the run ends.
+const stateOf = async () => (await evalJs(`document.querySelector('[data-reading="${rid}"]').dataset.s`)).v;
+for (let guard = 0; guard < 3 && (await stateOf()) !== ""; guard++) { await click(`[data-reading="${rid}"]`); await sleep(700); }
+check("chip cycled to blank as a starting point", (await stateOf()) === "", await stateOf());
+const doneBefore = (await evalJs(`document.querySelectorAll('.chch[data-s="done"]').length`)).v;
+
 await click(firstChip); await sleep(900);
-let after = await evalJs(`document.querySelector('[data-reading="${rid}"]').dataset.s`);
-check("chapter tick: blank -> in_progress", before.v === "" && after.v === "in_progress", { before: before.v, after: after.v });
+check("chapter tick: blank -> in_progress", (await stateOf()) === "in_progress", await stateOf());
 
 await click(`[data-reading="${rid}"]`); await sleep(900);
-after = await evalJs(`document.querySelector('[data-reading="${rid}"]').dataset.s`);
-check("chapter tick: in_progress -> done", after.v === "done", after.v);
+check("chapter tick: in_progress -> done", (await stateOf()) === "done", await stateOf());
 
 let srv = await (await fetch("http://127.0.0.1:8787/api/data")).json();
-check("progress persisted to the server", srv.progress.some((p) => p.reading_id === rid && p.status === "done"), srv.progress);
+check("progress persisted to the server", srv.progress.some((p) => p.reading_id === rid && p.status === "done"), srv.progress.filter((p) => p.reading_id === rid));
 
-// the x-of-y counter in the readings section head must move
+// the x-of-y counter in the readings section head must move by exactly one
 let counter = await evalJs(`document.querySelector('.sechead .mono')?.textContent.replace(/\\s+/g,' ').trim()`);
-check("the readings counter counts the tick", /^1 of 13 done$/.test(counter.v || ""), counter.v);
+check("the readings counter counts the tick", new RegExp(`^${doneBefore + 1} of \\d+ done$`).test(counter.v || ""), { counter: counter.v, doneBefore });
 
 await click(`[data-reading="${rid}"]`); await sleep(900);   // back to blank
-after = await evalJs(`document.querySelector('[data-reading="${rid}"]').dataset.s`);
-check("chapter tick: done -> blank", after.v === "", after.v);
+check("chapter tick: done -> blank", (await stateOf()) === "", await stateOf());
 srv = await (await fetch("http://127.0.0.1:8787/api/data")).json();
-check("clearing removes the row, no ghost", !srv.progress.some((p) => p.reading_id === rid && p.status), srv.progress);
+check("clearing removes the row, no ghost", !srv.progress.some((p) => p.reading_id === rid && p.status), srv.progress.filter((p) => p.reading_id === rid));
 
 // ---------------------------------------------------------------- scroll stays put
 // A tick re-renders the view; it must not throw you back to the top.

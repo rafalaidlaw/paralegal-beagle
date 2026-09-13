@@ -66,6 +66,9 @@ const courseName = (code) => course(code).name || code;
 const isDone = (prog, id) => (prog[id]?.status || "") === "done";
 
 const HEAVY = 90;          /* a week carrying this much grade or more is ruled in red */
+/* The label after an item's name: its weight, or "due" for an unweighted
+   milestone -- unless the name already ends in "due", or it reads "due due". */
+const weightTag = (a) => a.weight_pct ? `${a.weight_pct}%` : (/(^|\W)due(\W|$)/i.test(a.name) ? "" : "due");
 const pill = (code) =>
   `<a class="course-pill" data-c="${esc(code)}" href="#courses/${esc(code)}" title="${esc(courseName(code))}">${esc(code)}</a>`;
 const typeWord = (t) => `<span class="type ${esc(t)}">${esc(t)}</span>`;
@@ -431,12 +434,17 @@ VIEWS.grid = () => {
       const rows = D.schedule.filter((r) => r.course === code && r.week_no === w);
       if (!rows.length) { h += `<div class="gcell off">no class</div>`; continue; }
       if (rows.every((r) => r.due_type === "study_week")) { h += `<div class="gcell break">study week</div>`; continue; }
-      const chapters = [...new Set(D.readings.filter((r) => r.course === code && r.week_no === w).map((r) => r.chapter))];
+      const reads = D.readings.filter((r) => r.course === code && r.week_no === w);
       const dues = D.assessments.filter((a) => a.course === code && a.week_no === w);
       const unsure = rows.find((r) => r.confidence && r.confidence !== "high");
-      let cell = chapters.length ? `<div class="ch">ch ${chapters.join(", ")}</div>` : "";
+      /* Where the syllabus gives pages, the grid shows them beside the chapter,
+         one chapter per line; where it gives none, the chapters share a line. */
+      let cell = !reads.length ? ""
+        : reads.some((r) => r.pages)
+          ? reads.map((r) => `<div class="ch">ch ${esc(r.chapter)}${r.pages ? ` <span class="pg">pp. ${esc(list(r.pages))}</span>` : ""}</div>`).join("")
+          : `<div class="ch">ch ${[...new Set(reads.map((r) => r.chapter))].join(", ")}</div>`;
       for (const a of dues) {
-        cell += `<div><span class="tag ${esc(a.type)}">${esc(a.name)} <b>${a.weight_pct ? a.weight_pct + "%" : "due"}</b></span>
+        cell += `<div><span class="tag ${esc(a.type)}">${esc(a.name)}${weightTag(a) ? ` <b>${weightTag(a)}</b>` : ""}</span>
           ${a.scope_chapters ? `<div class="cov">covers ch ${esc(list(a.scope_chapters))}</div>` : ""}</div>`;
       }
       if (unsure) cell += `<div><span class="tag unstated" title="${esc(unsure.note || "confidence: " + unsure.confidence)}">check</span></div>`;
@@ -507,7 +515,7 @@ VIEWS.crunch = () => {
       </div>
       <div class="pct">${x.load ? x.load + "%" : x.isBreak ? "—" : "0"}</div></div>`;
     if (x.items.length) h += `<div class="citems">${x.items.map((a) =>
-      `<span class="citem ${esc(a.type)}" data-c="${esc(a.course)}"><span class="code">${esc(a.course)}</span><span>${esc(a.name)}</span><span style="font-weight:800">${a.weight_pct ? a.weight_pct + "%" : "due"}</span></span>`).join("")}</div>`;
+      `<span class="citem ${esc(a.type)}" data-c="${esc(a.course)}"><span class="code">${esc(a.course)}</span><span>${esc(a.name)}</span>${weightTag(a) ? `<span style="font-weight:800">${weightTag(a)}</span>` : ""}</span>`).join("")}</div>`;
   }
   return h + legend() + `<div class="spacer"></div>`;
 };

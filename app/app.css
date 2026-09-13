@@ -436,6 +436,8 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
 .grow.now .gwk .n { color: var(--accent-text); }
 .gwk .d { margin-top: 2px; font-size: 12px; color: var(--ink3); white-space: nowrap; }
 .gcell .ch { font: 500 12.5px var(--mono); color: var(--ink2); }
+.gcell .ch + .ch { margin-top: -3px; }
+.gcell .ch .pg { font: 400 12px var(--sans); color: var(--ink3); }
 .gcell .cov { margin-top: 3px; font-size: 12px; color: var(--ink3); }
 .gcell .tag { white-space: normal; }   /* a long name wraps inside its cell instead of spilling into the next */
 .gcell.break { color: var(--ink3); font-size: 12px; justify-content: center; }
