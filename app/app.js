@@ -27,7 +27,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
 const MONTH_FULL = ["January", "February", "March", "April", "May", "June", "July",
   "August", "September", "October", "November", "December"];
 const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
@@ -41,6 +41,13 @@ const fmt = (s) => { if (!s) return ""; const x = toDate(s); return `${DOW[x.get
 const fmtShort = (s) => { if (!s) return ""; const x = toDate(s); return `${x.getDate()} ${MON[x.getMonth()]}`; };
 const fmtLong = (s) => { if (!s) return ""; const x = toDate(s); return `${DOW[x.getDay()]} ${x.getDate()} ${MON[x.getMonth()]} ${x.getFullYear()}`; };
 const plus = (s, n) => { const d = toDate(s); d.setDate(d.getDate() + n); return iso(d); };
+/* Monday to Friday of a term week, as one range: "7–11 Sept", "28 Sept – 2 Oct". */
+function weekRange(n) {
+  const a = toDate(weekMonday(n)), b = toDate(plus(weekMonday(n), 4));
+  return a.getMonth() === b.getMonth()
+    ? `${a.getDate()}–${b.getDate()} ${MON[a.getMonth()]}`
+    : `${a.getDate()} ${MON[a.getMonth()]} – ${b.getDate()} ${MON[b.getMonth()]}`;
+}
 const list = (s) => String(s || "").split(";").filter(Boolean).join(", ");
 
 function daysBetween(a, b) { return Math.round((toDate(b) - toDate(a)) / 86400000); }
@@ -419,7 +426,7 @@ VIEWS.grid = () => {
     if (D.term.drop_deadline >= mon && D.term.drop_deadline <= plus(mon, 6)) marks.push(`${D.term.drop_deadline_label} — ${fmt(D.term.drop_deadline)}`);
     if (D.term.grades_released >= mon && D.term.grades_released <= plus(mon, 6)) marks.push(`Grades released — ${fmt(D.term.grades_released)}`);
     if (marks.length) h += `<div class="gnote">${esc(marks.join("  ·  "))}</div>`;
-    h += `<div class="grow ${w === nowWk ? "now" : ""}"><div class="gwk"><div class="n">${w}</div><div class="d">${fmtShort(mon)}</div></div>`;
+    h += `<div class="grow ${w === nowWk ? "now" : ""}"><div class="gwk"><div class="n">Week ${w}</div><div class="d">${weekRange(w)}</div></div>`;
     for (const code of codes) {
       const rows = D.schedule.filter((r) => r.course === code && r.week_no === w);
       if (!rows.length) { h += `<div class="gcell off">no class</div>`; continue; }
