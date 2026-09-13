@@ -55,7 +55,9 @@ async function shoot(view, width, scheme, file) {
     { features: [{ name: "prefers-color-scheme", value: scheme }] }, S);
   await send("Emulation.setDeviceMetricsOverride",
     { width, height: 1200, deviceScaleFactor: 1, mobile: width < 700 }, S);
-  await send("Page.navigate", { url: `http://127.0.0.1:8787/#${view}` }, S);
+  // light is the app's default regardless of the OS, so the theme is
+  // requested explicitly via ?theme= (read before first paint by index.html)
+  await send("Page.navigate", { url: `http://127.0.0.1:8787/?theme=${scheme}#${view}` }, S);
   await sleep(1700);
   // grow the viewport to the full document so nothing is cut off
   const { result: h } = await send("Runtime.evaluate",

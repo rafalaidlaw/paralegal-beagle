@@ -109,9 +109,11 @@ async function post(path, body) {
 }
 
 /* ------------------------------------------------------------ theme + density */
-const THEMES = ["auto", "light", "dark"];
-const THEME_LABEL = { auto: "◐ Auto", light: "☀ Light", dark: "☾ Dark" };
-function currentTheme() { const t = LS.get("beagle-theme"); return THEMES.includes(t) ? t : "auto"; }
+/* Light is the default. Rafael's Windows is in dark mode and he asked for
+   light regardless, so "auto" (follow Windows) is a choice, not the start. */
+const THEMES = ["light", "dark", "auto"];
+const THEME_LABEL = { light: "☀ Light", dark: "☾ Dark", auto: "◐ Auto" };
+function currentTheme() { const t = LS.get("beagle-theme"); return THEMES.includes(t) ? t : "light"; }
 function cycleTheme() {
   const next = THEMES[(THEMES.indexOf(currentTheme()) + 1) % THEMES.length];
   LS.set("beagle-theme", next);

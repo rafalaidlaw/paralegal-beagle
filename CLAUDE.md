@@ -136,9 +136,15 @@ that a refresh is the build.
 Views, in the sidebar: This Week, Deadlines, Term Grid, Crunch, Courses, Notes,
 Cases, Review. Routes are hash-based and bookmarkable: `#deadlines`,
 `#courses/LGL225`, `#week/7`. `#exams` is kept as an alias of `#deadlines` so
-old bookmarks land. The sidebar footer has an auto/light/dark toggle and a
-Roomy/Compact density toggle; both live in `localStorage` and are read before
-the first paint by an inline script in `index.html`.
+old bookmarks land. The sidebar footer has a theme toggle and a Roomy/Compact
+density toggle; both live in `localStorage` and are read before the first
+paint by an inline script in `index.html`.
+
+**Light is the default theme.** Rafael's Windows is in dark mode and he asked
+for light regardless (13 Sep 2026), so with no stored choice `index.html`
+stamps `data-theme="light"`. The toggle cycles light → dark → auto, where auto
+follows Windows. `tools/shot.mjs` therefore requests the theme explicitly with
+`?theme=`, and `tools/interact.mjs` asserts light-on-a-dark-system.
 
 `serve.py` serves exactly three static files — `/`, `/app.css`, `/app.js` —
 with no asset route. So **no font file, image or SVG can be added without

@@ -42,8 +42,9 @@ They are listed down the left side, each with a count beside it.
   keys do the same. **Back to this week** returns you to today.
 - Click any bar in the term runway to jump to that week. Click a course code
   anywhere to open that course.
-- **Auto / Light / Dark** at the bottom of the sidebar follows Windows by
-  default, or pins it either way. **Roomy / Compact** tightens the rows.
+- The theme button at the bottom of the sidebar cycles **Light**, **Dark**,
+  and **Auto**, which follows Windows. It starts on Light and remembers your
+  choice. **Roomy / Compact** tightens the rows.
 - Every screen has its own web address, so you can bookmark one. `#deadlines`
   opens Deadlines; `#courses/LGL225` opens Immigration Law; `#week/7` opens
   week 7.

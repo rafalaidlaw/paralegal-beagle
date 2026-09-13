@@ -129,26 +129,31 @@ check("the sidebar shows the current week, zero-padded", sideWeek.v === "01", si
 // ---------------------------------------------------------------- theme
 await go("week");
 const themeState = () => evalJs(`JSON.stringify({attr: document.documentElement.dataset.theme || "", btn: document.querySelector("#theme").textContent.trim(), ls: localStorage.getItem("beagle-theme")})`);
-check("theme starts on auto", JSON.parse((await themeState()).v).attr === "", (await themeState()).v);
-await click("#theme"); await sleep(250);
+// light is the default even on a dark system
+await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "dark" }] }, S);
+await go("week");
 let t = JSON.parse((await themeState()).v);
-check("theme -> light sets the attribute and persists", t.attr === "light" && t.ls === "light" && /Light/.test(t.btn), t);
+const bgStart = await evalJs(`getComputedStyle(document.body).backgroundColor`);
+check("theme starts on light, even with a dark system", t.attr === "light" && bgStart.v === "rgb(243, 242, 242)", { ...t, bg: bgStart.v });
 await click("#theme"); await sleep(250);
 t = JSON.parse((await themeState()).v);
-check("theme -> dark", t.attr === "dark" && t.ls === "dark", t);
+check("theme -> dark sets the attribute and persists", t.attr === "dark" && t.ls === "dark" && /Dark/.test(t.btn), t);
 await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "light" }] }, S);
 await sleep(200);
 const bgDark = await evalJs(`getComputedStyle(document.body).backgroundColor`);
 check("explicit dark wins over a light system", bgDark.v === "rgb(22, 21, 20)", bgDark.v);
 await click("#theme"); await sleep(250);
 t = JSON.parse((await themeState()).v);
-check("theme cycles back to auto", t.attr === "" && t.ls === "auto", t);
+check("theme -> auto follows Windows", t.attr === "" && t.ls === "auto", t);
 const bgAuto = await evalJs(`getComputedStyle(document.body).backgroundColor`);
 check("auto follows the light system", bgAuto.v === "rgb(243, 242, 242)", bgAuto.v);
 await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "dark" }] }, S);
 await sleep(200);
 const bgAutoDark = await evalJs(`getComputedStyle(document.body).backgroundColor`);
 check("auto follows a dark system too", bgAutoDark.v === "rgb(22, 21, 20)", bgAutoDark.v);
+await click("#theme"); await sleep(250);
+t = JSON.parse((await themeState()).v);
+check("theme cycles back to light", t.attr === "light" && t.ls === "light", t);
 
 // ---------------------------------------------------------------- density
 await go("grid");
