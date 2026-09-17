@@ -205,6 +205,9 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   click anywhere is one row in `progress.csv` and every view agrees. The
   grid restyles the chip (`.gcell .chch`); it does not have its own. A
   re-render also puts back the grid's sideways scroll, not only `scrollY`.
+- **A grid cell reads graded items first**, then the chapter chips, then the
+  LSO line, then any "check" flag. Rafael asked for the assessments on top
+  (17 Sep 2026): they are what matters most in a week.
 - **LSO competencies are numbers only.** The syllabi print "LSO
   Competencies: 202, 204" per class meeting (`lso_nums`, shown by
   `lsoLine()` in the syllabus's own order). No syllabus gives the wording

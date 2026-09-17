@@ -443,15 +443,15 @@ VIEWS.grid = () => {
       const reads = D.readings.filter((r) => r.course === code && r.week_no === w);
       const dues = D.assessments.filter((a) => a.course === code && a.week_no === w);
       const unsure = rows.find((r) => r.confidence && r.confidence !== "high");
-      /* One tick chip per chapter -- the same chip as This Week and Courses,
+      /* Graded items first: they are what matters most in a week, so they sit
+         at the top of the cell, above the chapters (Rafael, 17 Sep 2026). */
+      let cell = dues.map((a) => `<div><span class="tag ${esc(a.type)}">${esc(a.name)}${weightTag(a) ? ` <b>${weightTag(a)}</b>` : ""}</span>
+          ${a.scope_chapters ? `<div class="cov">covers ch ${esc(list(a.scope_chapters))}</div>` : ""}</div>`).join("");
+      /* Then one tick chip per chapter -- the same chip as This Week and Courses,
          reading the same progress row, so a tick made anywhere shows here. */
-      let cell = reads.length ? `<div class="chips">${reads.map((r) => chapterChip(r, prog[r.id])).join("")}</div>`
+      cell += reads.length ? `<div class="chips">${reads.map((r) => chapterChip(r, prog[r.id])).join("")}</div>`
         : (dues.length || unsure) ? "" : `<span class="muted">—</span>`;     /* a class with nothing assigned */
       cell += rows.map((r) => lsoLine(r, true)).join("");
-      for (const a of dues) {
-        cell += `<div><span class="tag ${esc(a.type)}">${esc(a.name)}${weightTag(a) ? ` <b>${weightTag(a)}</b>` : ""}</span>
-          ${a.scope_chapters ? `<div class="cov">covers ch ${esc(list(a.scope_chapters))}</div>` : ""}</div>`;
-      }
       if (unsure) cell += `<div><span class="tag unstated" title="${esc(unsure.note || "confidence: " + unsure.confidence)}">check</span></div>`;
       h += `<div class="gcell ${unsure ? "unsure" : ""}">${cell}</div>`;
     }
