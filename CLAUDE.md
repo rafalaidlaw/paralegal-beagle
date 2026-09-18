@@ -87,6 +87,38 @@ python validate.py
 `validate.py` checks the DATA. For anything about the interface, see
 `tools/README.md` — it lists the six checks and the order to run them in.
 
+## The paralegal wiki, and what this project owes it
+
+Rafael keeps a second project at `../paralegal-wiki`: an "LLM wiki" in Andrej
+Karpathy's pattern, where Claude Code maintains Markdown pages of doctrine,
+cases and statutes under its own `CLAUDE.md` schema, and Obsidian is only the
+viewer. **The division of authority is the thing to protect:**
+
+| | this project | the wiki |
+|---|---|---|
+| owns | dates, weeks, chapters assigned, deadlines, weights, LSO numbers, stated exam scope | doctrine, tests, elements, cases, statutes, analyses, quizzes |
+
+Ask "could a professor change this by announcement?" If yes it is calendar, and
+it is ours. Neither project stores the other's facts, and nothing here should
+ever be written into `wiki/` — those pages have one maintainer.
+
+`python export_schedule.py` writes one generated file per course into
+`../paralegal-wiki/context/`, so the wiki's Ingest workflow can look up a real
+class date instead of guessing one. It had to: the wiki's first source page
+recorded the ingest date because the lecture PDF gave none. Notes:
+
+- It **reads the wiki's own class list** from that repo's `CLAUDE.md` §3 rather
+  than holding a copy. LGL154 is excluded there on purpose; follow it, and stop
+  rather than invent a class folder.
+- It imports `serve.py` and calls `build_payload()`, so readings, week numbers
+  and deadlines are derived exactly once, in one place. A second derivation is
+  a second answer waiting to disagree.
+- Output is deterministic — the provenance line names the commit and a digest of
+  the three source CSVs, never a wall clock, so an unchanged export leaves the
+  wiki repo's `git status` clean. `--check` says what would change and writes
+  nothing.
+- Re-run it after any change to `data/`, right after `validate.py`.
+
 **Never go back to flattened text.** `pdftotext` reconstructs columns from
 whitespace but cannot tell you which ROW a wrapped line belongs to, and the first
 line of a cell lands under the previous row's last line. That produced a real,

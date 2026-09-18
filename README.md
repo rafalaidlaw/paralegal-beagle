@@ -99,6 +99,25 @@ keeps the **verbatim syllabus wording** beside every date and reading
 (`date_raw`, `reading_raw`), so if a figure ever looks wrong you can trace it
 back to a page of the original PDF in seconds.
 
+## The wiki next door
+
+`../paralegal-wiki` is your other project: the one where Claude Code writes up
+doctrine, cases and statutes as you ingest lectures. It knows the law; this one
+knows the calendar. To hand it the calendar:
+
+```
+python export_schedule.py
+```
+
+That writes one file per course into the wiki's `context/` folder — every class
+with its real date, the chapters the syllabus assigned, the LSO competencies,
+and every deadline. The wiki reads those when it writes up a lecture, so a page
+gets the true class date instead of the day you happened to ingest it. Run it
+again whenever you change something in `data/`.
+
+Dates, deadlines and chapters are **this** project's to fix; doctrine is the
+wiki's. If a date is wrong in the wiki, fix it here and re-run the export.
+
 ## If a professor changes something
 
 Edit the row in `data/schedule.csv` or `data/assessments.csv`, then:
