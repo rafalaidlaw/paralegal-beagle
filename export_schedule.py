@@ -90,12 +90,16 @@ def provenance():
     three source CSVs changes only when the data does.
     """
     sources = ["courses.csv", "schedule.csv", "assessments.csv"]
+    paths = [f"data/{n}" for n in sources]
     try:
-        sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
-                             capture_output=True, text=True, check=True).stdout.strip()
+        # The last commit that touched THESE FILES, not HEAD. Naming HEAD made
+        # every unrelated commit here rewrite all eight files in the wiki repo,
+        # which is the opposite of the point.
+        sha = subprocess.run(["git", "log", "-1", "--format=%h", "--"] + paths, cwd=ROOT,
+                             capture_output=True, text=True, check=True).stdout.strip() or "none"
         # Only the three files this reads. progress.csv changes every time Rafael
         # ticks a chapter, and that must not make every export read as provisional.
-        dirty = subprocess.run(["git", "status", "--porcelain", "--"] + [f"data/{n}" for n in sources],
+        dirty = subprocess.run(["git", "status", "--porcelain", "--"] + paths,
                                cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
         commit = f"{sha}{' plus uncommitted edits' if dirty else ''}"
     except Exception:
