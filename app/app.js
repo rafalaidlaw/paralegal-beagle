@@ -76,6 +76,22 @@ const pill = (code) => isShown("courses")
   : `<span class="course-pill" data-c="${esc(code)}" title="${esc(courseName(code))}">${esc(code)}</span>`;
 const typeWord = (t) => `<span class="type ${esc(t)}">${esc(t)}</span>`;
 
+/* Column order in the Weekly Calendar: the order Rafael meets his courses in
+   the week, which is how he reads across a row (24 Sep 2026). It is a
+   preference, not a fact from the syllabi, so it lives here and not in
+   data/courses.csv -- that file stays alphabetical, which is what makes it
+   readable beside validate.py's output.
+
+   It is his order, not the clock's: by meeting time Administrative Law is
+   sixth (Wed 5:10pm), and he asked for it first. Do not "correct" it.
+
+   A course missing from this list still appears, at the end. A column that
+   silently vanished would look exactly like a course with nothing due -- the
+   failure this whole project is built to avoid. */
+const WEEK_ORDER = ["LGL156", "LGL151", "LGL250", "LGL225", "LGL154", "LGL160", "LGL152", "LGL153"];
+const rank = (code) => { const i = WEEK_ORDER.indexOf(code); return i < 0 ? WEEK_ORDER.length : i; };
+const byWeekOrder = (codes) => [...codes].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+
 /* A week-precision item has a WINDOW, not a date, so it needs two horizons:
      dMin — the earliest it can happen (that week's Monday). Planning uses
             this: "in 9 days" is the honest warning for a quiz in the week of
@@ -441,7 +457,7 @@ function deadlineRow(a, isNext, extra) {
 
 /* ==================================================================== GRID */
 VIEWS.grid = () => {
-  const codes = D.courses.map((c) => c.code);
+  const codes = byWeekOrder(D.courses.map((c) => c.code));
   const prog = progressMap();
   const nowWk = nowWeek(), last = LAST_WEEK();
   let h = `<div class="gtools">
@@ -483,7 +499,8 @@ VIEWS.grid = () => {
 
 function legend() {
   const on = isShown("courses");
-  return `<div class="legend">${D.courses.map((c) => {
+  const ordered = byWeekOrder(D.courses.map((c) => c.code)).map((code) => course(code));
+  return `<div class="legend">${ordered.map((c) => {
     const body = `<span class="dot"></span><span class="code">${esc(c.code)}</span>`;
     return on
       ? `<a href="#courses/${esc(c.code)}" data-c="${esc(c.code)}" title="${esc(c.name)}">${body}</a>`

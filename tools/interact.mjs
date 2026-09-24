@@ -249,8 +249,21 @@ await go("grid");
 const lsoGrid = await evalJs(`JSON.stringify({ n: document.querySelectorAll('.gcell .lso').length, first: document.querySelector('.gcell .lso')?.textContent.trim() })`);
 const lg = JSON.parse(lsoGrid.v);
 check("the grid carries them in short form", lg.n >= 60 && /^LSO \d+(, \d+)*$/.test(lg.first || ""), lg);
-const lsoNone = await evalJs(`[...document.querySelectorAll('.grow:not(.head)')].some(r => r.children[4].querySelector('.lso'))`);
+// LGL154's column, found by reading the header rather than counted from the
+// left -- the columns are in Rafael's week order now, not alphabetical.
+const lsoNone = await evalJs(`(() => {
+  const heads = [...document.querySelectorAll('.grow.head .gcell .code')].map(e => e.textContent.trim());
+  const i = heads.indexOf("LGL154");
+  if (i < 0) return "LGL154 column not found";
+  return [...document.querySelectorAll('.grow:not(.head)')].some(r => r.children[i + 1].querySelector('.lso'));
+})()`);
 check("LGL154 lists none, so its column shows none", lsoNone.v === false, lsoNone.v);
+const colOrder = await evalJs(`[...document.querySelectorAll('.grow.head .gcell .code')].map(e => e.textContent.trim())`);
+check("the calendar's columns run in Rafael's week order",
+  JSON.stringify(colOrder.v) === JSON.stringify(["LGL156", "LGL151", "LGL250", "LGL225", "LGL154", "LGL160", "LGL152", "LGL153"]), colOrder.v);
+const legOrder = await evalJs(`[...document.querySelectorAll('.legend .code')].map(e => e.textContent.trim())`);
+check("the legend beneath it reads in the same order",
+  JSON.stringify(legOrder.v) === JSON.stringify(colOrder.v), legOrder.v);
 
 // ---------------------------------------------------------------- deep links
 // Cut to three screens on 24 Sep 2026. The other five still render (viewtest

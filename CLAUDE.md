@@ -234,6 +234,14 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   "3.8 on --bg: marks only" read as a declaration and silently swallowed the
   `--accent-text` line after it. That is why the comment beside a token must
   never contain `--name:`.
+- **The Weekly Calendar's columns run in Rafael's week order**, not
+  alphabetically: LGL156, LGL151, LGL250, LGL225, LGL154, LGL160, LGL152,
+  LGL153 (`WEEK_ORDER` in `app.js`, also used by `legend()`). It is his order,
+  not the clock's — by meeting time Administrative Law is sixth (Wed 5:10pm)
+  and he asked for it first on 24 Sep 2026. Do not "correct" it, and do not
+  move it into `data/courses.csv`: that file stays alphabetical, and column
+  order is a preference, not a fact from a syllabus. A course missing from
+  `WEEK_ORDER` still renders, at the end.
 - **The Weekly Calendar is 1100px wide minimum**, which fits beside the 238px
   sidebar at 1440. The reference used 1260 and cut off the eighth column.
   Chips inside grid cells wrap; everywhere else they do not.
