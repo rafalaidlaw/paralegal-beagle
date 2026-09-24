@@ -196,7 +196,7 @@ check("theme cycles back to light", t.attr === "light" && t.ls === "light", t);
 await go("grid");
 const chVisible = () => evalJs(`getComputedStyle(document.querySelector('.gcell .chips')).display`);
 const lsoVisible = () => evalJs(`getComputedStyle(document.querySelector('.gcell .lso')).display`);
-check("term grid shows chapters by default", (await chVisible()).v !== "none", (await chVisible()).v);
+check("the Weekly Calendar shows chapters by default", (await chVisible()).v !== "none", (await chVisible()).v);
 await click("#deadlines-only"); await sleep(900);
 check("deadlines-only hides the chapter runs", (await chVisible()).v === "none", (await chVisible()).v);
 check("deadlines-only hides the competency lines too", (await lsoVisible()).v === "none", (await lsoVisible()).v);
@@ -211,7 +211,7 @@ check("...and the competency lines", (await lsoVisible()).v !== "none", (await l
 check("no density button in the sidebar", (await evalJs(`document.querySelector('#density')`)).v === null, null);
 
 // ---------------------------------------------------------------- one tick, every view
-// The Term Grid carries the same chips as This Week and Courses, all reading
+// The Weekly Calendar carries the same chips as This Week and Courses, all reading
 // one progress row, so a tick made in the grid must show on the other two.
 // `rid` was cycled to blank at the top of this run.
 await go("grid");
@@ -281,6 +281,18 @@ check("the grid legend is likewise not linked", ll.links === 0 && ll.items === 8
 await go("exams");   // the old hash must still land somewhere sensible
 const title = await evalJs(`document.querySelector("#vtitle")?.textContent.trim()`);
 check("#exams aliases to Deadlines", title.v === "Deadlines", title.v);
+// The Term Grid became the Weekly Calendar on 24 Sep 2026. #grid stays the
+// route so old bookmarks work; #calendar matches the name on screen.
+for (const [hash, want] of [["grid", "Weekly Calendar"], ["calendar", "Weekly Calendar"]]) {
+  await go(hash);
+  const t = await evalJs(`document.querySelector("#vtitle")?.textContent.trim()`);
+  check(`#${hash} opens the Weekly Calendar`, t.v === want, t.v);
+}
+const navText = await evalJs(`[...document.querySelectorAll('#nav a[data-view]')].map(a => a.firstChild.textContent.trim())`);
+check("the sidebar names the three screens and shows no group headings",
+  JSON.stringify(navText.v) === JSON.stringify(["This Week", "Deadlines", "Weekly Calendar"])
+  && (await evalJs(`document.querySelectorAll('#nav .grp').length`)).v === 0, navText.v);
+await go("deadlines");   // back, for the two checks below
 const nextRows = await evalJs(`document.querySelectorAll('.drow.next').length`);
 check("exactly one deadline row is marked next", nextRows.v === 1, nextRows.v);
 const months = await evalJs(`[...document.querySelectorAll('.month')].map(m => m.textContent.trim())`);

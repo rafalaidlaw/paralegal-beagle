@@ -141,7 +141,7 @@ function toggleDeadlinesOnly() { LS.set("beagle-deadlines-only", isDeadlinesOnly
 const VIEW_META = {
   week: ["This Week", () => weekSubtitle()],
   deadlines: ["Deadlines", () => "Every graded item and hard milestone in date order — what it covers, when it lands, what it is worth."],
-  grid: ["Term Grid", () => `Fifteen weeks against ${words(D.courses.length)} courses. The one view no single syllabus can give you.`],
+  grid: ["Weekly Calendar", () => `Fifteen weeks against ${words(D.courses.length)} courses. The one view no single syllabus can give you.`],
   crunch: ["Crunch", () => crunchSubtitle()],
   courses: ["Courses", () => "Per-course syllabus, standing and schedule."],
   notes: ["Notes", () => "Reading notes in Markdown, indexed per class meeting."],
@@ -203,7 +203,8 @@ function paintChrome() {
 /* ------------------------------------------------------------ router */
 const VIEWS = {};
 
-/* THE THREE SCREENS. Rafael cut the app to This Week, Deadlines and Term Grid
+/* THE THREE SCREENS. Rafael cut the app to This Week, Deadlines and the
+   Weekly Calendar
    on 24 Sep 2026. The other five -- Crunch, Courses, Notes, Cases, Review --
    are still built and still work; they are simply not listed in the sidebar
    and not routable. To bring one back: add its name to this list and
@@ -216,7 +217,9 @@ const VIEWS = {};
 const SHOWN = ["week", "deadlines", "grid"];
 const isShown = (v) => SHOWN.includes(v);
 
-const ALIAS = { exams: "deadlines" };
+/* The route stays #grid so old bookmarks keep working; #calendar matches the
+   name it is shown under, and #exams predates the Deadlines rename. */
+const ALIAS = { exams: "deadlines", calendar: "grid" };
 let renderedView = null;
 /* Re-rendering replaces the whole view, so the scroll position has to be put
    back on purpose. A change of SCREEN goes to the top; a tick, a mark, a
@@ -224,7 +227,7 @@ let renderedView = null;
 function render() {
   paintChrome();
   const y = window.scrollY;
-  const x = $(".gridwrap")?.scrollLeft || 0;     /* the Term Grid scrolls sideways below 1338px */
+  const x = $(".gridwrap")?.scrollLeft || 0;     /* the Weekly Calendar scrolls sideways below 1338px */
   main.innerHTML = VIEWS[state.view]();
   if (state.view !== renderedView) window.scrollTo(0, 0);
   else { window.scrollTo(0, y); if (x) { const g = $(".gridwrap"); if (g) g.scrollLeft = x; } }

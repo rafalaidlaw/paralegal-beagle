@@ -202,7 +202,9 @@ i, em { font-style: normal; font-weight: 600; }
 .nowblock .big span { font: 700 14px var(--sans); color: var(--ink3); }
 .nowblock .range { margin-top: 6px; font-size: 12.5px; color: var(--ink2); }
 
-.nav { flex: 1; overflow-y: auto; padding: 6px 0 10px; min-height: 0; }
+.nav { flex: 1; overflow-y: auto; padding: 12px 0 10px; min-height: 0; }
+/* The "Now" / "The term" group headings went on 24 Sep 2026 -- three entries
+   do not need grouping. The rule stays for whichever screens come back. */
 .nav .grp { display: block; padding: 16px 18px 5px; }
 .nav .grp:first-child { padding-top: 12px; }
 .nav a {

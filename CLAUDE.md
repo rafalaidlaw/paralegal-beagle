@@ -165,7 +165,12 @@ Standard library only. Binds 127.0.0.1. There is **no build step** — edit
 `app/*` and refresh. Rafael has asked "did you build it?" before; the answer is
 that a refresh is the build.
 
-**Three screens, since 24 Sep 2026: This Week, Deadlines, Term Grid.** Rafael
+**Three screens, since 24 Sep 2026: This Week, Deadlines, Weekly Calendar.**
+The Term Grid was renamed on 24 Sep 2026; its route stays `#grid` so old
+bookmarks keep working, with `#calendar` as an alias. The sidebar's "Now" /
+"The term" group headings went at the same time — three entries need no
+grouping, though `.nav .grp` stays in the stylesheet for whatever comes back.
+Rafael
 cut it to what he opens. Crunch, Courses, Notes, Cases and Review are still
 built, still rendered by `viewtest.mjs`, and still correct — they are listed in
 neither the sidebar nor the router. The switch is `SHOWN` in `app.js`; add a
@@ -229,7 +234,7 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   "3.8 on --bg: marks only" read as a declaration and silently swallowed the
   `--accent-text` line after it. That is why the comment beside a token must
   never contain `--name:`.
-- **The Term Grid is 1100px wide minimum**, which fits beside the 238px
+- **The Weekly Calendar is 1100px wide minimum**, which fits beside the 238px
   sidebar at 1440. The reference used 1260 and cut off the eighth column.
   Chips inside grid cells wrap; everywhere else they do not.
 - **A phone layout is checked with `tools/probe.mjs`, not a screenshot.**
@@ -245,7 +250,7 @@ reasonable in a stylesheet; re-measure before undoing any of them.
 - **Native `<select>` is as wide as its widest option.** The note picker holds
   121 class meetings; it needs `max-width: 100%`.
 - **One chip, every view.** A chapter's tick box is `chapterChip()` on This
-  Week, Courses and the Term Grid alike, keyed by the reading id, so one
+  Week, Courses and the Weekly Calendar alike, keyed by the reading id, so one
   click anywhere is one row in `progress.csv` and every view agrees. The
   grid restyles the chip (`.gcell .chch`); it does not have its own. A
   re-render also puts back the grid's sideways scroll, not only `scrollY`.

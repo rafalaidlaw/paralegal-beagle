@@ -26,7 +26,7 @@ Three, listed down the left side with a count beside each.
 |---|---|
 | **This Week** | Start here. One sentence at the top says how many chapters there are this week and how far off the next graded item is. Then the next three deadlines with a big day count each, your readings for the week class by class, and the whole term as fifteen bars down the right. |
 | **Deadlines** | Every graded item in date order, month by month: what it covers where the syllabus says, when it lands, what it is worth. |
-| **Term Grid** | All fifteen weeks by all eight courses on one screen, with a tick box beside every chapter. Holidays, study week and the drop deadline get their own rows. A button hides the chapters when you only want deadlines. |
+| **Weekly Calendar** | All fifteen weeks by all eight courses on one screen, with a tick box beside every chapter. Holidays, study week and the drop deadline get their own rows. A button hides the chapters when you only want deadlines. |
 
 ### The five that are put away
 
@@ -43,7 +43,7 @@ held the 24 open questions the syllabi left ambiguous — they are still listed 
 ## Getting around
 
 - Click the box beside a chapter to cycle it: not started → in progress →
-  done. The same box appears on This Week, Courses and the Term Grid, and a
+  done. The same box appears on This Week and the Weekly Calendar, and a
   tick made on any of them shows on all three. **All done** clears a whole
   class at once. Your progress lives in `data/progress.csv` and survives
   everything else.
@@ -59,8 +59,8 @@ held the 24 open questions the syllabi left ambiguous — they are still listed 
   and **Auto**, which follows Windows. It starts on Light and remembers your
   choice.
 - Every screen has its own web address, so you can bookmark one. `#deadlines`
-  opens Deadlines; `#courses/LGL225` opens Immigration Law; `#week/7` opens
-  week 7.
+  opens Deadlines; `#week/7` opens week 7; `#grid` and `#calendar` both open
+  the Weekly Calendar.
 - On a phone the sidebar folds into a strip across the top.
 
 The look was designed in Claude Design and rebuilt here to run offline. The
