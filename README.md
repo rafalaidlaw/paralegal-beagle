@@ -20,18 +20,25 @@ just refresh the page.
 
 ## The screens
 
-They are listed down the left side, each with a count beside it.
+Three, listed down the left side with a count beside each.
 
 | Screen | What it's for |
 |---|---|
 | **This Week** | Start here. One sentence at the top says how many chapters there are this week and how far off the next graded item is. Then the next three deadlines with a big day count each, your readings for the week class by class, and the whole term as fifteen bars down the right. |
 | **Deadlines** | Every graded item in date order, month by month: what it covers where the syllabus says, when it lands, what it is worth. |
 | **Term Grid** | All fifteen weeks by all eight courses on one screen, with a tick box beside every chapter. Holidays, study week and the drop deadline get their own rows. A button hides the chapters when you only want deadlines. |
-| **Crunch** | How much of your final grade falls due each week, added up across all eight courses, one bar per week coloured by course. Nobody else can produce this for you: each professor sees only their own course. |
-| **Courses** | One course at a time: the details, your grade standing, every assessment with a box to enter the mark, and the full schedule with tick-offs. |
-| **Notes** | Your reading notes, filed by course and week. Plain Markdown files in `notes/`. Write them here or in any editor. |
-| **Cases** | Case briefs with style of cause, citation, CanLII link, and whether you have actually verified it. |
-| **Review** | The questions the syllabi left open. Worth one sitting to clear. |
+
+### The five that are put away
+
+Crunch, Courses, Notes, Cases and Review were switched off on 24 Sep 2026 to
+keep the app to what you actually open. **They are not deleted** — the code is
+untouched and still tested. To bring one back, add its name to the `SHOWN` list
+near the top of `app/app.js` and un-comment its line in `app/index.html`.
+
+Worth knowing while they are away: **Courses** was the only place to type in a
+mark you got back, so grade standing is unavailable until it returns. **Review**
+held the 24 open questions the syllabi left ambiguous — they are still listed in
+`data/changes.md`.
 
 ## Getting around
 

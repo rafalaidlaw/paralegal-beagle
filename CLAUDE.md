@@ -165,10 +165,22 @@ Standard library only. Binds 127.0.0.1. There is **no build step** — edit
 `app/*` and refresh. Rafael has asked "did you build it?" before; the answer is
 that a refresh is the build.
 
-Views, in the sidebar: This Week, Deadlines, Term Grid, Crunch, Courses, Notes,
-Cases, Review. Routes are hash-based and bookmarkable: `#deadlines`,
-`#courses/LGL225`, `#week/7`. `#exams` is kept as an alias of `#deadlines` so
-old bookmarks land. The sidebar footer has a theme toggle; the choice lives
+**Three screens, since 24 Sep 2026: This Week, Deadlines, Term Grid.** Rafael
+cut it to what he opens. Crunch, Courses, Notes, Cases and Review are still
+built, still rendered by `viewtest.mjs`, and still correct — they are listed in
+neither the sidebar nor the router. The switch is `SHOWN` in `app.js`; add a
+name there and un-comment its `<a>` in `index.html` to bring one back, and
+nothing else. **Do not delete those views' code**: This Week's runway calls
+`crunchWeeks()` from the Crunch section and the header calls `reviewItems()`,
+so cutting the blocks out breaks the screens he kept. Two consequences worth
+saying out loud rather than rediscovering: with Courses away there is nowhere
+to enter a mark, so grade standing is dark; and anything that would link to a
+hidden screen must not render as a link — `pill()` and `legend()` fall back to
+plain chips, and `tools/interact.mjs` asserts it.
+
+Routes are hash-based and bookmarkable: `#deadlines`, `#week/7`. `#exams` is
+kept as an alias of `#deadlines`, and a deep link to a hidden screen
+(`#courses/LGL225`) lands on This Week rather than a blank page. The sidebar footer has a theme toggle; the choice lives
 in `localStorage` and is read before the first paint by an inline script in
 `index.html`. There was also a Roomy/Compact spacing toggle; Rafael chose
 compact for good on 13 Sep 2026, so `--rowpad`/`--secpad` are 8/18 and the

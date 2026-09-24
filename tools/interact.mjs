@@ -116,7 +116,7 @@ const yAfter = (await evalJs(`window.scrollY`)).v;
 check("ticking a chapter keeps the scroll position", yBefore > 200 && Math.abs(yAfter - yBefore) < 4, { yBefore, yAfter });
 await click(`[data-reading="${lastChip}"]`); await sleep(600);
 await click(`[data-reading="${lastChip}"]`); await sleep(600);   // back to blank
-await evalJs(`document.querySelector('#nav a[data-view="crunch"]').click()`); await sleep(1200);
+await evalJs(`document.querySelector('#nav a[data-view="deadlines"]').click()`); await sleep(1200);
 check("switching screens goes to the top", (await evalJs(`window.scrollY`)).v === 0, (await evalJs(`window.scrollY`)).v);
 
 // ---------------------------------------------------------------- master tick
@@ -142,20 +142,26 @@ if (master) {
 // ---------------------------------------------------------------- week nav
 await go("week");
 const wkText = () => evalJs(`document.querySelector('.wknav b')?.textContent.trim()`);
-check("lands on the current week", /Week 1 of 15/.test((await wkText()).v || ""), (await wkText()).v);
+// Read the week the app lands on rather than naming one. This suite was
+// written in week 1 and asserted "Week 1 of 15"; by week 3 that had turned
+// seven honest checks red for no reason but the calendar.
+const wkNo = async () => Number(((await wkText()).v || "").match(/Week (\d+) of/)?.[1]);
+const here = await wkNo();
+check("lands on a real term week", here >= 1 && here <= 15, (await wkText()).v);
 await click("#wk-next"); await sleep(1200);
-check("next-week button steps forward", /Week 2 of 15/.test((await wkText()).v || ""), (await wkText()).v);
+check("next-week button steps forward", (await wkNo()) === here + 1, (await wkText()).v);
 await key("]"); await sleep(1200);
-check("] key steps forward", /Week 3 of 15/.test((await wkText()).v || ""), (await wkText()).v);
+check("] key steps forward", (await wkNo()) === here + 2, (await wkText()).v);
 await key("["); await sleep(1200);
-check("[ key steps back", /Week 2 of 15/.test((await wkText()).v || ""), (await wkText()).v);
-check("the hash follows the week", (await evalJs("location.hash")).v === "#week/2", (await evalJs("location.hash")).v);
+check("[ key steps back", (await wkNo()) === here + 1, (await wkText()).v);
+check("the hash follows the week", (await evalJs("location.hash")).v === `#week/${here + 1}`, (await evalJs("location.hash")).v);
 await click("#wk-today"); await sleep(1000);
-check("back-to-this-week returns to week 1", /Week 1 of 15/.test((await wkText()).v || ""), (await wkText()).v);
+check("back-to-this-week returns to the current week", (await wkNo()) === here, (await wkText()).v);
 const stripNow = await evalJs(`document.querySelectorAll('.runway.now').length`);
 check("exactly one runway row is marked now", stripNow.v === 1, stripNow.v);
 const sideWeek = await evalJs(`document.querySelector('#wk-big')?.textContent.trim()`);
-check("the sidebar shows the current week, zero-padded", sideWeek.v === "01", sideWeek.v);
+check("the sidebar shows the current week, zero-padded",
+  sideWeek.v === String(here).padStart(2, "0"), { sideWeek: sideWeek.v, here });
 
 // ---------------------------------------------------------------- theme
 await go("week");
@@ -215,11 +221,9 @@ await click(`.gcell [data-reading="${rid}"]`); await sleep(900);
 check("ticking in the grid: blank -> in_progress", (await gridState()) === "in_progress", await gridState());
 await go("week");
 check("the same tick shows on This Week", (await stateOf()) === "in_progress", await stateOf());
-await go(`courses/${rid.slice(0, 6)}`);
-check("the same tick shows on Courses", (await stateOf()) === "in_progress", await stateOf());
-await click(`[data-reading="${rid}"]`); await sleep(700);     // done, ticked on Courses this time
+await click(`[data-reading="${rid}"]`); await sleep(700);     // done, ticked on This Week this time
 await go("grid");
-check("a tick made on Courses shows in the grid", (await gridState()) === "done", await gridState());
+check("a tick made on This Week shows in the grid", (await gridState()) === "done", await gridState());
 await click(`.gcell [data-reading="${rid}"]`); await sleep(900);   // back to blank
 check("the grid clears it again", (await gridState()) === "", await gridState());
 
@@ -241,9 +245,6 @@ await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1200, de
 await go("week/2");
 const lsoWeek = await evalJs(`[...document.querySelectorAll('.rrow .lso')].map(e => e.textContent.trim())`);
 check("This Week lists a class's LSO competencies", (lsoWeek.v || []).includes("LSO competencies 171, 172, 170"), lsoWeek.v);
-await go("courses/LGL151");
-const lsoCourse = await evalJs(`[...document.querySelectorAll('.rrow .lso')].map(e => e.textContent.trim())`);
-check("Courses lists them on the schedule rows", (lsoCourse.v || []).includes("LSO competencies 171, 172, 170"), lsoCourse.v);
 await go("grid");
 const lsoGrid = await evalJs(`JSON.stringify({ n: document.querySelectorAll('.gcell .lso').length, first: document.querySelector('.gcell .lso')?.textContent.trim() })`);
 const lg = JSON.parse(lsoGrid.v);
@@ -252,16 +253,29 @@ const lsoNone = await evalJs(`[...document.querySelectorAll('.grow:not(.head)')]
 check("LGL154 lists none, so its column shows none", lsoNone.v === false, lsoNone.v);
 
 // ---------------------------------------------------------------- deep links
-await go("courses/LGL225");
-const sel = await evalJs(`document.querySelector("#csel").value`);
-check("#courses/LGL225 opens that course", sel.v === "LGL225", sel.v);
-await go("week");
-const pillHref = await evalJs(`document.querySelector('.card a.course-pill')?.getAttribute("href")`);
-check("card pills link into Courses", /^#courses\/LGL\d{3}$/.test(pillHref.v || ""), pillHref.v);
-const navCount = await evalJs(`document.querySelector('#nav a[data-view="review"] .count')?.textContent.trim()`);
-check("the sidebar shows the review count", /^\d+$/.test(navCount.v || ""), navCount.v);
+// Cut to three screens on 24 Sep 2026. The other five still render (viewtest
+// proves that) but are not listed and not routable, and nothing may link to
+// them -- a link to nowhere is worse than no link.
+const navViews = await evalJs(`[...document.querySelectorAll('#nav a[data-view]')].map(a => a.dataset.view)`);
+check("the sidebar lists exactly the three screens",
+  JSON.stringify(navViews.v) === JSON.stringify(["week", "deadlines", "grid"]), navViews.v);
+const navCount = await evalJs(`document.querySelector('#nav a[data-view="deadlines"] .count')?.textContent.trim()`);
+check("the sidebar shows a count beside a screen", /^\d+$/.test(navCount.v || ""), navCount.v);
 const navOn = await evalJs(`document.querySelectorAll('#nav a.on').length`);
 check("exactly one nav item is active", navOn.v === 1, navOn.v);
+
+await go("courses/LGL225");   // an old bookmark to a screen that is now hidden
+const landed = await evalJs(`JSON.stringify({ title: document.querySelector("#vtitle")?.textContent.trim(), csel: !!document.querySelector("#csel") })`);
+const lj = JSON.parse(landed.v);
+check("an old deep link to a hidden screen lands on This Week", lj.title === "This Week" && !lj.csel, lj);
+await go("week");
+const deadPills = await evalJs(`JSON.stringify({ links: document.querySelectorAll('.card a.course-pill').length, chips: document.querySelectorAll('.card .course-pill').length })`);
+const dp = JSON.parse(deadPills.v);
+check("course pills are chips, not links to a hidden screen", dp.links === 0 && dp.chips > 0, dp);
+await go("grid");
+const legendLinks = await evalJs(`JSON.stringify({ links: document.querySelectorAll('.legend a').length, items: document.querySelectorAll('.legend .leg').length })`);
+const ll = JSON.parse(legendLinks.v);
+check("the grid legend is likewise not linked", ll.links === 0 && ll.items === 8, ll);
 
 // ---------------------------------------------------------------- deadlines
 await go("exams");   // the old hash must still land somewhere sensible

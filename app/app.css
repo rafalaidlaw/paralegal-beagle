@@ -409,7 +409,7 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
 .citem .code { font: 700 12px var(--mono); }
 .citem.exam, .citem.test { border-color: var(--accent-text); color: var(--accent-text); }
 .legend { display: flex; gap: 12px; flex-wrap: wrap; padding: 10px var(--secpad) 0; }
-.legend a { display: inline-flex; align-items: center; gap: 5px; text-decoration: none; color: var(--ink2); font-size: 12px; }
+.legend a, .legend .leg { display: inline-flex; align-items: center; gap: 5px; text-decoration: none; color: var(--ink2); font-size: 12px; }
 .legend a:hover { color: var(--accent-text); }
 .legend .code { font: 700 12px var(--mono); }
 

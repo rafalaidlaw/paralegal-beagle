@@ -69,8 +69,11 @@ const HEAVY = 90;          /* a week carrying this much grade or more is ruled i
 /* The label after an item's name: its weight, or "due" for an unweighted
    milestone -- unless the name already ends in "due", or it reads "due due". */
 const weightTag = (a) => a.weight_pct ? `${a.weight_pct}%` : (/(^|\W)due(\W|$)/i.test(a.name) ? "" : "due");
-const pill = (code) =>
-  `<a class="course-pill" data-c="${esc(code)}" href="#courses/${esc(code)}" title="${esc(courseName(code))}">${esc(code)}</a>`;
+/* A course code. It links into Courses when that screen is shown; when it is
+   not, it is the same chip without the link -- never a link to nowhere. */
+const pill = (code) => isShown("courses")
+  ? `<a class="course-pill" data-c="${esc(code)}" href="#courses/${esc(code)}" title="${esc(courseName(code))}">${esc(code)}</a>`
+  : `<span class="course-pill" data-c="${esc(code)}" title="${esc(courseName(code))}">${esc(code)}</span>`;
 const typeWord = (t) => `<span class="type ${esc(t)}">${esc(t)}</span>`;
 
 /* A week-precision item has a WINDOW, not a date, so it needs two horizons:
@@ -199,6 +202,20 @@ function paintChrome() {
 
 /* ------------------------------------------------------------ router */
 const VIEWS = {};
+
+/* THE THREE SCREENS. Rafael cut the app to This Week, Deadlines and Term Grid
+   on 24 Sep 2026. The other five -- Crunch, Courses, Notes, Cases, Review --
+   are still built and still work; they are simply not listed in the sidebar
+   and not routable. To bring one back: add its name to this list and
+   un-comment its line in index.html's <nav>. Nothing else.
+
+   Their code is NOT commented out, on purpose. This Week's term runway calls
+   crunchWeeks() from the Crunch section and the page header calls
+   reviewItems(), so commenting those blocks out would break the screens he
+   kept. One list is also one thing to change back, instead of five. */
+const SHOWN = ["week", "deadlines", "grid"];
+const isShown = (v) => SHOWN.includes(v);
+
 const ALIAS = { exams: "deadlines" };
 let renderedView = null;
 /* Re-rendering replaces the whole view, so the scroll position has to be put
@@ -219,6 +236,9 @@ function routeFromHash() {
   let [v, arg] = raw.split("/");
   v = ALIAS[v] || v;
   if (!VIEWS[v]) return;
+  /* An old bookmark to a screen that is no longer shown (#courses/LGL225)
+     lands on This Week rather than a blank page. */
+  if (!isShown(v)) { state.view = "week"; return; }
   state.view = v;
   if (v === "courses" && arg && D.courses.some((c) => c.code === arg)) state.course = arg;
   if (v === "week") state.week = arg ? clampWeek(Number(arg)) : null;
@@ -269,7 +289,7 @@ VIEWS.week = () => {
     h += `<div class="callout"><span class="lbl">Past its date — ${words(over.length)} item${over.length === 1 ? "" : "s"}</span>
       <ul>${over.map((a) => `<li><b>${esc(a.course)} ${esc(a.name)}</b> · ${a.weight_pct}% · ${whenLabel(a)}
         <span class="tag overdue">${Math.abs(dMax(a))}d ago</span></li>`).join("")}</ul>
-      <div class="quiet">If one of these is marked and returned, enter the mark in Courses and it stops showing here.</div></div>`;
+      <div class="quiet">These stay listed until their week has fully run out — a week-dated item is not late while its week is still going.</div></div>`;
   }
 
   /* ---- the week band: items the syllabus dates only to a week ------ */
@@ -459,8 +479,13 @@ VIEWS.grid = () => {
 };
 
 function legend() {
-  return `<div class="legend">${D.courses.map((c) =>
-    `<a href="#courses/${esc(c.code)}" data-c="${esc(c.code)}" title="${esc(c.name)}"><span class="dot"></span><span class="code">${esc(c.code)}</span></a>`).join("")}</div>`;
+  const on = isShown("courses");
+  return `<div class="legend">${D.courses.map((c) => {
+    const body = `<span class="dot"></span><span class="code">${esc(c.code)}</span>`;
+    return on
+      ? `<a href="#courses/${esc(c.code)}" data-c="${esc(c.code)}" title="${esc(c.name)}">${body}</a>`
+      : `<span class="leg" data-c="${esc(c.code)}" title="${esc(c.name)}">${body}</span>`;
+  }).join("")}</div>`;
 }
 
 /* ================================================================== CRUNCH */
