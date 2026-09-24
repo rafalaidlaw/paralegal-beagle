@@ -422,9 +422,7 @@ VIEWS.grid = () => {
   const prog = progressMap();
   const nowWk = nowWeek(), last = LAST_WEEK();
   let h = `<div class="gtools">
-    <button id="deadlines-only" aria-pressed="${isDeadlinesOnly()}">${isDeadlinesOnly() ? "showing deadlines only" : "show deadlines only"}</button>
-    <span class="quiet">Tick a chapter here as you read it; the same tick shows on This Week and Courses. LSO numbers are the competencies the syllabus lists for that class.
-      Exams and tests are ruled in red. An em dash is a class with nothing assigned; a hatched cell is a week with no class.</span></div>`;
+    <button id="deadlines-only" aria-pressed="${isDeadlinesOnly()}">${isDeadlinesOnly() ? "showing deadlines only" : "show deadlines only"}</button></div>`;
   h += `<div class="gridwrap"><div class="grid ${isDeadlinesOnly() ? "deadlines-only" : ""}">
     <div class="grow head"><div class="gwk lbl">Week</div>${codes.map((c) => `<div class="gcell" data-c="${esc(c)}">
       <a class="code" href="#courses/${esc(c)}" style="text-decoration:none;color:inherit">${esc(c)}</a><div class="short">${esc(courseName(c))}</div></div>`).join("")}</div>`;
