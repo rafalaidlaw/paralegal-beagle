@@ -4,7 +4,15 @@
       "Bash(mkdir -p syllabi handouts reference data app build notes)",
       "Bash(mv \"Contracts and Torts Syllabus Fall 2026.pdf\" \"CourseOutline_Syllabus.pdf\" \"LGL 156 Syllabus - Fall 2026.pdf\" \"LGL 250 SPF 26-3 Courseleaf Syllabus.pdf\" \"LGL151 Syllabus -Fall 2026.pdf\" \"LGL153NPF Syllabus Fall 2026.docx\" \"lgl154-npf-Fall 2026 Syllabus.pdf\" \"syllabi-2267-lgl225-npf-5370-loggedin.pdf\" syllabi/)",
       "Bash(mv \"Presentation Instructions - Fall 2026.pdf\" \"Activity_ Immigration Reference Toolkit _ Fall_ 2026\\(1\\).docx\" handouts/)",
-      "Bash(mv \"2026-09-11_integrity-in-action.pdf\" reference/)"
+      "Bash(mv \"2026-09-11_integrity-in-action.pdf\" reference/)",
+      "WebSearch",
+      "Bash(find \"C:/Users/Rafael/Desktop/paralegal-wiki\" -not -path \"*/.git/*\" 2>&1 | head -300)",
+      "Read(//c/Users/Rafael/Desktop/paralegal-wiki/**)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:gist.githubusercontent.com)",
+      "Bash(sed -n '/^function md\\(/,/^}/p' app/app.js)",
+      "Bash(sed -n '/VIEWS.cases = /,/^};/p' app/app.js)",
+      "Read(//c/Users/Rafael/Desktop/paralegal-wiki/wiki/**)"
     ]
   }
 }
