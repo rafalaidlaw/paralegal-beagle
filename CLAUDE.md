@@ -237,20 +237,31 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   `--accent-text` line after it. That is why the comment beside a token must
   never contain `--name:`.
 - **The Timetable is drawn from `data/timetable.csv`, which is not derived
-  from the syllabi.** It was transcribed from a picture of Rafael's Block NF
-  timetable on 25 Sep 2026 and is the one file in `data/` with a `source`
-  column. Five blocks corroborate a syllabus (`confidence: high`); six were
-  read off the picture (`confidence: low`) and are drawn dashed and labelled
-  "to confirm". Blocks are positioned by percentage of the day's span, so the
-  chart holds its proportions at any width; a block under an hour tall drops
-  to one line or it clips its own text.
-- **Three courses disagree with that timetable, and it is not settled.** It
-  shows every course as section **NPF**; `courses.csv` has LGL152 and LGL156 as
-  **NPE** on different days, and LGL151 is dated to Mondays throughout
-  `schedule.csv` while the timetable says Tuesday. **Do not resolve this by
-  preferring the newer source.** It bears on deadlines, not just the drawing:
-  LGL152 and LGL156 date work to "during in person class". See
-  `data/changes.md`, 25 Sep 2026.
+  from the syllabi.** It is Rafael's Seneca enrolment listing (25 Sep 2026),
+  the one file in `data/` with a `source` column, and every row is
+  `confidence: high`. An earlier version held times read off a screenshot; the
+  listing corrected six of them by up to an hour. **Never re-introduce a time
+  read off a picture when the listing has one.**
+- **The listing gives starts and rooms but no end times.** Five blocks take
+  their end from a syllabus; six have none stated anywhere and carry a blank
+  `end`. Those draw `OPEN_DRAW_MIN` (45) minutes tall with a dashed foot and
+  read "11:40am –". That 45 is a drawing decision so the chart has something to
+  show — nothing is computed from it, and it must never harden into a claimed
+  duration. Blocks are positioned by percentage of the day's span, so the chart
+  holds its proportions at any width; a block under an hour tall drops to one
+  line and shows the bare room code (`A4519`) or it clips its own text.
+- **Three courses meet on a different day from the one their syllabus
+  describes, and nothing has been re-dated.** Enrolled: LGL151 **Tue 1:30pm**
+  A-A4526 (every LGL151 row in `schedule.csv` is a **Monday**); LGL152 **Thu
+  11:40am online** + **Fri 9:50am** A-A3518 (syllabus NPE: Thu 2:25pm, Fri
+  8:00am A-A4513); LGL156 **Tue 11:40am** A-A4519 + **Thu 1:30pm online**
+  (syllabus NPE: Wed 5:10pm C-C3036, Thu 9:50am). This bears on deadlines, not
+  only the drawing — LGL152 and LGL156 date work to "during in person class",
+  so their in-person day is the due day and it has moved. **Do not re-date
+  `schedule.csv` to match.** The prior question is whether the syllabi on file
+  are for his own sections: a syllabus for another section is wrong throughout,
+  not merely on its weekday. The listing does settle open question 3 — LGL156
+  and LGL250 do not clash on Thursday. See `data/changes.md`, 25 Sep 2026.
 - **The Weekly Calendar's columns run in Rafael's week order**, not
   alphabetically: LGL156, LGL151, LGL250, LGL225, LGL154, LGL160, LGL152,
   LGL153 (`WEEK_ORDER` in `app.js`, also used by `legend()`). It is his order,

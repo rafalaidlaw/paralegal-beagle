@@ -528,9 +528,23 @@ const clock = (t) => {
   return `${h % 12 === 0 ? 12 : h % 12}${m ? ":" + String(m).padStart(2, "0") : ""}${h < 12 ? "am" : "pm"}`;
 };
 const durWords = (a, b) => {
+  if (!b) return "—";
   const n = mins(b) - mins(a), h = Math.floor(n / 60), m = n % 60;
   return `${h ? h + "h" : ""}${h && m ? " " : ""}${m ? m + "m" : ""}`;
 };
+/* Rafael's enrolment listing gives the start of each class and its room, but
+   never the end. Six of eleven blocks therefore have no end time anywhere --
+   not in the listing, and not in a syllabus, because three of those courses'
+   syllabi describe a different section. An open block is DRAWN 45 minutes tall
+   so the chart has something to show, and says so: the bottom edge is dashed
+   and the time reads "11:40am –". The 45 is a drawing decision, never a claim
+   about the class, and nothing is computed from it. */
+const OPEN_DRAW_MIN = 45;
+/* "Newnham Bldg A - A4519" -> "A4519". The chart has one line to spare on a
+   short block and the room is the part he needs walking across campus; the
+   full string stays in the table and the tooltip. */
+const shortRoom = (room) => String(room || "").replace(/^.*?-\s*/, "").trim();
+const ends = (t) => (t.end ? mins(t.end) : mins(t.start) + OPEN_DRAW_MIN);
 
 VIEWS.timetable = () => {
   const tt = D.timetable.slice();
@@ -541,22 +555,22 @@ VIEWS.timetable = () => {
   /* The chart runs from the first class of the week to the last, rounded out to
      the hour, so no empty band is drawn above or below. */
   const from = Math.floor(Math.min(...tt.map((t) => mins(t.start))) / 60) * 60;
-  const to = Math.ceil(Math.max(...tt.map((t) => mins(t.end))) / 60) * 60;
+  const to = Math.ceil(Math.max(...tt.map(ends)) / 60) * 60;
   const span = to - from;
   const pos = (t) => ((mins(t) - from) / span * 100).toFixed(3);
   const hours = [];
   for (let m = from; m <= to; m += 60) hours.push(m);
 
-  const unsure = tt.filter((t) => t.confidence === "low");
+  const open = tt.filter((t) => !t.end);
+  const inPerson = tt.filter((t) => t.mode === "in person");
   const busiest = TT_DAYS.map((d) => ({ d, n: tt.filter((t) => t.day === d).length })).sort((a, b) => b.n - a.n)[0];
   const free = TT_DAYS.filter((d) => !tt.some((t) => t.day === d));
-  const totalMin = tt.reduce((s, t) => s + (mins(t.end) - mins(t.start)), 0);
 
   let h = `<div class="stats">
-    <div class="stat"><span class="lbl">Hours in class</span><div class="v">${(totalMin / 60).toFixed(1)}</div><div class="n">across ${words(tt.length)} blocks a week</div></div>
+    <div class="stat"><span class="lbl">Classes a week</span><div class="v">${tt.length}</div><div class="n">${words(inPerson.length)} on campus, ${words(tt.length - inPerson.length)} online</div></div>
     <div class="stat"><span class="lbl">Heaviest day</span><div class="v">${busiest.d}</div><div class="n">${words(busiest.n)} classes</div></div>
     <div class="stat"><span class="lbl">Clear days</span><div class="v">${free.length ? free.join(", ") : "none"}</div><div class="n">${free.length ? "nothing timetabled" : "every weekday has a class"}</div></div>
-    <div class="stat"><span class="lbl">Still to confirm</span><div class="v ${unsure.length ? "red" : ""}">${unsure.length || "0"}</div><div class="n">${unsure.length ? "read off the picture, not stated in words" : "every block corroborated"}</div></div>
+    <div class="stat"><span class="lbl">End times unknown</span><div class="v">${open.length || "0"}</div><div class="n">${open.length ? "your enrolment gives starts, not finishes" : "every block has both ends"}</div></div>
   </div>`;
 
   h += `<div class="ttwrap"><div class="tt">
@@ -570,23 +584,28 @@ VIEWS.timetable = () => {
         return `<div class="ttcol${free.includes(d) ? " off" : ""}">
           ${hours.slice(1, -1).map((m) => `<span class="ttline" style="top:${pos(hhmm(m))}%"></span>`).join("")}
           ${blocks.map((t) => {
-            const soft = t.confidence === "low";
-            const where = t.room ? esc(t.room) : t.mode ? esc(t.mode) : soft ? "to confirm" : "";
+            const soft = !t.end;
+            const where = t.room ? esc(shortRoom(t.room)) : t.mode ? esc(t.mode) : "";
             /* Under an hour there is no room for three lines: the block goes to
-               one, and the tooltip still carries the room and the caveat. */
-            const short = mins(t.end) - mins(t.start) < 60;
-            return `<a class="ttblock${soft ? " unsure" : ""}${short ? " short" : ""}" data-c="${esc(t.course)}" href="#grid"
-              style="top:${pos(t.start)}%;height:${((mins(t.end) - mins(t.start)) / span * 100).toFixed(3)}%"
-              title="${esc(`${courseName(t.course)} — ${clock(t.start)} to ${clock(t.end)}${t.room ? ", " + t.room : ""}${soft ? " (times read off the timetable, not confirmed)" : ""}`)}">
+               one, and the tooltip still carries the room. */
+            const short = ends(t) - mins(t.start) < 60;
+            return `<a class="ttblock${soft ? " open" : ""}${short ? " short" : ""}" data-c="${esc(t.course)}" href="#grid"
+              style="top:${pos(t.start)}%;height:${((ends(t) - mins(t.start)) / span * 100).toFixed(3)}%"
+              title="${esc(`${courseName(t.course)} — starts ${clock(t.start)}${t.end ? `, ends ${clock(t.end)}` : ", end time not stated in your enrolment"}${t.room ? " · " + t.room : ""}${t.mode ? " · " + t.mode : ""}`)}">
               <span class="code">${esc(t.course)}</span>
-              <span class="when">${clock(t.start)}–${clock(t.end)}</span>
-              ${where && !short ? `<span class="where">${where}</span>` : ""}</a>`;
+              <span class="when">${clock(t.start)}${t.end ? "–" + clock(t.end) : " –"}</span>
+              ${where ? `<span class="where">${where}</span>` : ""}</a>`;
           }).join("")}
           ${blocks.length ? "" : `<span class="ttfree">no class</span>`}
         </div>`;
       }).join("")}
     </div></div></div>`;
 
+  if (open.length) {
+    h += `<p class="quiet" style="padding:8px var(--secpad) 0;max-width:74ch">A block with a dashed foot is one your enrolment listing gives
+      a start time for but no finish — ${words(open.length)} of them. Those are drawn ${OPEN_DRAW_MIN} minutes tall so there is something to see;
+      that height is a drawing decision, not a claim about how long the class runs.</p>`;
+  }
   h += `<div class="sechead"><h2>Every block, in words</h2><span class="mono sub2">${tt.length} a week</span></div>
     <div class="scroll" style="padding:0 var(--secpad)"><table class="rtable"><thead><tr>
       <th scope="col" style="width:72px">Course</th><th scope="col" style="width:56px">Day</th>
@@ -595,7 +614,7 @@ VIEWS.timetable = () => {
   for (const t of TT_DAYS.flatMap((d) => tt.filter((x) => x.day === d).sort((a, b) => mins(a.start) - mins(b.start)))) {
     h += `<tr data-c="${esc(t.course)}"><td>${pill(t.course)}</td>
       <td data-label="Day">${esc(t.day)}</td>
-      <td class="nowrap" data-label="Time">${clock(t.start)} – ${clock(t.end)}</td>
+      <td class="nowrap" data-label="Time">${clock(t.start)} – ${t.end ? clock(t.end) : `<span class="quiet">not stated</span>`}</td>
       <td class="nowrap quiet" data-label="Length">${durWords(t.start, t.end)}</td>
       <td>${t.room ? esc(t.room) : ""}${t.room && t.mode ? " · " : ""}${t.mode ? esc(t.mode) : ""}
         ${t.confidence === "low" ? `<span class="tag unstated">read off the picture</span>` : ""}
@@ -603,15 +622,17 @@ VIEWS.timetable = () => {
   }
   h += `</tbody></table></div>`;
 
-  if (unsure.length) {
-    h += `<div class="callout"><span class="lbl red">${cap(words(unsure.length))} block${unsure.length === 1 ? "" : "s"} nobody has confirmed</span>
-      <p style="margin:6px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">Your timetable is headed <b>Block NF</b> and shows every course as section <b>NPF</b>.
-        The syllabi this app was built from have <b>LGL152</b> and <b>LGL156</b> as <b>NPE</b>, meeting on different days, and <b>LGL151</b> is dated to Mondays
-        right through <code>data/schedule.csv</code> while the timetable puts it on Tuesday afternoon.</p>
-      <p style="margin:8px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">Worth settling: LGL152 and LGL156 both date work to <i>during in-person class</i>,
-        so if the in-person day is different, so is the day that work is due. Check your enrolment on Learn@Seneca, then correct
-        <code>data/courses.csv</code> and <code>data/timetable.csv</code>, and note who told you in <code>data/changes.md</code>.</p></div>`;
-  }
+  h += `<div class="callout"><span class="lbl red">Three courses meet on a different day from the one their syllabus describes</span>
+    <p style="margin:6px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">This chart is your <b>enrolment listing</b> — the one that says <i>Enrolled</i> beside each class.
+      Three of the syllabi describe a different section:</p>
+    <ul style="margin:8px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">
+      <li><b>LGL151</b> — you are enrolled <b>Tue 1:30pm</b> in A-A4526. Every LGL151 row in <code>data/schedule.csv</code> is dated to a <b>Monday</b>.</li>
+      <li><b>LGL152</b> — you are enrolled <b>Thu 11:40am online</b> and <b>Fri 9:50am</b> in A-A3518. The syllabus describes section <b>NPE</b>: Thu 2:25pm online, Fri 8:00am in A-A4513.</li>
+      <li><b>LGL156</b> — you are enrolled <b>Tue 11:40am</b> in A-A4519 and <b>Thu 1:30pm online</b>. The syllabus describes section <b>NPE</b>: Wed 5:10pm in C-C3036, Thu 9:50am online.</li>
+    </ul>
+    <p style="margin:8px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">This reaches past the drawing. LGL152 and LGL156 date work to <i>during in person class</i>,
+      so their in-person day is the day that work is due — and it has moved. Nothing in <code>schedule.csv</code> or <code>assessments.csv</code> has been changed:
+      check whether the syllabi you hold are your own sections' before any date is rewritten.</p></div>`;
   return h + `${legend()}<div class="spacer"></div>`;
 };
 

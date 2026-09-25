@@ -142,3 +142,52 @@ than NPE, the in-person day moves, and so does the day that work is due.
 whether the timetable or the syllabi reflect his actual enrolment. **Open
 question — do not resolve it by picking the more recent source.**
 
+## 2026-09-25 (later) — the enrolment listing replaces the times read off the picture
+
+Rafael pasted his Seneca enrolment listing — each class with its start time and
+room, every line reading **Status: Enrolled**. `data/timetable.csv` was rewritten
+from it. It corrects six of the eleven start times I had read off the picture of
+his timetable earlier the same day, some by as much as an hour:
+
+| | read off the picture | his enrolment says |
+|---|---|---|
+| LGL156 Tue | 11:50 | **11:40**, Newnham A-A4519 |
+| LGL151 Tue | 13:15 | **13:30**, Newnham A-A4526 |
+| LGL152 Thu | 11:50 | **11:40**, online |
+| LGL156 Thu | 14:25 | **13:30**, online |
+| LGL152 Fri | 10:05 | **09:50**, Newnham A-A3518 |
+| LGL153 Fri | 14:25 | **13:30**, online |
+
+The five that matched the syllabi still match, rooms included. Every row is now
+`confidence: high`, and the earlier `low` rows are gone — nothing in that file
+is a reading of a picture any more.
+
+**What the listing does not give is end times.** Five blocks take theirs from a
+syllabus; the other six have no finish time stated anywhere. Those are drawn 45
+minutes tall with a dashed foot and read "11:40am –". The 45 is a drawing
+decision so the chart has something to show; nothing is computed from it and no
+duration is claimed. Ask in class, or look for the finish time in the Student
+Centre.
+
+**The section question is answered, and it is the enrolment listing that wins.**
+Three courses meet on a different day from the one their syllabus describes:
+
+| | the syllabus | enrolled |
+|---|---|---|
+| LGL151 | Mon (and every LGL151 row in `schedule.csv` is a Monday) | **Tue 1:30pm**, A-A4526 |
+| LGL152 | NPE: Thu 2:25pm online, Fri 8:00am A-A4513 | **Thu 11:40am online**, **Fri 9:50am** A-A3518 |
+| LGL156 | NPE: Wed 5:10pm C-C3036, Thu 9:50am online | **Tue 11:40am** A-A4519, **Thu 1:30pm online** |
+
+It also answers **open question 3**: LGL156 and LGL250 do *not* clash on
+Thursday morning. LGL250 is online at 9:50; LGL156 is online at 13:30.
+
+**Still not changed, on purpose:** `courses.csv`, `schedule.csv` and
+`assessments.csv`. Re-dating LGL151's fourteen class rows from Monday to
+Tuesday, and moving LGL152's and LGL156's in-person days, would move the day
+that work dated "during in person class" is due. Before any of that, Rafael
+needs to establish whether the syllabi he holds are his own sections' — a
+syllabus for the wrong section would have the wrong dates throughout, not just
+the wrong weekday.
+
+**Authority:** Rafael's Seneca enrolment listing, pasted 25 Sep 2026.
+

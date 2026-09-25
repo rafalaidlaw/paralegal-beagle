@@ -27,7 +27,7 @@ Three, listed down the left side with a count beside each.
 | **This Week** | Start here. One sentence at the top says how many chapters there are this week and how far off the next graded item is. Then the next three deadlines with a big day count each, your readings for the week class by class, and the whole term as fifteen bars down the right. |
 | **Deadlines** | Every graded item in date order, month by month: what it covers where the syllabus says, when it lands, what it is worth. |
 | **Weekly Calendar** | All fifteen weeks by all eight courses on one screen, with a tick box beside every chapter. Holidays, study week and the drop deadline get their own rows. A button hides the chapters when you only want deadlines. |
-| **Timetable** | Your ordinary week drawn to scale, from your Block NF timetable — which day, which hour, which room. Six blocks are drawn dashed because their times were read off the picture rather than stated in a syllabus. |
+| **Timetable** | Your ordinary week drawn to scale, from your enrolment listing — which day, which hour, which room. Six blocks have a dashed foot: your enrolment gives their start time but no finish. |
 
 ### The five that are put away
 
@@ -110,20 +110,27 @@ back to a page of the original PDF in seconds.
 ## About the Timetable screen, and a question it raises
 
 `data/timetable.csv` is the only file in `data/` that did not come out of a
-syllabus — it was transcribed from a picture of your Seneca timetable. Five of
-its eleven blocks match the syllabi exactly. Six do not, and those are drawn
-with a dashed edge and labelled **to confirm**:
+syllabus — it is your Seneca enrolment listing, the one that says *Enrolled*
+beside each class. It gives a start time and a room for every class but never a
+finish, so six blocks are drawn 45 minutes tall with a dashed foot. That height
+is only so there is something to see; it is not a claim about how long the class
+runs. If you find the finish times, put them in the `end` column.
 
-- Your timetable is headed **Block NF** and shows every course as section
-  **NPF**. The syllabi have **LGL152** and **LGL156** as **NPE**.
-- **LGL151** is dated to Mondays right through `data/schedule.csv`; the
-  timetable puts it Tuesday afternoon.
+**Three courses meet on a different day from the one their syllabus describes**,
+and that is not settled:
 
-This is worth settling rather than leaving pretty. LGL152 and LGL156 both date
-work to *during in person class*, so if your in-person day is different, so is
-the day that work is due. Check your enrolment on Learn@Seneca, then fix
-`data/courses.csv` and `data/timetable.csv` and write down what you found in
-`data/changes.md`.
+| | the syllabus | you are enrolled |
+|---|---|---|
+| LGL151 | Mon — and every LGL151 row in `data/schedule.csv` is a Monday | **Tue 1:30pm**, A-A4526 |
+| LGL152 | section NPE: Thu 2:25pm online, Fri 8:00am A-A4513 | **Thu 11:40am online**, **Fri 9:50am** A-A3518 |
+| LGL156 | section NPE: Wed 5:10pm C-C3036, Thu 9:50am online | **Tue 11:40am** A-A4519, **Thu 1:30pm online** |
+
+Worth sorting out, because LGL152 and LGL156 date work to *during in person
+class* — so their in-person day is the day that work is due, and it has moved.
+Nothing in the schedule or the deadlines has been changed on the strength of
+this. The question to answer first is whether the syllabi you have are for your
+own sections; if one is for another section, its dates are wrong all the way
+through, not just its weekday.
 
 ## The wiki next door
 

@@ -451,14 +451,16 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
   border-left: 3px solid var(--c, var(--ink3));
 }
 .ttblock:hover { background: color-mix(in srgb, var(--c, var(--ink3)) 24%, var(--surf)); }
-/* a block whose hours were read off a picture rather than stated in words */
-.ttblock.unsure { border: 1px dashed var(--ink4); border-left: 3px dashed var(--c, var(--ink3)); }
+/* a block whose finish time nothing states: the foot is dashed because the
+   drawn height is a drawing decision, not a claim about the class */
+.ttblock.open { border-bottom: 2px dashed var(--ink4); }
 .ttblock .code { display: block; font: 700 12px var(--mono); }
 .ttblock .when { display: block; margin-top: 2px; font-size: 12px; color: var(--ink2); }
 .ttblock .where { display: block; margin-top: 2px; font-size: 12px; color: var(--ink3); }
 /* a block under an hour tall: code and time on one line, or the text is cut */
 .ttblock.short { display: flex; align-items: baseline; gap: 6px; padding: 3px 7px; }
-.ttblock.short .when { margin-top: 0; }
+.ttblock.short .when, .ttblock.short .where { margin-top: 0; }
+.ttblock.short .where { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* =========================================================== term grid */
 .gridwrap { overflow-x: auto; }

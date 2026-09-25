@@ -307,14 +307,16 @@ check("the sidebar names its screens and shows no group headings",
   && (await evalJs(`document.querySelectorAll('#nav .grp').length`)).v === 0, navText.v);
 
 // ---------------------------------------------------------------- timetable
-// Rafael's Block NF timetable, drawn to scale from data/timetable.csv. The six
-// blocks read off the picture rather than stated in a syllabus must stay
-// visibly unconfirmed -- that is the whole point of drawing it.
+// Rafael's week from his enrolment listing, drawn to scale out of
+// data/timetable.csv. That listing gives a start time and a room for each
+// class but never a finish, so six of the eleven blocks must stay visibly
+// open-ended rather than be given an invented duration.
 await go("timetable");
 const ttShape = await evalJs(`JSON.stringify({
   days: [...document.querySelectorAll('.tthead .ttday')].map(e => e.textContent.trim()),
   blocks: document.querySelectorAll('.ttblock').length,
-  unsure: document.querySelectorAll('.ttblock.unsure').length,
+  open: document.querySelectorAll('.ttblock.open').length,
+  rooms: [...document.querySelectorAll('.ttblock .where')].length,
   free: [...document.querySelectorAll('.ttcol.off')].length,
   rows: document.querySelectorAll('.rtable tbody tr').length
 })`);
@@ -322,7 +324,8 @@ const ts = JSON.parse(ttShape.v);
 check("the timetable draws five day columns",
   JSON.stringify(ts.days) === JSON.stringify(["Mon", "Tue", "Wed", "Thu", "Fri"]), ts.days);
 check("every row in timetable.csv is drawn and listed", ts.blocks === 11 && ts.rows === 11, ts);
-check("the six unconfirmed blocks are marked as such", ts.unsure === 6, ts);
+check("the six blocks with no stated finish are drawn open", ts.open === 6, ts);
+check("every block says where it is, room or online", ts.rooms === 11, ts);
 check("Monday is drawn as a clear day", ts.free === 1, ts);
 // A block must sit where the clock says. LGL225 runs 8:55-10:40 in a chart that
 // starts at 8:00 and ends at 19:00 -- 55 minutes down a 660-minute span.
@@ -333,8 +336,19 @@ const ttPos = await evalJs(`(() => {
 const wantTop = (55 / 660 * 100).toFixed(3) + "%", wantH = (105 / 660 * 100).toFixed(3) + "%";
 check("a block is placed by the clock, not by its order",
   ttPos.v && ttPos.v.top === wantTop && ttPos.v.height === wantH, { got: ttPos.v, wantTop, wantH });
-const ttWarn = await evalJs(`!!document.querySelector('.callout .lbl.red')`);
-check("the section conflict is called out on the page", ttWarn.v === true, ttWarn.v);
+const ttWarn = await evalJs(`document.querySelector('.callout .lbl.red')?.textContent.trim()`);
+check("the section conflict is called out on the page",
+  /different day/.test(ttWarn.v || ""), ttWarn.v);
+// The enrolment listing is the authority for the three courses whose syllabus
+// describes another section. If these ever drift, the chart is lying.
+const ttTimes = await evalJs(`JSON.stringify([...document.querySelectorAll('.ttblock')].map(b =>
+  b.dataset.c + " " + b.closest('.ttcol').previousElementSibling ))`);
+const ttEnrol = await evalJs(`JSON.stringify([...document.querySelectorAll('.rtable tbody tr')].map(r =>
+  [...r.children].slice(0, 3).map(c => c.textContent.trim().replace(/\\s+/g, " ")).join(" | ")))`);
+const rows = JSON.parse(ttEnrol.v);
+for (const want of ["LGL151 | Tue | 1:30pm", "LGL152 | Fri | 9:50am", "LGL156 | Tue | 11:40am", "LGL156 | Thu | 1:30pm"]) {
+  check(`the listing's own time survives: ${want}`, rows.some((r) => r.startsWith(want)), rows);
+}
 
 await go("deadlines");   // back, for the two checks below
 const nextRows = await evalJs(`document.querySelectorAll('.drow.next').length`);
