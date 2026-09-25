@@ -270,8 +270,8 @@ check("the legend beneath it reads in the same order",
 // proves that) but are not listed and not routable, and nothing may link to
 // them -- a link to nowhere is worse than no link.
 const navViews = await evalJs(`[...document.querySelectorAll('#nav a[data-view]')].map(a => a.dataset.view)`);
-check("the sidebar lists exactly the three screens",
-  JSON.stringify(navViews.v) === JSON.stringify(["week", "deadlines", "grid"]), navViews.v);
+check("the sidebar lists exactly the shown screens",
+  JSON.stringify(navViews.v) === JSON.stringify(["week", "deadlines", "grid", "timetable"]), navViews.v);
 const navCount = await evalJs(`document.querySelector('#nav a[data-view="deadlines"] .count')?.textContent.trim()`);
 check("the sidebar shows a count beside a screen", /^\d+$/.test(navCount.v || ""), navCount.v);
 const navOn = await evalJs(`document.querySelectorAll('#nav a.on').length`);
@@ -302,9 +302,40 @@ for (const [hash, want] of [["grid", "Weekly Calendar"], ["calendar", "Weekly Ca
   check(`#${hash} opens the Weekly Calendar`, t.v === want, t.v);
 }
 const navText = await evalJs(`[...document.querySelectorAll('#nav a[data-view]')].map(a => a.firstChild.textContent.trim())`);
-check("the sidebar names the three screens and shows no group headings",
-  JSON.stringify(navText.v) === JSON.stringify(["This Week", "Deadlines", "Weekly Calendar"])
+check("the sidebar names its screens and shows no group headings",
+  JSON.stringify(navText.v) === JSON.stringify(["This Week", "Deadlines", "Weekly Calendar", "Timetable"])
   && (await evalJs(`document.querySelectorAll('#nav .grp').length`)).v === 0, navText.v);
+
+// ---------------------------------------------------------------- timetable
+// Rafael's Block NF timetable, drawn to scale from data/timetable.csv. The six
+// blocks read off the picture rather than stated in a syllabus must stay
+// visibly unconfirmed -- that is the whole point of drawing it.
+await go("timetable");
+const ttShape = await evalJs(`JSON.stringify({
+  days: [...document.querySelectorAll('.tthead .ttday')].map(e => e.textContent.trim()),
+  blocks: document.querySelectorAll('.ttblock').length,
+  unsure: document.querySelectorAll('.ttblock.unsure').length,
+  free: [...document.querySelectorAll('.ttcol.off')].length,
+  rows: document.querySelectorAll('.rtable tbody tr').length
+})`);
+const ts = JSON.parse(ttShape.v);
+check("the timetable draws five day columns",
+  JSON.stringify(ts.days) === JSON.stringify(["Mon", "Tue", "Wed", "Thu", "Fri"]), ts.days);
+check("every row in timetable.csv is drawn and listed", ts.blocks === 11 && ts.rows === 11, ts);
+check("the six unconfirmed blocks are marked as such", ts.unsure === 6, ts);
+check("Monday is drawn as a clear day", ts.free === 1, ts);
+// A block must sit where the clock says. LGL225 runs 8:55-10:40 in a chart that
+// starts at 8:00 and ends at 19:00 -- 55 minutes down a 660-minute span.
+const ttPos = await evalJs(`(() => {
+  const b = document.querySelector('.ttblock[data-c="LGL225"]');
+  return b ? { top: b.style.top, height: b.style.height } : null;
+})()`);
+const wantTop = (55 / 660 * 100).toFixed(3) + "%", wantH = (105 / 660 * 100).toFixed(3) + "%";
+check("a block is placed by the clock, not by its order",
+  ttPos.v && ttPos.v.top === wantTop && ttPos.v.height === wantH, { got: ttPos.v, wantTop, wantH });
+const ttWarn = await evalJs(`!!document.querySelector('.callout .lbl.red')`);
+check("the section conflict is called out on the page", ttWarn.v === true, ttWarn.v);
+
 await go("deadlines");   // back, for the two checks below
 const nextRows = await evalJs(`document.querySelectorAll('.drow.next').length`);
 check("exactly one deadline row is marked next", nextRows.v === 1, nextRows.v);

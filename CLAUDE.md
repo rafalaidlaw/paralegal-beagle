@@ -10,7 +10,8 @@ changes in terms of his coursework, not the code.
 **`data/*.csv` is the source of truth. Everything else is derived and disposable.**
 
 `data/schedule.csv`, `courses.csv` and `assessments.csv` were extracted from the
-syllabi once and are now edited **by hand**. `progress.csv`, `grades.csv` and
+syllabi once and are now edited **by hand**. `timetable.csv` came from a picture
+of Rafael's own timetable, not a syllabus, and says so per row. `progress.csv`, `grades.csv` and
 `cases.csv` are written by the app as Rafael uses it — never hand-edit those
 while the server is running. Readings, term weeks, grade standing and crunch
 load are recomputed on every request and are never stored.
@@ -165,7 +166,8 @@ Standard library only. Binds 127.0.0.1. There is **no build step** — edit
 `app/*` and refresh. Rafael has asked "did you build it?" before; the answer is
 that a refresh is the build.
 
-**Three screens, since 24 Sep 2026: This Week, Deadlines, Weekly Calendar.**
+**Four screens: This Week, Deadlines, Weekly Calendar, Timetable.** Rafael cut
+it to three on 24 Sep 2026 and added the Timetable on 25 Sep.
 The Term Grid was renamed on 24 Sep 2026; its route stays `#grid` so old
 bookmarks keep working, with `#calendar` as an alias. The sidebar's "Now" /
 "The term" group headings went at the same time — three entries need no
@@ -234,6 +236,21 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   "3.8 on --bg: marks only" read as a declaration and silently swallowed the
   `--accent-text` line after it. That is why the comment beside a token must
   never contain `--name:`.
+- **The Timetable is drawn from `data/timetable.csv`, which is not derived
+  from the syllabi.** It was transcribed from a picture of Rafael's Block NF
+  timetable on 25 Sep 2026 and is the one file in `data/` with a `source`
+  column. Five blocks corroborate a syllabus (`confidence: high`); six were
+  read off the picture (`confidence: low`) and are drawn dashed and labelled
+  "to confirm". Blocks are positioned by percentage of the day's span, so the
+  chart holds its proportions at any width; a block under an hour tall drops
+  to one line or it clips its own text.
+- **Three courses disagree with that timetable, and it is not settled.** It
+  shows every course as section **NPF**; `courses.csv` has LGL152 and LGL156 as
+  **NPE** on different days, and LGL151 is dated to Mondays throughout
+  `schedule.csv` while the timetable says Tuesday. **Do not resolve this by
+  preferring the newer source.** It bears on deadlines, not just the drawing:
+  LGL152 and LGL156 date work to "during in person class". See
+  `data/changes.md`, 25 Sep 2026.
 - **The Weekly Calendar's columns run in Rafael's week order**, not
   alphabetically: LGL156, LGL151, LGL250, LGL225, LGL154, LGL160, LGL152,
   LGL153 (`WEEK_ORDER` in `app.js`, also used by `legend()`). It is his order,

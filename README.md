@@ -27,6 +27,7 @@ Three, listed down the left side with a count beside each.
 | **This Week** | Start here. One sentence at the top says how many chapters there are this week and how far off the next graded item is. Then the next three deadlines with a big day count each, your readings for the week class by class, and the whole term as fifteen bars down the right. |
 | **Deadlines** | Every graded item in date order, month by month: what it covers where the syllabus says, when it lands, what it is worth. |
 | **Weekly Calendar** | All fifteen weeks by all eight courses on one screen, with a tick box beside every chapter. Holidays, study week and the drop deadline get their own rows. A button hides the chapters when you only want deadlines. |
+| **Timetable** | Your ordinary week drawn to scale, from your Block NF timetable — which day, which hour, which room. Six blocks are drawn dashed because their times were read off the picture rather than stated in a syllabus. |
 
 ### The five that are put away
 
@@ -105,6 +106,24 @@ tools/        scripts that check the app; you never need to run these
 keeps the **verbatim syllabus wording** beside every date and reading
 (`date_raw`, `reading_raw`), so if a figure ever looks wrong you can trace it
 back to a page of the original PDF in seconds.
+
+## About the Timetable screen, and a question it raises
+
+`data/timetable.csv` is the only file in `data/` that did not come out of a
+syllabus — it was transcribed from a picture of your Seneca timetable. Five of
+its eleven blocks match the syllabi exactly. Six do not, and those are drawn
+with a dashed edge and labelled **to confirm**:
+
+- Your timetable is headed **Block NF** and shows every course as section
+  **NPF**. The syllabi have **LGL152** and **LGL156** as **NPE**.
+- **LGL151** is dated to Mondays right through `data/schedule.csv`; the
+  timetable puts it Tuesday afternoon.
+
+This is worth settling rather than leaving pretty. LGL152 and LGL156 both date
+work to *during in person class*, so if your in-person day is different, so is
+the day that work is due. Check your enrolment on Learn@Seneca, then fix
+`data/courses.csv` and `data/timetable.csv` and write down what you found in
+`data/changes.md`.
 
 ## The wiki next door
 

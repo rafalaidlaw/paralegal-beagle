@@ -419,6 +419,47 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
 .bar > i { display: block; height: 100%; background: var(--ink); }
 .bar.ok > i { background: var(--ink4); }
 
+/* ============================================================= timetable */
+/* Five day columns with the hours down the left. Blocks are placed by
+   percentage of the day's span, so the chart keeps its proportions at any
+   width and no class can drift off its hour line. */
+/* the gutter's first and last hour labels are centred on their line, so they
+   reach half a line above and below the chart; the padding is their room */
+.ttwrap { padding: var(--s4) var(--secpad) var(--s4); overflow-x: auto; }
+.tt { min-width: 660px; }
+.ttrow { display: grid; grid-template-columns: 58px repeat(5, minmax(0, 1fr)); }
+.tthead { border-bottom: 2px solid var(--rule); }
+.tthead .ttday {
+  padding: 7px 10px; border-left: 1px solid var(--line);
+  font: 700 12px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink2);
+}
+.tthead .ttday.off { color: var(--ink3); }
+.ttbody { height: 520px; position: relative; border-bottom: 1px solid var(--line); }
+.ttbody .ttgut { position: relative; }
+.tthr {
+  position: absolute; right: 8px; transform: translateY(-50%);
+  font: 500 12px var(--mono); color: var(--ink3); white-space: nowrap;
+}
+.ttcol { position: relative; border-left: 1px solid var(--line); min-width: 0; }
+.ttcol.off { background: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--ink4) 14%, transparent) 5px 10px); }
+.ttline { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line); }
+.ttfree { position: absolute; top: 12px; left: 0; right: 0; text-align: center; font-size: 12px; color: var(--ink3); }
+.ttblock {
+  position: absolute; left: 3px; right: 3px; overflow: hidden;
+  padding: 5px 7px; text-decoration: none; color: var(--ink);
+  background: color-mix(in srgb, var(--c, var(--ink3)) 14%, var(--surf));
+  border-left: 3px solid var(--c, var(--ink3));
+}
+.ttblock:hover { background: color-mix(in srgb, var(--c, var(--ink3)) 24%, var(--surf)); }
+/* a block whose hours were read off a picture rather than stated in words */
+.ttblock.unsure { border: 1px dashed var(--ink4); border-left: 3px dashed var(--c, var(--ink3)); }
+.ttblock .code { display: block; font: 700 12px var(--mono); }
+.ttblock .when { display: block; margin-top: 2px; font-size: 12px; color: var(--ink2); }
+.ttblock .where { display: block; margin-top: 2px; font-size: 12px; color: var(--ink3); }
+/* a block under an hour tall: code and time on one line, or the text is cut */
+.ttblock.short { display: flex; align-items: baseline; gap: 6px; padding: 3px 7px; }
+.ttblock.short .when { margin-top: 0; }
+
 /* =========================================================== term grid */
 .gridwrap { overflow-x: auto; }
 /* 1100 fits beside the sidebar at 1440; below that it scrolls sideways */

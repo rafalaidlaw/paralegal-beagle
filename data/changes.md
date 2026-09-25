@@ -107,3 +107,38 @@ through the term, and `schedule.csv` keeps that wording on the week-5 row. The
 assessment now carries his actual slot, which is what the deadline views and the
 crunch load should reflect. `source_file: announced` tells `validate.py` not to
 look for this date in the syllabus.
+
+## 2026-09-25 — Rafael's Block NF timetable, and three courses that disagree with it
+
+New file `data/timetable.csv`: eleven class blocks, transcribed from a picture
+of Rafael's own Seneca timetable for the week of Mon 14 Sept 2026, headed
+**Block NF**. It is the first thing in `data/` that did not come out of a
+syllabus, which is why every row carries `source` and `confidence`.
+
+**Five blocks corroborate the syllabi exactly** and are recorded `high`:
+LGL225 Wed 8:55–10:40, LGL154 Wed 12:35–14:20, LGL160 Wed 14:25–17:05,
+LGL250 Tue 17:10–18:55 and LGL250 Thu 9:50–10:40.
+
+**Six do not, and are recorded `low`** — their times were read off the picture,
+not stated anywhere in words:
+
+| | the syllabi say | the timetable shows |
+|---|---|---|
+| LGL151 | `Mon`, no time; every schedule row is a Monday | **Tue** about 1:15–3:55pm |
+| LGL152 | section **NPE**, Thu 2:25–4:10pm online + Fri 8–9:45am A-A4513 | section **NPF**, **Thu** about 11:50–1:10 + **Fri** about 10:05–11:45 |
+| LGL156 | section **NPE**, Wed 5:10–6:55pm C-C3036 + Thu 9:50–10:40am online | section **NPF**, **Tue** about 11:50–1:10 + **Thu** about 2:25–3:05 |
+| LGL153 | `Fri`, no time | Fri about 2:25–3:45pm — the day agrees, the hours are new |
+
+**Nothing else was changed.** `courses.csv`, `schedule.csv` and
+`assessments.csv` still say what the syllabi say, and `validate.py` still
+passes. The disagreement is shown on the Timetable screen instead of being
+resolved by guesswork.
+
+**Why it matters beyond the picture.** LGL152 and LGL156 both date work to
+*during in person class* (`date_precision: week`). If Rafael is in NPF rather
+than NPE, the in-person day moves, and so does the day that work is due.
+
+**Authority:** a screenshot Rafael supplied on 25 Sep 2026. He has not yet said
+whether the timetable or the syllabi reflect his actual enrolment. **Open
+question — do not resolve it by picking the more recent source.**
+

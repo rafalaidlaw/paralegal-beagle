@@ -158,6 +158,10 @@ const VIEW_META = {
   week: ["This Week", () => weekSubtitle()],
   deadlines: ["Deadlines", () => "Every graded item and hard milestone in date order — what it covers, when it lands, what it is worth."],
   grid: ["Weekly Calendar", () => `Fifteen weeks against ${words(D.courses.length)} courses. The one view no single syllabus can give you.`],
+  timetable: ["Timetable", () => {
+    const n = D.timetable.filter((t) => t.confidence === "low").length;
+    return `Your week, hour by hour${n ? ` — ${words(n)} block${n === 1 ? "" : "s"} still to confirm` : ""}.`;
+  }],
   crunch: ["Crunch", () => crunchSubtitle()],
   courses: ["Courses", () => "Per-course syllabus, standing and schedule."],
   notes: ["Notes", () => "Reading notes in Markdown, indexed per class meeting."],
@@ -191,6 +195,7 @@ function counts() {
     week: D.readings.filter((r) => r.week_no === wk).length,
     deadlines: D.assessments.length,
     grid: LAST_WEEK(),
+    timetable: new Set(D.timetable.map((t) => t.course)).size,
     crunch: crunchWeeks().filter((x) => x.load >= HEAVY).length,
     courses: D.courses.length,
     notes: D.notes.length,
@@ -230,7 +235,7 @@ const VIEWS = {};
    crunchWeeks() from the Crunch section and the page header calls
    reviewItems(), so commenting those blocks out would break the screens he
    kept. One list is also one thing to change back, instead of five. */
-const SHOWN = ["week", "deadlines", "grid"];
+const SHOWN = ["week", "deadlines", "grid", "timetable"];
 const isShown = (v) => SHOWN.includes(v);
 
 /* The route stays #grid so old bookmarks keep working; #calendar matches the
@@ -507,6 +512,108 @@ function legend() {
       : `<span class="leg" data-c="${esc(c.code)}" title="${esc(c.name)}">${body}</span>`;
   }).join("")}</div>`;
 }
+
+/* =============================================================== TIMETABLE */
+/* Rafael's Block NF timetable drawn to scale: five day columns, one block per
+   class, placed by the clock. Its data is data/timetable.csv, transcribed from
+   a picture of his own timetable -- NOT derived from the syllabi, and it
+   contradicts three of them. So every block carries where its times came from,
+   and an unconfirmed one is drawn dashed: absence, not alarm, the same way an
+   unstated exam scope is drawn. */
+const TT_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+const mins = (hhmm) => { const [h, m] = String(hhmm).split(":").map(Number); return h * 60 + m; };
+const hhmm = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+const clock = (t) => {
+  const n = mins(t), h = Math.floor(n / 60), m = n % 60;
+  return `${h % 12 === 0 ? 12 : h % 12}${m ? ":" + String(m).padStart(2, "0") : ""}${h < 12 ? "am" : "pm"}`;
+};
+const durWords = (a, b) => {
+  const n = mins(b) - mins(a), h = Math.floor(n / 60), m = n % 60;
+  return `${h ? h + "h" : ""}${h && m ? " " : ""}${m ? m + "m" : ""}`;
+};
+
+VIEWS.timetable = () => {
+  const tt = D.timetable.slice();
+  if (!tt.length) {
+    return `<div class="empty"><div class="lead"><h2>No timetable yet</h2>
+      <p>Add rows to <code>data/timetable.csv</code> and refresh.</p></div></div>`;
+  }
+  /* The chart runs from the first class of the week to the last, rounded out to
+     the hour, so no empty band is drawn above or below. */
+  const from = Math.floor(Math.min(...tt.map((t) => mins(t.start))) / 60) * 60;
+  const to = Math.ceil(Math.max(...tt.map((t) => mins(t.end))) / 60) * 60;
+  const span = to - from;
+  const pos = (t) => ((mins(t) - from) / span * 100).toFixed(3);
+  const hours = [];
+  for (let m = from; m <= to; m += 60) hours.push(m);
+
+  const unsure = tt.filter((t) => t.confidence === "low");
+  const busiest = TT_DAYS.map((d) => ({ d, n: tt.filter((t) => t.day === d).length })).sort((a, b) => b.n - a.n)[0];
+  const free = TT_DAYS.filter((d) => !tt.some((t) => t.day === d));
+  const totalMin = tt.reduce((s, t) => s + (mins(t.end) - mins(t.start)), 0);
+
+  let h = `<div class="stats">
+    <div class="stat"><span class="lbl">Hours in class</span><div class="v">${(totalMin / 60).toFixed(1)}</div><div class="n">across ${words(tt.length)} blocks a week</div></div>
+    <div class="stat"><span class="lbl">Heaviest day</span><div class="v">${busiest.d}</div><div class="n">${words(busiest.n)} classes</div></div>
+    <div class="stat"><span class="lbl">Clear days</span><div class="v">${free.length ? free.join(", ") : "none"}</div><div class="n">${free.length ? "nothing timetabled" : "every weekday has a class"}</div></div>
+    <div class="stat"><span class="lbl">Still to confirm</span><div class="v ${unsure.length ? "red" : ""}">${unsure.length || "0"}</div><div class="n">${unsure.length ? "read off the picture, not stated in words" : "every block corroborated"}</div></div>
+  </div>`;
+
+  h += `<div class="ttwrap"><div class="tt">
+    <div class="ttrow tthead"><div class="ttgut"></div>${TT_DAYS.map((d) =>
+      `<div class="ttday${free.includes(d) ? " off" : ""}">${d}</div>`).join("")}</div>
+    <div class="ttrow ttbody">
+      <div class="ttgut">${hours.map((m) =>
+        `<span class="tthr" style="top:${pos(hhmm(m))}%">${clock(hhmm(m))}</span>`).join("")}</div>
+      ${TT_DAYS.map((d) => {
+        const blocks = tt.filter((t) => t.day === d).sort((a, b) => mins(a.start) - mins(b.start));
+        return `<div class="ttcol${free.includes(d) ? " off" : ""}">
+          ${hours.slice(1, -1).map((m) => `<span class="ttline" style="top:${pos(hhmm(m))}%"></span>`).join("")}
+          ${blocks.map((t) => {
+            const soft = t.confidence === "low";
+            const where = t.room ? esc(t.room) : t.mode ? esc(t.mode) : soft ? "to confirm" : "";
+            /* Under an hour there is no room for three lines: the block goes to
+               one, and the tooltip still carries the room and the caveat. */
+            const short = mins(t.end) - mins(t.start) < 60;
+            return `<a class="ttblock${soft ? " unsure" : ""}${short ? " short" : ""}" data-c="${esc(t.course)}" href="#grid"
+              style="top:${pos(t.start)}%;height:${((mins(t.end) - mins(t.start)) / span * 100).toFixed(3)}%"
+              title="${esc(`${courseName(t.course)} — ${clock(t.start)} to ${clock(t.end)}${t.room ? ", " + t.room : ""}${soft ? " (times read off the timetable, not confirmed)" : ""}`)}">
+              <span class="code">${esc(t.course)}</span>
+              <span class="when">${clock(t.start)}–${clock(t.end)}</span>
+              ${where && !short ? `<span class="where">${where}</span>` : ""}</a>`;
+          }).join("")}
+          ${blocks.length ? "" : `<span class="ttfree">no class</span>`}
+        </div>`;
+      }).join("")}
+    </div></div></div>`;
+
+  h += `<div class="sechead"><h2>Every block, in words</h2><span class="mono sub2">${tt.length} a week</span></div>
+    <div class="scroll" style="padding:0 var(--secpad)"><table class="rtable"><thead><tr>
+      <th scope="col" style="width:72px">Course</th><th scope="col" style="width:56px">Day</th>
+      <th scope="col" style="width:136px">Time</th><th scope="col" style="width:60px">Length</th>
+      <th scope="col">Where, and where the times came from</th></tr></thead><tbody>`;
+  for (const t of TT_DAYS.flatMap((d) => tt.filter((x) => x.day === d).sort((a, b) => mins(a.start) - mins(b.start)))) {
+    h += `<tr data-c="${esc(t.course)}"><td>${pill(t.course)}</td>
+      <td data-label="Day">${esc(t.day)}</td>
+      <td class="nowrap" data-label="Time">${clock(t.start)} – ${clock(t.end)}</td>
+      <td class="nowrap quiet" data-label="Length">${durWords(t.start, t.end)}</td>
+      <td>${t.room ? esc(t.room) : ""}${t.room && t.mode ? " · " : ""}${t.mode ? esc(t.mode) : ""}
+        ${t.confidence === "low" ? `<span class="tag unstated">read off the picture</span>` : ""}
+        ${t.note ? `<div class="quiet" style="margin-top:3px">${esc(t.note)}</div>` : ""}</td></tr>`;
+  }
+  h += `</tbody></table></div>`;
+
+  if (unsure.length) {
+    h += `<div class="callout"><span class="lbl red">${cap(words(unsure.length))} block${unsure.length === 1 ? "" : "s"} nobody has confirmed</span>
+      <p style="margin:6px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">Your timetable is headed <b>Block NF</b> and shows every course as section <b>NPF</b>.
+        The syllabi this app was built from have <b>LGL152</b> and <b>LGL156</b> as <b>NPE</b>, meeting on different days, and <b>LGL151</b> is dated to Mondays
+        right through <code>data/schedule.csv</code> while the timetable puts it on Tuesday afternoon.</p>
+      <p style="margin:8px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">Worth settling: LGL152 and LGL156 both date work to <i>during in-person class</i>,
+        so if the in-person day is different, so is the day that work is due. Check your enrolment on Learn@Seneca, then correct
+        <code>data/courses.csv</code> and <code>data/timetable.csv</code>, and note who told you in <code>data/changes.md</code>.</p></div>`;
+  }
+  return h + `${legend()}<div class="spacer"></div>`;
+};
 
 /* ================================================================== CRUNCH */
 function crunchWeeks() {

@@ -245,6 +245,10 @@ def build_payload():
         "progress": read_csv("progress.csv"),
         "grades": read_csv("grades.csv"),
         "cases": read_csv("cases.csv"),
+        # Rafael's own Block NF timetable, transcribed 25 Sep 2026. It is NOT
+        # derived from the syllabi and it contradicts three of them -- see the
+        # note column on each row and data/changes.md.
+        "timetable": read_csv("timetable.csv"),
         "notes": notes_index(),
         "syllabi": sorted(p.name for p in SYLLABI.glob("*")) if SYLLABI.exists() else [],
     }
