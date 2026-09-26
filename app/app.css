@@ -539,7 +539,17 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
 }
 .drow.exam, .drow.test { border-left-color: var(--accent); }
 .drow.next { background: var(--accent-tint); }
-.drow.past { opacity: .55; }
+/* A deadline whose date has gone. Greyed deliberately rather than with
+   opacity: opacity dimmed the red rail on an exam until it read as a
+   half-strength exam, and it takes the text below the contrast floor. Here the
+   ink steps back to --ink3 (still over 4.5:1) and the course hue gives way to
+   a neutral rail, so the row is plainly behind you but perfectly readable. */
+.drow.past { --c: var(--ink4); color: var(--ink3); background: var(--surf2); }
+.drow.past h3, .drow.past .when b { color: var(--ink2); font-weight: 600; }
+.drow.past .scope, .drow.past .course, .drow.past .when, .drow.past .weight { color: var(--ink3); }
+.drow.past .weight b { color: var(--ink3); }
+.drow.past .tag, .drow.past .type { border-color: var(--line); color: var(--ink3); }
+.drow.past.exam, .drow.past.test { border-left-color: var(--ink4); }
 .drow .key .code { font: 700 12px var(--mono); }
 .drow .key .type { margin-top: 4px; }
 .drow h3 { margin: 0; font-size: 16px; line-height: 1.25; }

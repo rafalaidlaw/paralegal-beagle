@@ -166,8 +166,12 @@ Standard library only. Binds 127.0.0.1. There is **no build step** — edit
 `app/*` and refresh. Rafael has asked "did you build it?" before; the answer is
 that a refresh is the build.
 
-**Four screens, in this sidebar order: Weekly Calendar, Upcoming, Deadlines,
-Timetable** (`SHOWN` in `app.js` is that order). Rafael cut the app to three on
+**Three screens, in this sidebar order: Weekly Calendar, Upcoming, Timetable**
+(`SHOWN` in `app.js` is that order; Deadlines was switched off on 26 Sep 2026,
+its view code intact). `#deadlines` and `#exams` therefore land on Upcoming.
+**Nothing may link to a screen that is not shown** — the fortnight rows on
+Upcoming become plain `div`s and point at the Weekly Calendar instead, exactly
+as `pill()` and `legend()` do for Courses; `interact.mjs` asserts it. Rafael cut the app to three on
 24 Sep 2026, added the Timetable on 25 Sep, and on 26 Sep renamed This Week to
 **Upcoming**, moved the Weekly Calendar to the top, and asked for the roll
 below. The app still OPENS on Upcoming — sidebar order and landing screen are
@@ -267,6 +271,11 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   `confidence: high`. An earlier version held times read off a screenshot; the
   listing corrected six of them by up to an hour. **Never re-introduce a time
   read off a picture when the listing has one.**
+- **The Timetable is the chart and nothing else** (26 Sep 2026). The table
+  beneath it repeated what the chart said, and the standing callout about the
+  section conflict said the same thing on every visit. That conflict is not
+  lost: it is in `data/changes.md`, in this file, in `README.md`, and in the
+  `note` column of every affected row of `data/timetable.csv`.
 - **The listing gives starts and rooms but no end times.** Five blocks take
   their end from a syllabus; six have none stated anywhere and carry a blank
   `end`. Those draw `OPEN_DRAW_MIN` (45) minutes tall with a dashed foot and

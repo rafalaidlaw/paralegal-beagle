@@ -262,3 +262,18 @@ whose syllabi describe a section he is not enrolled in, so their meeting days in
 `schedule.csv` cannot yet be trusted. Settle the section question first, then
 this becomes a single clean change.
 
+## 2026-09-26 — LGL160 presentation outlines moved to Friday 25 Sept
+
+| field | old | new |
+|---|---|---|
+| due_date | 2026-09-28 | **2026-09-25** |
+| source_file | LGL160 | `announced` |
+
+**Authority:** reported by Rafael, 26 Sep 2026. He noticed it was still listed
+as upcoming and said it had been moved to the Friday. He did not say whether
+that came from class, Blackboard or email — worth noting here when known.
+
+The syllabus still reads "Presentation outlines due: September 28th at
+12:00 p.m.", and `due_date_raw` keeps that wording. `source_file: announced`
+tells `validate.py` not to look for the new date in the syllabus.
+

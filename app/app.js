@@ -138,10 +138,16 @@ function dueSorted() {
 function whenLabel(a) {
   return a.date_precision === "exact" ? fmt(a.due_resolved) : `week of ${fmtShort(a.due_resolved)}`;
 }
+/* Same honesty as the Upcoming cards: once a week-dated item's Monday has
+   gone, "this week" names the wrong week -- the app may already have rolled
+   into the next one. Count to the day its window shuts instead. */
 function relLabel(a) {
   const lo = dMin(a), hi = dMax(a);
   if (hi < 0) return `${Math.abs(hi)} days ago`;
-  if (lo <= 0) return a.date_precision === "exact" ? "today" : "this week";
+  if (lo <= 0) {
+    if (a.date_precision === "exact") return "today";
+    return hi === 0 ? "last day" : `${hi} day${hi === 1 ? "" : "s"} left`;
+  }
   if (lo === 1) return "tomorrow";
   return `in ${lo} days`;
 }
@@ -243,7 +249,7 @@ function classesLeft() {
 /* ------------------------------------------------------------ chrome */
 const VIEW_META = {
   week: ["Upcoming", () => weekSubtitle()],
-  deadlines: ["Deadlines", () => "Every graded item and hard milestone in date order — what it covers, when it lands, what it is worth."],
+  deadlines: ["Deadlines", () => ""],
   grid: ["Weekly Calendar", () => ""],
   timetable: ["Timetable", () => {
     const n = D.timetable.filter((t) => t.confidence === "low").length;
@@ -314,10 +320,10 @@ function paintChrome() {
   $("#vtitle").textContent = title;
   $("#vsub").textContent = sub();
   $("#todaychip").textContent = fmtLong(today());
-  const left = classesLeft(), lastDay = D.term.end;
+  const left = classesLeft();
   $("#footstats").innerHTML = left
-    ? `<b>${left}</b> class${left === 1 ? "" : "es"} left<br>to ${fmt(lastDay)}<div class="pep">${esc(pepToday())}</div>`
-    : `<b>Term over</b><br>${fmt(lastDay)} was the last class<div class="pep">${esc(pepToday())}</div>`;
+    ? `<b>${left}</b> <span class="lbl">Class${left === 1 ? "" : "es"} to go</span><div class="pep">${esc(pepToday())}</div>`
+    : `<span class="lbl">Term over</span><div class="pep">${esc(pepToday())}</div>`;
   const tb = $("#theme"); if (tb) tb.textContent = THEME_LABEL[currentTheme()];
 }
 
@@ -338,7 +344,7 @@ const VIEWS = {};
 /* Sidebar order, top to bottom. The Weekly Calendar leads because it is how
    Rafael navigates the term (his call, 26 Sep 2026); the app still OPENS on
    Upcoming, which is a separate thing -- see state.view. */
-const SHOWN = ["grid", "week", "deadlines", "timetable"];
+const SHOWN = ["grid", "week", "timetable"];
 const isShown = (v) => SHOWN.includes(v);
 
 /* The route stays #grid so old bookmarks keep working; #calendar matches the
@@ -418,14 +424,17 @@ VIEWS.week = () => {
      caught exactly that on 26 Sep 2026). */
   const rest = upcoming.slice(3).filter((a) => daysLeft(a) <= 14);
   if (rest.length) {
+    const dlOn = isShown("deadlines");
     h += `<section class="sec"><span class="lbl">Then, inside the fortnight</span>
-      <div class="upnext">${rest.map((a) => `<a class="uprow" href="#deadlines" data-c="${esc(a.course)}">
+      <div class="upnext">${rest.map((a) => `<${dlOn ? "a" : "div"} class="uprow" ${dlOn ? `href="#deadlines"` : ""} data-c="${esc(a.course)}">
         <span class="when"><b>${daysLeft(a)}</b> ${daysLeft(a) === 1 ? "day" : "days"}</span>
         <span class="what"><b>${nm(a.name)}</b><span class="course">${esc(a.course)} · ${esc(courseName(a.course))}</span></span>
         <span class="tag ${esc(a.type)}">${esc(a.type)}</span>
         <span class="date">${whenLabel(a)}</span>
-        <span class="wt">${a.weight_pct ? a.weight_pct + "%" : "—"}</span></a>`).join("")}</div>
-      <div class="note"><a href="#deadlines">See every deadline</a> for the rest of the term.</div>
+        <span class="wt">${a.weight_pct ? a.weight_pct + "%" : "—"}</span></${dlOn ? "a" : "div"}>`).join("")}</div>
+      <div class="note">${dlOn
+        ? `<a href="#deadlines">See every deadline</a> for the rest of the term.`
+        : `Further ahead than a fortnight? The <a href="#grid">Weekly Calendar</a> has every item of the term.`}</div>
     </section>`;
   }
 
@@ -558,13 +567,12 @@ function chapterChip(r, p, showWeek) {
 /* =============================================================== DEADLINES */
 VIEWS.deadlines = () => {
   const items = dueSorted();
-  const stated = items.filter((a) => ["exam", "test", "quiz"].includes(a.type) && a.scope_source === "stated").length;
-  const examish = items.filter((a) => ["exam", "test", "quiz"].includes(a.type)).length;
   const nextUp = items.find((a) => !isOverdue(a));
-  let h = `<div class="pad" style="border-bottom:1px solid var(--line);background:var(--surf)">
-    <p style="margin:0;font-size:13.5px;color:var(--ink2);max-width:78ch">Scope is shown only where a syllabus states it.
-      <b>Not stated</b> means ask the professor — ${words(stated)} of ${words(examish)} exams, tests and quizzes name their chapters,
-      and the rest carry no guarantee that the exam is forward-looking.</p></div>`;
+  /* The standing note about unstated scope was removed on 26 Sep 2026: it sat
+     above every visit to say the same thing, and each row that lacks a scope
+     already says "not stated -- ask" on its own face, where it is actually
+     about that item. */
+  let h = "";
   let lastMonth = "";
   for (const a of items) {
     const m = MONTH_FULL[toDate(a.due_resolved).getMonth()];
@@ -739,39 +747,10 @@ VIEWS.timetable = () => {
     </div></div></div>`;
 
   if (open.length) {
-    h += `<p class="quiet" style="padding:8px var(--secpad) 0;max-width:74ch">A block with a dashed foot is one your enrolment listing gives
-      a start time for but no finish — ${words(open.length)} of them. Those are drawn ${OPEN_DRAW_MIN} minutes tall so there is something to see;
-      that height is a drawing decision, not a claim about how long the class runs.</p>`;
+    h += `<p class="quiet" style="padding:8px var(--secpad) 0;max-width:74ch">A block with a dashed foot is one your class listing
+      gives a start time for but no finish — ${words(open.length)} of them. Those are drawn ${OPEN_DRAW_MIN} minutes tall so there is
+      something to see; that height is a drawing decision, not a claim about how long the class runs.</p>`;
   }
-  h += `<div class="sechead"><h2>Every block, in words</h2><span class="mono sub2">${tt.length} a week</span></div>
-    <div class="scroll" style="padding:0 var(--secpad)"><table class="rtable"><thead><tr>
-      <th scope="col" style="width:72px">Course</th><th scope="col" style="width:56px">Day</th>
-      <th scope="col" style="width:136px">Time</th><th scope="col" style="width:60px">Length</th>
-      <th scope="col" style="width:62px">Class</th>
-      <th scope="col">Where, and where the times came from</th></tr></thead><tbody>`;
-  for (const t of days.flatMap((d) => tt.filter((x) => x.day === d).sort((a, b) => mins(a.start) - mins(b.start)))) {
-    h += `<tr data-c="${esc(t.course)}"><td>${pill(t.course)}</td>
-      <td data-label="Day">${esc(t.day)}</td>
-      <td class="nowrap" data-label="Time">${clock(t.start)} – ${t.end ? clock(t.end) : `<span class="quiet">not stated</span>`}</td>
-      <td class="nowrap quiet" data-label="Length">${durWords(t.start, t.end)}</td>
-      <td class="mono quiet" data-label="Class">${t.class_nbr ? esc(t.class_nbr) : "—"}</td>
-      <td>${t.room ? esc(t.room) : ""}${t.room && t.mode ? " · " : ""}${t.mode ? esc(t.mode) : ""}
-        ${t.confidence === "low" ? `<span class="tag unstated">read off the picture</span>` : ""}
-        ${t.note ? `<div class="quiet" style="margin-top:3px">${esc(t.note)}</div>` : ""}</td></tr>`;
-  }
-  h += `</tbody></table></div>`;
-
-  h += `<div class="callout"><span class="lbl red">Three courses meet on a different day from the one their syllabus describes</span>
-    <p style="margin:6px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">This chart is your <b>class listing</b> — the one giving a class number and <i>Enrolled</i> beside each course.
-      Five of those numbers match what the syllabi say. Two do not, and a third course meets on another day entirely:</p>
-    <ul style="margin:8px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">
-      <li><b>LGL151</b> — enrolled <b>Tue 1:30–4:10pm</b> in A-A4526, class <b>4532</b>. Every LGL151 row in <code>data/schedule.csv</code> is dated to a <b>Monday</b>.</li>
-      <li><b>LGL152</b> — enrolled in class <b>4533</b>, section <b>NPF</b>. The syllabus on file is class <b>3966</b>, section <b>NPE</b>.</li>
-      <li><b>LGL156</b> — enrolled in class <b>4535</b>, section <b>NPF</b>. The syllabus on file is class <b>4050</b>, section <b>NPE</b>.</li>
-    </ul>
-    <p style="margin:8px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">This reaches past the drawing. LGL152 and LGL156 date work to <i>during in person class</i>,
-      so their in-person day is the day that work is due — and it has moved. Nothing in <code>schedule.csv</code> or <code>assessments.csv</code> has been changed:
-      check whether the syllabi you hold are your own sections' before any date is rewritten.</p></div>`;
   return h + `${legend()}<div class="spacer"></div>`;
 };
 

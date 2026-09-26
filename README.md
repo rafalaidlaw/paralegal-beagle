@@ -26,13 +26,14 @@ Three, listed down the left side with a count beside each.
 |---|---|
 | **Weekly Calendar** | All fifteen weeks by all eight courses on one screen, with a tick box beside every chapter. Holidays, study week and the drop deadline get their own rows. A button hides the chapters when you only want deadlines. |
 | **Upcoming** | What is next. One sentence at the top names the nearest graded item and how long is left on it, then the next three deadlines with a big day count each, your readings for the week class by class, and the whole term as fifteen bars down the right. **Once Friday is over it rolls to the following week** — on a Saturday it shows you the week you are about to walk into, not the one that just ended. The sidebar says "Week ahead" rather than "Current week" when it has done that. |
-| **Deadlines** | Every graded item in date order, month by month: what it covers where the syllabus says, when it lands, what it is worth. |
 | **Timetable** | Your ordinary week drawn to scale, from your class listing — which day, which hour, which room, which class number. Only the days you have a class are drawn, so there is no empty Monday column; the figures above the chart still tell you Monday is clear. |
 
-### The five that are put away
+### The six that are put away
 
-Crunch, Courses, Notes, Cases and Review were switched off on 24 Sep 2026 to
-keep the app to what you actually open. **They are not deleted** — the code is
+Crunch, Courses, Notes, Cases, Review and Deadlines are switched off, to keep
+the app to what you actually open. Deadlines went on 26 Sep 2026: Upcoming
+carries the next fortnight and the Weekly Calendar carries the whole term, so
+it had become a third list of the same items. **They are not deleted** — the code is
 untouched and still tested. To bring one back, add its name to the `SHOWN` list
 near the top of `app/app.js` and un-comment its line in `app/index.html`.
 

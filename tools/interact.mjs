@@ -116,7 +116,7 @@ const yAfter = (await evalJs(`window.scrollY`)).v;
 check("ticking a chapter keeps the scroll position", yBefore > 200 && Math.abs(yAfter - yBefore) < 4, { yBefore, yAfter });
 await click(`[data-reading="${lastChip}"]`); await sleep(600);
 await click(`[data-reading="${lastChip}"]`); await sleep(600);   // back to blank
-await evalJs(`document.querySelector('#nav a[data-view="deadlines"]').click()`); await sleep(1200);
+await evalJs(`document.querySelector('#nav a[data-view="timetable"]').click()`); await sleep(1200);
 check("switching screens goes to the top", (await evalJs(`window.scrollY`)).v === 0, (await evalJs(`window.scrollY`)).v);
 
 // ---------------------------------------------------------------- master tick
@@ -168,7 +168,7 @@ check("the sidebar shows the current week, zero-padded",
 // with the date -- same day, same line, so it is never noise.
 await go("week");
 const foot = await evalJs(`JSON.stringify({
-  text: document.querySelector('#footstats')?.textContent.replace(/\s+/g, " ").trim(),
+  text: document.querySelector('#footstats')?.textContent.replace(/\\s+/g, " ").trim(),
   pep: document.querySelector('#footstats .pep')?.textContent.trim(),
   n: Number(document.querySelector('#footstats b')?.textContent.trim())
 })`);
@@ -176,10 +176,10 @@ const fj = JSON.parse(foot.v);
 const srvLeft = await (await fetch("http://127.0.0.1:8787/api/data")).json();
 const wantLeft = srvLeft.schedule.filter((r) => r.due_type !== "study_week" && r.class_date >= srvLeft.today).length;
 check("the footer counts the classes still ahead", fj.n === wantLeft, { shown: fj.n, wantLeft });
-check("the footer names the last day of term", /to \w{3} \d+ \w+/.test(fj.text || ""), fj.text);
+check("the footer reads 'classes to go'", /classes to go/i.test(fj.text || ""), fj.text);
 check("the footer carries a line for the day", !!fj.pep && fj.pep.length < 40, fj.pep);
 // it must be the same line on a re-render, not a fresh roll of the dice
-await go("deadlines"); await go("week");
+await go("grid"); await go("week");
 const pep2 = await evalJs(`document.querySelector('#footstats .pep')?.textContent.trim()`);
 check("that line does not change on a re-render", pep2.v === fj.pep, { first: fj.pep, second: pep2.v });
 
@@ -305,14 +305,67 @@ const legOrder = await evalJs(`[...document.querySelectorAll('.legend .code')].m
 check("the legend beneath it reads in the same order",
   JSON.stringify(legOrder.v) === JSON.stringify(colOrder.v), legOrder.v);
 
+// ---------------------------------------------------------------- timetable
+// Rafael's week from his class listing, drawn to scale out of
+// data/timetable.csv: every block has a start, a finish, a room and the class
+// number he is enrolled in. Since 26 Sep 2026 the chart stands alone -- the
+// table beneath it repeated what the chart already said, and the standing
+// callout said the same thing on every visit.
+await go("timetable");
+const ttShape = await evalJs(`JSON.stringify({
+  days: [...document.querySelectorAll('.tthead .ttday')].map(e => e.textContent.trim()),
+  blocks: document.querySelectorAll('.ttblock').length,
+  open: document.querySelectorAll('.ttblock.open').length,
+  rooms: document.querySelectorAll('.ttblock .where').length,
+  clear: document.querySelector('.stats .stat:nth-child(3) .v')?.textContent.trim(),
+  hours: document.querySelector('.stats .stat:nth-child(4) .v')?.textContent.trim(),
+  tables: document.querySelectorAll('.rtable').length,
+  callouts: document.querySelectorAll('.callout').length
+})`);
+const ts = JSON.parse(ttShape.v);
+// Monday has no class this term, so it is not drawn at all -- but it is still
+// named in the stats, because a clear day is worth knowing about.
+check("the timetable draws only the days with a class in them",
+  JSON.stringify(ts.days) === JSON.stringify(["Tue", "Wed", "Thu", "Fri"]), ts.days);
+check("every row in timetable.csv is drawn", ts.blocks === 11, ts);
+check("no block is open-ended now that every finish is known", ts.open === 0, ts);
+check("every block says where it is, room or online", ts.rooms === 11, ts);
+check("Monday is left out of the chart but still named as clear", ts.clear === "Mon", ts);
+check("the weekly total can be stated now", ts.hours === "19.3", ts);
+check("the chart stands alone, with no table or callout beneath it",
+  ts.tables === 0 && ts.callouts === 0, ts);
+const ttCols = await evalJs(`getComputedStyle(document.querySelector('.tt')).getPropertyValue('--cols').trim()`);
+check("the chart is as wide as the days it draws", ttCols.v === "4", ttCols.v);
+// A block must sit where the clock says. LGL225 runs 8:55-10:40 in a chart
+// that starts at 8:00 and ends at 19:00 -- 55 minutes down a 660-minute span.
+const ttPos = await evalJs(`(() => {
+  const b = document.querySelector('.ttblock[data-c="LGL225"]');
+  return b ? { top: b.style.top, height: b.style.height } : null;
+})()`);
+const wantTop = (55 / 660 * 100).toFixed(3) + "%", wantH = (105 / 660 * 100).toFixed(3) + "%";
+check("a block is placed by the clock, not by its order",
+  ttPos.v && ttPos.v.top === wantTop && ttPos.v.height === wantH, { got: ttPos.v, wantTop, wantH });
+// the listing's own hours, read off the chart itself
+const ttTitles = await evalJs(`JSON.stringify([...document.querySelectorAll('.ttblock')].map(b => b.getAttribute('title')))`);
+const titles = JSON.parse(ttTitles.v);
+for (const want of ["starts 1:30pm, ends 4:10pm", "starts 9:50am, ends 11:35am",
+                    "starts 11:40am, ends 1:25pm", "starts 1:30pm, ends 2:20pm"]) {
+  check(`the listing's own hours survive: ${want}`, titles.some((t) => (t || "").includes(want)), titles);
+}
+// The section conflict is no longer printed on screen (Rafael, 26 Sep 2026),
+// but it must not be lost: every affected row still carries it in the data.
+const ttData = await (await fetch("http://127.0.0.1:8787/api/data")).json();
+const flagged = ttData.timetable.filter((t) => /different section|MONDAY/.test(t.note || "")).length;
+check("the section conflict is still recorded in the data", flagged >= 4, flagged);
+
 // ---------------------------------------------------------------- deep links
 // Cut to three screens on 24 Sep 2026. The other five still render (viewtest
 // proves that) but are not listed and not routable, and nothing may link to
 // them -- a link to nowhere is worse than no link.
 const navViews = await evalJs(`[...document.querySelectorAll('#nav a[data-view]')].map(a => a.dataset.view)`);
 check("the sidebar lists exactly the shown screens, in order",
-  JSON.stringify(navViews.v) === JSON.stringify(["grid", "week", "deadlines", "timetable"]), navViews.v);
-const navCount = await evalJs(`document.querySelector('#nav a[data-view="deadlines"] .count')?.textContent.trim()`);
+  JSON.stringify(navViews.v) === JSON.stringify(["grid", "week", "timetable"]), navViews.v);
+const navCount = await evalJs(`document.querySelector('#nav a[data-view="week"] .count')?.textContent.trim()`);
 check("the sidebar shows a count beside a screen", /^\d+$/.test(navCount.v || ""), navCount.v);
 const navOn = await evalJs(`document.querySelectorAll('#nav a.on').length`);
 check("exactly one nav item is active", navOn.v === 1, navOn.v);
@@ -330,10 +383,7 @@ const legendLinks = await evalJs(`JSON.stringify({ links: document.querySelector
 const ll = JSON.parse(legendLinks.v);
 check("the grid legend is likewise not linked", ll.links === 0 && ll.items === 8, ll);
 
-// ---------------------------------------------------------------- deadlines
-await go("exams");   // the old hash must still land somewhere sensible
-const title = await evalJs(`document.querySelector("#vtitle")?.textContent.trim()`);
-check("#exams aliases to Deadlines", title.v === "Deadlines", title.v);
+// ------------------------------------------------------------- the calendar
 // The Term Grid became the Weekly Calendar on 24 Sep 2026. #grid stays the
 // route so old bookmarks work; #calendar matches the name on screen.
 for (const [hash, want] of [["grid", "Weekly Calendar"], ["calendar", "Weekly Calendar"]]) {
@@ -343,88 +393,28 @@ for (const [hash, want] of [["grid", "Weekly Calendar"], ["calendar", "Weekly Ca
 }
 const calSub = await evalJs(`document.querySelector("#vsub")?.textContent.trim()`);
 check("the Weekly Calendar carries no subtitle", calSub.v === "", JSON.stringify(calSub.v));
-const navText = await evalJs(`[...document.querySelectorAll('#nav a[data-view]')].map(a => a.firstChild.textContent.trim())`);
-check("the sidebar names its screens and shows no group headings",
-  JSON.stringify(navText.v) === JSON.stringify(["Weekly Calendar", "Upcoming", "Deadlines", "Timetable"])
-  && (await evalJs(`document.querySelectorAll('#nav .grp').length`)).v === 0, navText.v);
 
-// ---------------------------------------------------------------- timetable
-// Rafael's week from his class listing, drawn to scale out of
-// data/timetable.csv: every block has a start, a finish, a room and the class
-// number he is enrolled in. The open-ended drawing is kept for the case where
-// a row arrives without an end -- it must never be given an invented one.
-await go("timetable");
-const ttShape = await evalJs(`JSON.stringify({
-  days: [...document.querySelectorAll('.tthead .ttday')].map(e => e.textContent.trim()),
-  blocks: document.querySelectorAll('.ttblock').length,
-  open: document.querySelectorAll('.ttblock.open').length,
-  rooms: [...document.querySelectorAll('.ttblock .where')].length,
-  clear: document.querySelector('.stats .stat:nth-child(3) .v')?.textContent.trim(),
-  rows: document.querySelectorAll('.rtable tbody tr').length
+// ------------------------------------------------------- Deadlines is off
+// Switched off 26 Sep 2026: Upcoming carries the fortnight and the Weekly
+// Calendar carries the whole term, so it was a third list of the same items.
+// Its old hashes must still land somewhere, and nothing may link to it.
+for (const hash of ["deadlines", "exams"]) {
+  await go(hash);
+  const t = await evalJs(`document.querySelector("#vtitle")?.textContent.trim()`);
+  check(`#${hash} now lands on Upcoming`, t.v === "Upcoming", t.v);
+}
+await go("week");
+const dlLinks = await evalJs(`document.querySelectorAll('a[href="#deadlines"], a[href^="#deadlines/"]').length`);
+check("nothing on Upcoming links to the hidden Deadlines screen", dlLinks.v === 0, dlLinks.v);
+const upRows = await evalJs(`JSON.stringify({
+  rows: document.querySelectorAll('.uprow').length,
+  links: document.querySelectorAll('a.uprow').length,
+  names: [...document.querySelectorAll('.uprow .course')].map(e => e.textContent.trim()).slice(0, 2)
 })`);
-const ts = JSON.parse(ttShape.v);
-// Monday has no class this term, so it is not drawn at all -- but it is still
-// named in the stats, because a clear day is worth knowing about.
-check("the timetable draws only the days with a class in them",
-  JSON.stringify(ts.days) === JSON.stringify(["Tue", "Wed", "Thu", "Fri"]), ts.days);
-check("every row in timetable.csv is drawn and listed", ts.blocks === 11 && ts.rows === 11, ts);
-check("no block is open-ended now that every finish is known", ts.open === 0, ts);
-check("every block says where it is, room or online", ts.rooms === 11, ts);
-check("Monday is left out of the chart but still named as clear", ts.clear === "Mon", ts);
-const ttCols = await evalJs(`getComputedStyle(document.querySelector('.tt')).getPropertyValue('--cols').trim()`);
-check("the chart is as wide as the days it draws", ttCols.v === "4", ttCols.v);
-// A block must sit where the clock says. LGL225 runs 8:55-10:40 in a chart that
-// starts at 8:00 and ends at 19:00 -- 55 minutes down a 660-minute span.
-const ttPos = await evalJs(`(() => {
-  const b = document.querySelector('.ttblock[data-c="LGL225"]');
-  return b ? { top: b.style.top, height: b.style.height } : null;
-})()`);
-const wantTop = (55 / 660 * 100).toFixed(3) + "%", wantH = (105 / 660 * 100).toFixed(3) + "%";
-check("a block is placed by the clock, not by its order",
-  ttPos.v && ttPos.v.top === wantTop && ttPos.v.height === wantH, { got: ttPos.v, wantTop, wantH });
-const ttWarn = await evalJs(`document.querySelector('.callout .lbl.red')?.textContent.trim()`);
-check("the section conflict is called out on the page",
-  /different day/.test(ttWarn.v || ""), ttWarn.v);
-// The enrolment listing is the authority for the three courses whose syllabus
-// describes another section. If these ever drift, the chart is lying.
-const ttTimes = await evalJs(`JSON.stringify([...document.querySelectorAll('.ttblock')].map(b =>
-  b.dataset.c + " " + b.closest('.ttcol').previousElementSibling ))`);
-const ttEnrol = await evalJs(`JSON.stringify([...document.querySelectorAll('.rtable tbody tr')].map(r =>
-  [...r.children].slice(0, 3).map(c => c.textContent.trim().replace(/\\s+/g, " ")).join(" | ")))`);
-const rows = JSON.parse(ttEnrol.v);
-for (const want of ["LGL151 | Tue | 1:30pm – 4:10pm", "LGL152 | Fri | 9:50am – 11:35am",
-                    "LGL156 | Tue | 11:40am – 1:25pm", "LGL156 | Thu | 1:30pm – 2:20pm",
-                    "LGL153 | Fri | 1:30pm – 3:15pm", "LGL152 | Thu | 11:40am – 1:25pm"]) {
-  check(`the listing's own hours survive: ${want}`, rows.some((r) => r.startsWith(want)), rows);
-}
-const ttHours = await evalJs(`document.querySelector('.stats .stat:nth-child(4) .v')?.textContent.trim()`);
-check("the weekly total can be stated now", ttHours.v === "19.3", ttHours.v);
-
-
-// ------------------------------------------------------- "# 1" -> "#1"
-// LGL154's syllabus prints "Assignment # 1" and the CSV keeps that, because
-// every figure has to trace back to a page of the PDF. The gap is closed on
-// the way to the screen, so no view may show one.
-for (const view of ["week/3", "week/5", "deadlines", "grid"]) {
-  await go(view);
-  const gaps = await evalJs(`(() => {
-    const raw = [...document.querySelectorAll('.raw, details')];
-    const txt = [...document.querySelectorAll('h3, .name, .tag, .ch, .topic, td, li')]
-      .filter(e => !raw.some(r => r.contains(e)))
-      .map(e => e.textContent).join(" | ");
-    return (txt.match(/#\s+\d/g) || []).length;
-  })()`);
-  check(`no gap after a # on ${view}`, gaps.v === 0, gaps.v);
-}
-const tidied = await evalJs(`[...document.querySelectorAll('.gcell .tag')].map(e => e.textContent.trim()).filter(t => /#/.test(t))`);
-check("the calendar shows Assignment #1, not Assignment # 1",
-  (tidied.v || []).some((t) => /^Assignment #1 /.test(t)) && !(tidied.v || []).some((t) => /#\s/.test(t)), tidied.v);
-
-await go("deadlines");   // back, for the two checks below
-const nextRows = await evalJs(`document.querySelectorAll('.drow.next').length`);
-check("exactly one deadline row is marked next", nextRows.v === 1, nextRows.v);
-const months = await evalJs(`[...document.querySelectorAll('.month')].map(m => m.textContent.trim())`);
-check("deadlines are grouped by month", Array.isArray(months.v) && months.v.length >= 3, months.v);
+const ur = JSON.parse(upRows.v);
+check("the fortnight list is still there, as plain rows", ur.rows > 0 && ur.links === 0, ur);
+check("each fortnight row names its course in full",
+  (ur.names || []).every((n) => /^LGL\d{3} · .+/.test(n)), ur.names);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (logs.length) { console.log("\nbrowser errors:"); logs.forEach((l) => console.log("  " + l)); }
