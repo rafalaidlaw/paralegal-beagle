@@ -163,6 +163,34 @@ const sideWeek = await evalJs(`document.querySelector('#wk-big')?.textContent.tr
 check("the sidebar shows the current week, zero-padded",
   sideWeek.v === String(here).padStart(2, "0"), { sideWeek: sideWeek.v, here });
 
+// -------------------------------------------------- Upcoming rolls forward
+// From Saturday, "this week" means the week ahead: its classes are done and
+// what is worth reading for is next week's. Asserted as an invariant rather
+// than against a fixed date, so the suite keeps working every day of the week.
+await go("week");
+const roll = await evalJs(`JSON.stringify({
+  title: document.querySelector("#vtitle")?.textContent.trim(),
+  label: document.querySelector("#wk-lbl")?.textContent.trim(),
+  big: document.querySelector("#wk-big")?.textContent.trim(),
+  range: document.querySelector("#wk-range")?.textContent.trim(),
+  stepper: document.querySelector(".wknav b")?.textContent.trim(),
+  dow: new Date().getDay()
+})`);
+const rj = JSON.parse(roll.v);
+const weekend = rj.dow === 0 || rj.dow === 6;
+check("the screen is called Upcoming", rj.title === "Upcoming", rj);
+check(`the sidebar label matches the day (${weekend ? "weekend" : "weekday"})`,
+  rj.label === (weekend ? "Week ahead" : "Current week"), rj);
+check("a rolled-forward sidebar says when that week starts",
+  weekend ? /^Starts Mon /.test(rj.range) : / — /.test(rj.range), rj);
+check("the stepper opens on the same week the sidebar names",
+  rj.stepper === `Week ${Number(rj.big)} of 15`, rj);
+// A week-precision item whose Monday has gone counts down to the day its
+// window shuts, never "this week" -- which would name the wrong week.
+const cards = await evalJs(`[...document.querySelectorAll('.card .days')].map(e => e.textContent.replace(/\\s+/g, " ").trim())`);
+check("no card says 'this week' once the week has rolled",
+  !weekend || !(cards.v || []).some((c) => /this week/i.test(c)), cards.v);
+
 // ---------------------------------------------------------------- theme
 await go("week");
 const themeState = () => evalJs(`JSON.stringify({attr: document.documentElement.dataset.theme || "", btn: document.querySelector("#theme").textContent.trim(), ls: localStorage.getItem("beagle-theme")})`);
@@ -270,8 +298,8 @@ check("the legend beneath it reads in the same order",
 // proves that) but are not listed and not routable, and nothing may link to
 // them -- a link to nowhere is worse than no link.
 const navViews = await evalJs(`[...document.querySelectorAll('#nav a[data-view]')].map(a => a.dataset.view)`);
-check("the sidebar lists exactly the shown screens",
-  JSON.stringify(navViews.v) === JSON.stringify(["week", "deadlines", "grid", "timetable"]), navViews.v);
+check("the sidebar lists exactly the shown screens, in order",
+  JSON.stringify(navViews.v) === JSON.stringify(["grid", "week", "deadlines", "timetable"]), navViews.v);
 const navCount = await evalJs(`document.querySelector('#nav a[data-view="deadlines"] .count')?.textContent.trim()`);
 check("the sidebar shows a count beside a screen", /^\d+$/.test(navCount.v || ""), navCount.v);
 const navOn = await evalJs(`document.querySelectorAll('#nav a.on').length`);
@@ -280,7 +308,7 @@ check("exactly one nav item is active", navOn.v === 1, navOn.v);
 await go("courses/LGL225");   // an old bookmark to a screen that is now hidden
 const landed = await evalJs(`JSON.stringify({ title: document.querySelector("#vtitle")?.textContent.trim(), csel: !!document.querySelector("#csel") })`);
 const lj = JSON.parse(landed.v);
-check("an old deep link to a hidden screen lands on This Week", lj.title === "This Week" && !lj.csel, lj);
+check("an old deep link to a hidden screen lands on Upcoming", lj.title === "Upcoming" && !lj.csel, lj);
 await go("week");
 const deadPills = await evalJs(`JSON.stringify({ links: document.querySelectorAll('.card a.course-pill').length, chips: document.querySelectorAll('.card .course-pill').length })`);
 const dp = JSON.parse(deadPills.v);
@@ -303,7 +331,7 @@ for (const [hash, want] of [["grid", "Weekly Calendar"], ["calendar", "Weekly Ca
 }
 const navText = await evalJs(`[...document.querySelectorAll('#nav a[data-view]')].map(a => a.firstChild.textContent.trim())`);
 check("the sidebar names its screens and shows no group headings",
-  JSON.stringify(navText.v) === JSON.stringify(["This Week", "Deadlines", "Weekly Calendar", "Timetable"])
+  JSON.stringify(navText.v) === JSON.stringify(["Weekly Calendar", "Upcoming", "Deadlines", "Timetable"])
   && (await evalJs(`document.querySelectorAll('#nav .grp').length`)).v === 0, navText.v);
 
 // ---------------------------------------------------------------- timetable
@@ -349,6 +377,25 @@ const rows = JSON.parse(ttEnrol.v);
 for (const want of ["LGL151 | Tue | 1:30pm", "LGL152 | Fri | 9:50am", "LGL156 | Tue | 11:40am", "LGL156 | Thu | 1:30pm"]) {
   check(`the listing's own time survives: ${want}`, rows.some((r) => r.startsWith(want)), rows);
 }
+
+// ------------------------------------------------------- "# 1" -> "#1"
+// LGL154's syllabus prints "Assignment # 1" and the CSV keeps that, because
+// every figure has to trace back to a page of the PDF. The gap is closed on
+// the way to the screen, so no view may show one.
+for (const view of ["week/3", "week/5", "deadlines", "grid"]) {
+  await go(view);
+  const gaps = await evalJs(`(() => {
+    const raw = [...document.querySelectorAll('.raw, details')];
+    const txt = [...document.querySelectorAll('h3, .name, .tag, .ch, .topic, td, li')]
+      .filter(e => !raw.some(r => r.contains(e)))
+      .map(e => e.textContent).join(" | ");
+    return (txt.match(/#\s+\d/g) || []).length;
+  })()`);
+  check(`no gap after a # on ${view}`, gaps.v === 0, gaps.v);
+}
+const tidied = await evalJs(`[...document.querySelectorAll('.gcell .tag')].map(e => e.textContent.trim()).filter(t => /#/.test(t))`);
+check("the calendar shows Assignment #1, not Assignment # 1",
+  (tidied.v || []).some((t) => /^Assignment #1 /.test(t)) && !(tidied.v || []).some((t) => /#\s/.test(t)), tidied.v);
 
 await go("deadlines");   // back, for the two checks below
 const nextRows = await evalJs(`document.querySelectorAll('.drow.next').length`);

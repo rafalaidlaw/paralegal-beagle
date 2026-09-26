@@ -166,8 +166,26 @@ Standard library only. Binds 127.0.0.1. There is **no build step** — edit
 `app/*` and refresh. Rafael has asked "did you build it?" before; the answer is
 that a refresh is the build.
 
-**Four screens: This Week, Deadlines, Weekly Calendar, Timetable.** Rafael cut
-it to three on 24 Sep 2026 and added the Timetable on 25 Sep.
+**Four screens, in this sidebar order: Weekly Calendar, Upcoming, Deadlines,
+Timetable** (`SHOWN` in `app.js` is that order). Rafael cut the app to three on
+24 Sep 2026, added the Timetable on 25 Sep, and on 26 Sep renamed This Week to
+**Upcoming**, moved the Weekly Calendar to the top, and asked for the roll
+below. The app still OPENS on Upcoming — sidebar order and landing screen are
+separate things.
+
+**Upcoming rolls forward at the weekend.** Classes run Mon–Fri, so from
+Saturday the week you are standing in has nothing left to prepare for:
+`nowWeek()` adds one when `rolledForward()` (Sat or Sun). The roll is global on
+purpose — sidebar, the Calendar's ruled row, the runway marker and the reading
+backlog all move together, because one screen calling week 3 current while
+another calls week 4 current is worse than either. The sidebar says which it is
+doing: "Current week" or "Week ahead", with "Starts Mon 28 Sept" instead of a
+date range. **Never roll one of these and not the others.**
+
+A consequence worth keeping: a week-precision item whose Monday has passed must
+never be labelled "this week" once the roll has happened — that names the wrong
+week. `countdown()` counts to `dMax` instead ("1 day left"), which is the only
+honest number left on it.
 The Term Grid was renamed on 24 Sep 2026; its route stays `#grid` so old
 bookmarks keep working, with `#calendar` as an alias. The sidebar's "Now" /
 "The term" group headings went at the same time — three entries need no
@@ -280,6 +298,12 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   overflowed at 412 because it never did this.
 - **12px is the floor for anything with content.** The reference used 10.5px
   and 11px labels; the app holds 12.
+- **"Assignment # 1" is repaired on the way to the screen, not in the CSV.**
+  LGL154's syllabus really prints the space, and `data/*.csv` keeps it because
+  every figure has to trace back to a page of the PDF. `tidyHash()` closes the
+  gap and `nm()` is `esc()` plus that repair; apply `nm()` to names, due items
+  and topics. **Not** to the Review tab's "source text" blocks — those are
+  shown as verbatim proof of what the syllabus says.
 - **Never name a component class after an assessment type.** `.exam` on a card
   collided with `.tag.exam` on a chip once and doubled every exam chip's
   height.

@@ -24,9 +24,9 @@ Three, listed down the left side with a count beside each.
 
 | Screen | What it's for |
 |---|---|
-| **This Week** | Start here. One sentence at the top says how many chapters there are this week and how far off the next graded item is. Then the next three deadlines with a big day count each, your readings for the week class by class, and the whole term as fifteen bars down the right. |
-| **Deadlines** | Every graded item in date order, month by month: what it covers where the syllabus says, when it lands, what it is worth. |
 | **Weekly Calendar** | All fifteen weeks by all eight courses on one screen, with a tick box beside every chapter. Holidays, study week and the drop deadline get their own rows. A button hides the chapters when you only want deadlines. |
+| **Upcoming** | What is next. One sentence at the top names the nearest graded item and how long is left on it, then the next three deadlines with a big day count each, your readings for the week class by class, and the whole term as fifteen bars down the right. **Once Friday is over it rolls to the following week** — on a Saturday it shows you the week you are about to walk into, not the one that just ended. The sidebar says "Week ahead" rather than "Current week" when it has done that. |
+| **Deadlines** | Every graded item in date order, month by month: what it covers where the syllabus says, when it lands, what it is worth. |
 | **Timetable** | Your ordinary week drawn to scale, from your enrolment listing — which day, which hour, which room. Six blocks have a dashed foot: your enrolment gives their start time but no finish. |
 
 ### The five that are put away
@@ -61,7 +61,11 @@ held the 24 open questions the syllabi left ambiguous — they are still listed 
   choice.
 - Every screen has its own web address, so you can bookmark one. `#deadlines`
   opens Deadlines; `#week/7` opens week 7; `#grid` and `#calendar` both open
-  the Weekly Calendar.
+  the Weekly Calendar; `#week` and `#upcoming` both open Upcoming.
+- A graded item drops off Upcoming once it can no longer be met — the day
+  after, for a dated one; after its whole week has run out, for one the
+  syllabus dates only to a week. Until then it counts down to the day its
+  window shuts: "1 day left".
 - On a phone the sidebar folds into a strip across the top.
 
 The look was designed in Claude Design and rebuilt here to run offline. The

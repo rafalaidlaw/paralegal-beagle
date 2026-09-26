@@ -25,15 +25,15 @@
     </div>
 
     <div class="nowblock">
-      <span class="lbl">Current week</span>
+      <span class="lbl" id="wk-lbl">Current week</span>
       <div class="big"><b id="wk-big">—</b><span id="wk-of">of 15</span></div>
       <div class="range" id="wk-range"></div>
     </div>
 
     <nav class="nav" id="nav" aria-label="Views">
-      <a href="#week" data-view="week">This Week <span class="count" data-count="week"></span></a>
-      <a href="#deadlines" data-view="deadlines">Deadlines <span class="count" data-count="deadlines"></span></a>
       <a href="#grid" data-view="grid">Weekly Calendar <span class="count" data-count="grid"></span></a>
+      <a href="#week" data-view="week">Upcoming <span class="count" data-count="week"></span></a>
+      <a href="#deadlines" data-view="deadlines">Deadlines <span class="count" data-count="deadlines"></span></a>
       <a href="#timetable" data-view="timetable">Timetable <span class="count" data-count="timetable"></span></a>
       <!-- Cut to three screens on 24 Sep 2026. These five still work; to bring
            one back, un-comment its line here AND add its name to SHOWN in app.js.

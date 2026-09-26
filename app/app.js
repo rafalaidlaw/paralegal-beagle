@@ -56,7 +56,19 @@ const termWeek = (s) => Math.floor(daysBetween(D.term.week1_monday, s) / 7) + 1;
 const weekMonday = (n) => plus(D.term.week1_monday, (n - 1) * 7);
 const LAST_WEEK = () => termWeek(D.term.end);
 const clampWeek = (n) => Math.max(1, Math.min(LAST_WEEK(), n));
-const nowWeek = () => clampWeek(termWeek(today()));
+/* Classes run Monday to Friday, so once Friday is over the week Rafael is
+   standing in has nothing left to prepare for. From Saturday morning the app
+   rolls forward: "this week" becomes the week ahead, which is the one worth
+   reading for (his request, 26 Sep 2026 -- a Saturday, wanting week 4).
+
+   The roll is deliberately everywhere, not only on This Week: the sidebar, the
+   Weekly Calendar's ruled row, the runway marker and the reading backlog all
+   move together, because a screen that called week 3 current while another
+   called week 4 current would be worse than either. The sidebar says which of
+   the two it is doing -- "Current week" or "Week ahead" -- so the number is
+   never quietly wrong. */
+const rolledForward = () => { const d = toDate(today()).getDay(); return d === 0 || d === 6; };
+const nowWeek = () => clampWeek(termWeek(today()) + (rolledForward() ? 1 : 0));
 const shownWeek = () => state.week == null ? nowWeek() : state.week;
 
 const progressMap = () => Object.fromEntries(D.progress.map((p) => [p.reading_id, p]));
@@ -75,6 +87,18 @@ const pill = (code) => isShown("courses")
   ? `<a class="course-pill" data-c="${esc(code)}" href="#courses/${esc(code)}" title="${esc(courseName(code))}">${esc(code)}</a>`
   : `<span class="course-pill" data-c="${esc(code)}" title="${esc(courseName(code))}">${esc(code)}</span>`;
 const typeWord = (t) => `<span class="type ${esc(t)}">${esc(t)}</span>`;
+
+/* LGL154's syllabus really does print "Assignment # 1" and "In-Class Test # 1"
+   with a space, and data/*.csv keeps it that way -- every figure in this app
+   has to trace back to a page of the PDF, so the CSV is not the place to tidy
+   punctuation. Rafael reads it as "#1", so the gap is closed HERE, at the last
+   moment before it is drawn.
+
+   nm() is esc() plus that one repair, for a NAME. Deliberately not applied to
+   the Review tab's "source text" blocks: those are shown as verbatim proof of
+   what the syllabus says, and tidying them would be a small lie. */
+const tidyHash = (s) => String(s ?? "").replace(/#\s+(?=\d)/g, "#");
+const nm = (s) => esc(tidyHash(s));
 
 /* Column order in the Weekly Calendar: the order Rafael meets his courses in
    the week, which is how he reads across a row (24 Sep 2026). It is a
@@ -123,6 +147,20 @@ function relLabel(a) {
 }
 const weightLabel = (a) => a.weight_pct ? `worth ${a.weight_pct}% of the course` : "no separate weight";
 
+/* The big number on an Upcoming card, and the word under it.
+
+   Three cases, and the middle one is why this exists: a week-precision item
+   whose Monday has passed is not "this week" any more once Upcoming has rolled
+   into the next one -- it is an item with a day or two left before its window
+   shuts. Count to dMax there, which is the only honest number left. */
+function countdown(a) {
+  if (dMin(a) > 0) { const d = daysLeft(a); return { n: String(d), word: `day${d === 1 ? "" : "s"}` }; }
+  if (a.date_precision === "exact") return { n: "now", word: "today" };
+  const left = dMax(a);
+  if (left <= 0) return { n: "now", word: "last day" };
+  return { n: String(left), word: left === 1 ? "day left" : "days left" };
+}
+
 /* ------------------------------------------------------------ networking */
 async function load() {
   const r = await fetch("/api/data");
@@ -155,7 +193,7 @@ function toggleDeadlinesOnly() { LS.set("beagle-deadlines-only", isDeadlinesOnly
 
 /* ------------------------------------------------------------ chrome */
 const VIEW_META = {
-  week: ["This Week", () => weekSubtitle()],
+  week: ["Upcoming", () => weekSubtitle()],
   deadlines: ["Deadlines", () => "Every graded item and hard milestone in date order — what it covers, when it lands, what it is worth."],
   grid: ["Weekly Calendar", () => `Fifteen weeks against ${words(D.courses.length)} courses. The one view no single syllabus can give you.`],
   timetable: ["Timetable", () => {
@@ -169,19 +207,26 @@ const VIEW_META = {
   review: ["Review", () => `${cap(words(reviewItems().length))} open question${reviewItems().length === 1 ? "" : "s"} the syllabi left ambiguous.`],
 };
 
+/* The screen is called Upcoming, so the sentence leads with what is next --
+   the nearest thing still ahead of him, not a count of chapters. An item drops
+   out of "next" the moment it can no longer be met: an exact date once that day
+   has passed, a week-precision item once its whole week has run out (dMax, the
+   two-horizon rule). So this sentence re-points itself. */
 function weekSubtitle() {
   const wk = shownWeek();
   const reads = D.readings.filter((r) => r.week_no === wk);
   const nCourses = new Set(reads.map((r) => r.course)).size;
   const next = dueSorted().find((a) => !isOverdue(a));
-  const a = reads.length
-    ? `${cap(words(reads.length))} chapter${reads.length === 1 ? "" : "s"} across ${words(nCourses)} course${nCourses === 1 ? "" : "s"}`
-    : `No chapters assigned for week ${wk}`;
-  if (!next) return `${a}, and nothing graded left in the term.`;
+  const chapters = reads.length
+    ? `${words(reads.length)} chapter${reads.length === 1 ? "" : "s"} across ${words(nCourses)} course${nCourses === 1 ? "" : "s"}`
+    : `no chapters assigned`;
+  if (!next) return `Nothing graded left in the term, and ${chapters} in week ${wk}.`;
   const n = daysLeft(next);
-  const b = n === 0 ? (next.date_precision === "exact" ? "the first graded item is today" : "the first graded item falls this week")
-    : `the first graded item ${words(n)} day${n === 1 ? "" : "s"} out`;
-  return `${a}, and ${b}.`;
+  const when = n > 0
+    ? (n === 1 ? "tomorrow" : `in ${words(n)} days`)
+    : next.date_precision === "exact" ? "today"
+    : dMax(next) <= 0 ? "on its last day" : `by ${fmt(lastPossible(next))}`;
+  return `Next up: ${tidyHash(next.name)} for ${next.course} ${when}. Week ${wk} has ${chapters}.`;
 }
 function crunchSubtitle() {
   const ranked = crunchWeeks().filter((x) => x.load).sort((a, b) => b.load - a.load);
@@ -206,9 +251,13 @@ function counts() {
 
 function paintChrome() {
   const wk = nowWeek(), last = LAST_WEEK();
+  const ahead = rolledForward();
   $("#wk-big").textContent = String(wk).padStart(2, "0");
   $("#wk-of").textContent = `of ${last}`;
-  $("#wk-range").textContent = `Mon ${fmtShort(weekMonday(wk))} — Sun ${fmtShort(plus(weekMonday(wk), 6))}`;
+  $("#wk-lbl").textContent = ahead ? "Week ahead" : "Current week";
+  $("#wk-range").textContent = ahead
+    ? `Starts Mon ${fmtShort(weekMonday(wk))}`
+    : `Mon ${fmtShort(weekMonday(wk))} — Sun ${fmtShort(plus(weekMonday(wk), 6))}`;
   const c = counts();
   document.querySelectorAll("[data-count]").forEach((el) => { el.textContent = c[el.dataset.count] ?? ""; });
   document.querySelectorAll("#nav a[data-view]").forEach((a) => a.classList.toggle("on", a.dataset.view === state.view));
@@ -235,12 +284,15 @@ const VIEWS = {};
    crunchWeeks() from the Crunch section and the page header calls
    reviewItems(), so commenting those blocks out would break the screens he
    kept. One list is also one thing to change back, instead of five. */
-const SHOWN = ["week", "deadlines", "grid", "timetable"];
+/* Sidebar order, top to bottom. The Weekly Calendar leads because it is how
+   Rafael navigates the term (his call, 26 Sep 2026); the app still OPENS on
+   Upcoming, which is a separate thing -- see state.view. */
+const SHOWN = ["grid", "week", "deadlines", "timetable"];
 const isShown = (v) => SHOWN.includes(v);
 
 /* The route stays #grid so old bookmarks keep working; #calendar matches the
    name it is shown under, and #exams predates the Deadlines rename. */
-const ALIAS = { exams: "deadlines", calendar: "grid" };
+const ALIAS = { exams: "deadlines", calendar: "grid", upcoming: "week" };
 let renderedView = null;
 /* Re-rendering replaces the whole view, so the scroll position has to be put
    back on purpose. A change of SCREEN goes to the top; a tick, a mark, a
@@ -285,7 +337,9 @@ VIEWS.week = () => {
     <b>Week ${wk} of ${last}</b>
     <button id="wk-next" class="ghost" ${wk >= last ? "disabled" : ""} title="Next week ( ] )">${wk < last ? "week " + (wk + 1) : "week"} ›</button></span>
     <span class="quiet">${fmt(weekMonday(wk))} – ${fmt(plus(weekMonday(wk), 6))}</span>
-    ${wk !== nowWk ? `<button id="wk-today" class="ghost">back to this week</button>` : `<span class="quiet">this week</span>`}
+    ${wk !== nowWk
+      ? `<button id="wk-today" class="ghost">back to ${rolledForward() ? "the week ahead" : "this week"}</button>`
+      : `<span class="quiet">${rolledForward() ? "the week ahead — this week's classes are done" : "this week"}</span>`}
     ${holidayNote(wk)}
   </div>`;
 
@@ -296,11 +350,11 @@ VIEWS.week = () => {
   const three = upcoming.slice(0, 3);
   h += `<section class="sec"><span class="lbl">What lands next — ${within7 ? `${words(within7)} due inside the next 7 days` : "nothing is due inside the next 7 days"}</span>
     <div class="cards">${three.map((a, n) => {
-      const d = daysLeft(a), open = dMin(a) <= 0;
+      const c = countdown(a);
       return `<div class="card ${n === 0 ? "next" : ""}" data-c="${esc(a.course)}">
-        <div class="days"><b>${open ? "now" : d}</b><span>${open ? (a.date_precision === "exact" ? "today" : "this week") : `day${d === 1 ? "" : "s"}`}</span></div>
+        <div class="days"><b>${c.n}</b><span>${c.word}</span></div>
         <div class="who">${pill(a.course)} ${typeWord(a.type)}</div>
-        <div class="name">${esc(a.name)}</div>
+        <div class="name">${nm(a.name)}</div>
         <div class="when">${whenLabel(a)} · ${weightLabel(a)}</div>
       </div>`;
     }).join("") || `<div class="card"><div class="name">Nothing graded ahead</div><div class="when">Every dated item in the syllabi has passed.</div></div>`}</div>
@@ -311,7 +365,7 @@ VIEWS.week = () => {
   const over = dueSorted().filter((a) => isOverdue(a) && !gm[a.id]?.earned_pct);
   if (over.length) {
     h += `<div class="callout"><span class="lbl">Past its date — ${words(over.length)} item${over.length === 1 ? "" : "s"}</span>
-      <ul>${over.map((a) => `<li><b>${esc(a.course)} ${esc(a.name)}</b> · ${a.weight_pct}% · ${whenLabel(a)}
+      <ul>${over.map((a) => `<li><b>${esc(a.course)} ${nm(a.name)}</b> · ${a.weight_pct}% · ${whenLabel(a)}
         <span class="tag overdue">${Math.abs(dMax(a))}d ago</span></li>`).join("")}</ul>
       <div class="quiet">These stay listed until their week has fully run out — a week-dated item is not late while its week is still going.</div></div>`;
   }
@@ -320,7 +374,7 @@ VIEWS.week = () => {
   const band = D.assessments.filter((a) => a.week_no === wk && a.date_precision !== "exact");
   if (band.length) {
     h += `<div class="weekband" style="margin-top:16px"><span class="lbl">The syllabus gives a week, not a day</span>
-      ${band.map((a) => `<div class="wbrow">${pill(a.course)} ${typeWord(a.type)} <b>${esc(a.name)}</b>
+      ${band.map((a) => `<div class="wbrow">${pill(a.course)} ${typeWord(a.type)} <b>${nm(a.name)}</b>
         <span>${a.weight_pct ? a.weight_pct + "%" : ""}</span>
         <div class="quiet" style="flex:1 1 100%">${esc(a.due_date_raw)}${a.note ? " — " + esc(a.note) : ""}</div></div>`).join("")}
       <div class="quiet" style="margin-top:6px">Filing these on a Monday would be a guess. Confirm the day in class, then correct
@@ -343,8 +397,8 @@ VIEWS.week = () => {
       <div style="min-width:0">
         <div class="rhead"><h3>${esc(courseName(m.course))}</h3>
           ${chs.length > 1 ? `<button class="ghost" data-master="${chs.map((r) => esc(r.id)).join(",")}" data-to="${doneN === chs.length ? "not_started" : "done"}">${doneN === chs.length ? "clear all" : "all done"}</button>` : ""}</div>
-        ${m.topic && !sameText(m.topic, m.due_item) ? `<p class="topic">${esc(m.topic)}</p>` : ""}
-        ${m.due_item ? `<div style="margin:0 0 10px"><span class="tag ${esc(m.due_type)}">${esc(m.due_item)}</span></div>` : ""}
+        ${m.topic && !sameText(m.topic, m.due_item) ? `<p class="topic">${nm(m.topic)}</p>` : ""}
+        ${m.due_item ? `<div style="margin:0 0 10px"><span class="tag ${esc(m.due_type)}">${nm(m.due_item)}</span></div>` : ""}
         <div class="chips">${chs.map((r) => chapterChip(r, prog[r.id])).join("")}
           ${!chs.length ? `<span class="quiet">${m.reading_raw ? esc(m.reading_raw) : "No chapter reading listed for this class."}</span>` : ""}</div>
         ${unpairedNote(chs)}
@@ -374,7 +428,7 @@ VIEWS.week = () => {
   h += `<aside><div class="ahead"><h2>Term runway</h2><p>Share of your final grade falling due each week. Click a week to open it.</p></div>`;
   for (const x of weeks) {
     const cls = [x.w === nowWk ? "now" : "", x.load >= HEAVY ? "hot" : "", x.isBreak ? "break" : ""].filter(Boolean).join(" ");
-    h += `<a class="runway ${cls}" href="#week/${x.w}" title="${esc(x.isBreak ? "Study week" : x.load ? x.items.map((a) => `${a.course} ${a.name} ${a.weight_pct}%`).join("; ") : "nothing due")}">
+    h += `<a class="runway ${cls}" href="#week/${x.w}" title="${esc(x.isBreak ? "Study week" : x.load ? x.items.map((a) => `${a.course} ${tidyHash(a.name)} ${a.weight_pct}%`).join("; ") : "nothing due")}">
       <span class="no">${x.w}</span>
       <span class="trk"><i style="width:${x.isBreak ? 0 : (x.load / max * 100).toFixed(1)}%"></i></span>
       <span class="pct">${x.isBreak ? "—" : x.load + "%"}</span></a>`;
@@ -453,7 +507,7 @@ function deadlineRow(a, isNext, extra) {
   const meta = [a.materials_allowed, a.format, a.duration].filter(Boolean).join(" · ");
   return `<article class="drow ${esc(a.type)} ${isNext ? "next" : ""} ${isOverdue(a) ? "past" : ""}" data-c="${esc(a.course)}" id="dl-${esc(a.id)}">
     <div class="key"><div class="code">${esc(a.course)}</div><div class="type ${esc(a.type)}">${esc(a.type)}</div></div>
-    <div class="dbody" style="min-width:0"><h3>${esc(a.name)}</h3><div class="course">${esc(courseName(a.course))}</div>
+    <div class="dbody" style="min-width:0"><h3>${nm(a.name)}</h3><div class="course">${esc(courseName(a.course))}</div>
       <div class="scope">${scopeLine(a)}</div>${meta ? `<div class="scope quiet">${esc(meta)}</div>` : ""}</div>
     <div class="when"><b>${whenLabel(a)}</b><div>${relLabel(a)}</div></div>
     <div class="weight">${extra || `<b>${a.weight_pct ? a.weight_pct + "%" : "—"}</b><span>${a.weight_pct ? "of course" : "no weight"}</span>`}</div>
@@ -487,7 +541,7 @@ VIEWS.grid = () => {
       const unsure = rows.find((r) => r.confidence && r.confidence !== "high");
       /* Graded items first: they are what matters most in a week, so they sit
          at the top of the cell, above the chapters (Rafael, 17 Sep 2026). */
-      let cell = dues.map((a) => `<div><span class="tag ${esc(a.type)}">${esc(a.name)}${weightTag(a) ? ` <b>${weightTag(a)}</b>` : ""}</span>
+      let cell = dues.map((a) => `<div><span class="tag ${esc(a.type)}">${nm(a.name)}${weightTag(a) ? ` <b>${weightTag(a)}</b>` : ""}</span>
           ${a.scope_chapters ? `<div class="cov">covers ch ${esc(list(a.scope_chapters))}</div>` : ""}</div>`).join("");
       /* Then one tick chip per chapter -- the same chip as This Week and Courses,
          reading the same progress row, so a tick made anywhere shows here. */
@@ -684,14 +738,14 @@ VIEWS.crunch = () => {
     if (marks.length) h += `<div class="note">${esc(marks.join(" · "))}</div>`;
     const cls = [x.w === nowWk ? "now" : "", x.load >= HEAVY ? "hot" : "", x.isBreak ? "break" : ""].filter(Boolean).join(" ");
     h += `<div class="cw ${cls}"><div><div class="wkl">Week ${x.w}</div><div class="wkd">${fmtShort(mon)}</div></div>
-      <div class="bars" title="${esc(x.isBreak ? "Study week" : x.load ? x.items.map((a) => `${a.course} ${a.name} ${a.weight_pct}%`).join("; ") : "nothing due")}">
+      <div class="bars" title="${esc(x.isBreak ? "Study week" : x.load ? x.items.map((a) => `${a.course} ${tidyHash(a.name)} ${a.weight_pct}%`).join("; ") : "nothing due")}">
         <span class="flat" style="--flat:${(flat / max * 100).toFixed(2)}%"></span>
         <span style="display:flex;width:${(x.load / max * 100).toFixed(2)}%">${x.items.filter((a) => Number(a.weight_pct) > 0).map((a) =>
-          `<span class="seg" data-c="${esc(a.course)}" style="--v:${Number(a.weight_pct)}" title="${esc(a.course + " " + a.name + " " + a.weight_pct + "%")}"></span>`).join("")}</span>
+          `<span class="seg" data-c="${esc(a.course)}" style="--v:${Number(a.weight_pct)}" title="${esc(a.course + " " + tidyHash(a.name) + " " + a.weight_pct + "%")}"></span>`).join("")}</span>
       </div>
       <div class="pct">${x.load ? x.load + "%" : x.isBreak ? "—" : "0"}</div></div>`;
     if (x.items.length) h += `<div class="citems">${x.items.map((a) =>
-      `<span class="citem ${esc(a.type)}" data-c="${esc(a.course)}"><span class="code">${esc(a.course)}</span><span>${esc(a.name)}</span>${weightTag(a) ? `<span style="font-weight:800">${weightTag(a)}</span>` : ""}</span>`).join("")}</div>`;
+      `<span class="citem ${esc(a.type)}" data-c="${esc(a.course)}"><span class="code">${esc(a.course)}</span><span>${nm(a.name)}</span>${weightTag(a) ? `<span style="font-weight:800">${weightTag(a)}</span>` : ""}</span>`).join("")}</div>`;
   }
   return h + legend() + `<div class="spacer"></div>`;
 };
@@ -752,7 +806,7 @@ VIEWS.courses = () => {
   for (const a of items) {
     const g = gm[a.id] || {};
     h += deadlineRow(a, a === nextUp,
-      `<b>${a.weight_pct ? a.weight_pct + "%" : "—"}</b><span style="margin-top:8px"><input class="mark" type="number" min="0" max="100" step="0.1" data-grade="${esc(a.id)}" value="${esc(g.earned_pct || "")}" placeholder="mark" aria-label="Mark for ${esc(a.name)}, percent"></span>${g.returned_date ? `<span>returned ${esc(g.returned_date)}</span>` : ""}`);
+      `<b>${a.weight_pct ? a.weight_pct + "%" : "—"}</b><span style="margin-top:8px"><input class="mark" type="number" min="0" max="100" step="0.1" data-grade="${esc(a.id)}" value="${esc(g.earned_pct || "")}" placeholder="mark" aria-label="Mark for ${nm(a.name)}, percent"></span>${g.returned_date ? `<span>returned ${esc(g.returned_date)}</span>` : ""}`);
   }
 
   h += `<div class="sechead" style="border-top:2px solid var(--rule);margin-top:12px"><h2>Schedule and readings</h2></div>`;
@@ -762,11 +816,11 @@ VIEWS.courses = () => {
     h += `<article class="rrow ${r.week_no === nowWeek() ? "now" : ""}" data-c="${esc(code)}">
       <div class="key"><div class="code" style="font-family:var(--sans);font-size:13px">${fmt(r.class_date)}</div><div class="wk">week ${r.week_no}</div></div>
       <div style="min-width:0">
-        ${isBreak ? `<span class="tag">study week</span>` : (sameText(r.topic, r.due_item) ? "" : `<p class="topic" style="margin-top:0;color:var(--ink)">${esc(r.topic)}</p>`)}
+        ${isBreak ? `<span class="tag">study week</span>` : (sameText(r.topic, r.due_item) ? "" : `<p class="topic" style="margin-top:0;color:var(--ink)">${nm(r.topic)}</p>`)}
         ${r.note ? `<div class="meta" style="margin-bottom:8px">${esc(r.note)}</div>` : ""}
         <div class="chips">${rd.map((x) => chapterChip(x, prog[x.id])).join("")}
           ${!rd.length && r.reading_raw ? `<span class="quiet">${esc(r.reading_raw)}</span>` : ""}
-          ${r.due_item ? `<span class="tag ${esc(r.due_type)}">${esc(r.due_item)}</span>` : ""}</div>
+          ${r.due_item ? `<span class="tag ${esc(r.due_type)}">${nm(r.due_item)}</span>` : ""}</div>
         ${unpairedNote(rd)}
         ${lsoLine(r)}
       </div></article>`;
@@ -878,7 +932,7 @@ function reviewItems() {
   /* One row per assessment: an unstated exam scope that also carries a note
      is one question with a note, not two questions. */
   for (const a of D.assessments) {
-    const base = { who: `${a.course} ${a.name}`, sub: courseName(a.course), code: a.course, weight: a.weight_pct, when: a.due_resolved, prec: a.date_precision, raw: a.due_date_raw };
+    const base = { who: `${a.course} ${tidyHash(a.name)}`, sub: courseName(a.course), code: a.course, weight: a.weight_pct, when: a.due_resolved, prec: a.date_precision, raw: a.due_date_raw };
     if (["exam", "test"].includes(a.type) && a.scope_source !== "stated")
       out.push({ kind: "Exam scope not stated", what: a.note && FLAG.test(a.note) ? a.note : "", ...base });
     else if (a.confidence && a.confidence !== "high")
@@ -888,7 +942,7 @@ function reviewItems() {
   }
   for (const r of D.schedule) {
     if ((r.confidence && r.confidence !== "high") || (r.note && FLAG.test(r.note)))
-      out.push({ kind: "Schedule row", who: `${r.course} ${(r.topic || fmtShort(r.class_date)).slice(0, 90)}`, sub: courseName(r.course), code: r.course, weight: "", when: r.class_date, what: r.note,
+      out.push({ kind: "Schedule row", who: `${r.course} ${tidyHash((r.topic || fmtShort(r.class_date)).slice(0, 90))}`, sub: courseName(r.course), code: r.course, weight: "", when: r.class_date, what: r.note,
         raw: [r.date_raw, r.reading_raw].filter(Boolean).join(" — ") });
   }
   for (const c of D.courses) {
