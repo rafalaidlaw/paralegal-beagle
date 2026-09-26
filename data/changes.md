@@ -191,3 +191,74 @@ the wrong weekday.
 
 **Authority:** Rafael's Seneca enrolment listing, pasted 25 Sep 2026.
 
+## 2026-09-26 — the class listing completes the timetable, and names the sections
+
+Rafael supplied his Seneca class listing: each course with its full meeting
+range, its room, its **class number** and *Enrolled*. `data/timetable.csv` is
+now complete — eleven blocks, every one with both ends, a room and a class
+number, all `confidence: high`. The six finish times that nothing had stated:
+
+| | |
+|---|---|
+| LGL156 Tue | 11:40am – **1:25pm**, A-A4519 |
+| LGL151 Tue | 1:30pm – **4:10pm**, A-A4526 |
+| LGL152 Thu | 11:40am – **1:25pm**, online |
+| LGL156 Thu | 1:30pm – **2:20pm**, online (fifty minutes, the short block of the week) |
+| LGL152 Fri | 9:50am – **11:35am**, A-A3518 |
+| LGL153 Fri | 1:30pm – **3:15pm**, online |
+
+His week is **19.3 hours** of class across eleven blocks, six on campus and
+five online, with **no Monday class at all**.
+
+**The class numbers settle the section question.** Five match `courses.csv`
+exactly — LGL154 3967, LGL160 4536, LGL225 5370, LGL250 3593. Two do not:
+
+| | `courses.csv` (from the syllabus on file) | he is enrolled in |
+|---|---|---|
+| LGL152 | class **3966**, section **NPE** | class **4533**, section **NPF** |
+| LGL156 | class **4050**, section **NPE** | class **4535**, section **NPF** |
+
+So the LGL152 and LGL156 syllabi in `syllabi/` are **for sections he is not in**.
+LGL151 is a third case: no class number was ever recorded for it, his listing
+says class 4532 meeting Tuesday, and every LGL151 row in `schedule.csv` is a
+Monday.
+
+**Still not changed, on purpose:** `courses.csv`, `schedule.csv`,
+`assessments.csv`. A syllabus for another section may differ in more than its
+weekday — the reading schedule and the assessment dates could differ too — so
+re-dating rows one at a time would be guessing at which parts carry over.
+Rafael needs the NPF syllabi for LGL152 and LGL156, and to confirm which
+section's LGL151 syllabus he holds. Then this can be redone properly.
+
+**Authority:** Rafael's Seneca class listing, 26 Sep 2026.
+
+## 2026-09-26 — LGL151 Quiz #1 was written on Tuesday 22 Sept
+
+| field | old | new |
+|---|---|---|
+| due_date | *(blank)* | **2026-09-22** |
+| due_week_of | 2026-09-21 | 2026-09-21 *(kept — it is what the syllabus says)* |
+| date_precision | `week` | `exact` |
+| source_file | LGL151 | `announced` |
+
+**Authority:** reported by Rafael, 26 Sep 2026. He saw the quiz still showing on
+Upcoming as "1 day left" and said it had been written on the Tuesday. He is
+enrolled in LGL151 on Tuesdays (class 4532, Tue 1:30–4:10pm), so the week-of-21
+-Sept quiz fell in the Tuesday 22 Sept class. It now reads as done rather than
+pending.
+
+### The general form of this, still open
+
+Sixteen assessments are dated only to a week, and the app treats such an item as
+live until its Sunday — which is right when nobody knows the day, and wrong now
+that `data/timetable.csv` says which day each course actually meets. A quiz "in
+the week of 21 Sept" for a course that meets only on Tuesday happens on the
+Tuesday.
+
+Resolving them that way would be using evidence rather than inventing a weekday,
+which is what the rule against inventing one was guarding. **It has not been
+done**, because three of those courses (LGL151, LGL152, LGL156) are the ones
+whose syllabi describe a section he is not enrolled in, so their meeting days in
+`schedule.csv` cannot yet be trusted. Settle the section question first, then
+this becomes a single clean change.
+

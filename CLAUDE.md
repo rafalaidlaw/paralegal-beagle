@@ -173,6 +173,13 @@ Timetable** (`SHOWN` in `app.js` is that order). Rafael cut the app to three on
 below. The app still OPENS on Upcoming — sidebar order and landing screen are
 separate things.
 
+**Upcoming shows everything inside the fortnight, not a count of it.** Three
+cards carry the nearest items large, then `.upnext` lists the rest with course
+code, full course name, type, date and weight. Rafael caught the earlier
+version hiding LGL153's 30% test six days out behind the words "seven more
+inside the fortnight". Every graded item on this screen names its course in
+full as well as by code.
+
 **Upcoming rolls forward at the weekend.** Classes run Mon–Fri, so from
 Saturday the week you are standing in has nothing left to prepare for:
 `nowWeek()` adds one when `rolledForward()` (Sat or Sun). The roll is global on
@@ -298,6 +305,12 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   overflowed at 412 because it never did this.
 - **12px is the floor for anything with content.** The reference used 10.5px
   and 11px labels; the app holds 12.
+- **The sidebar footer counts down the term.** `classesLeft()` counts schedule
+  rows that are not study-week markers and fall today or later; beneath it a
+  line from `PEP` changes with the date. It is indexed by days since week 1,
+  never random — a line that changed on every re-render would be noise. Keep
+  them short and level: no congratulating him for existing, no triple
+  exclamation marks. The list is just strings and any length works.
 - **"Assignment # 1" is repaired on the way to the screen, not in the CSV.**
   LGL154's syllabus really prints the space, and `data/*.csv` keeps it because
   every figure has to trace back to a page of the PDF. `tidyHash()` closes the
@@ -317,10 +330,12 @@ reasonable in a stylesheet; re-measure before undoing any of them.
 - **A grid cell reads graded items first**, then the chapter chips, then the
   LSO line, then any "check" flag. Rafael asked for the assessments on top
   (17 Sep 2026): they are what matters most in a week.
-- **LSO competencies are numbers only.** The syllabi print "LSO
-  Competencies: 202, 204" per class meeting (`lso_nums`, shown by
-  `lsoLine()` in the syllabus's own order). No syllabus gives the wording
-  behind a number, so the app never does either — that would be invented.
+- **LSO competencies are switched off** (`SHOW_LSO = false`, 26 Sep 2026).
+  They put a line on every class and there was nothing to act on: no syllabus
+  gives the wording behind a number, and the app must not invent it. The data
+  is untouched — `lso_nums` is still on 65 schedule rows and still exported to
+  the wiki's `context/` files — so flipping `SHOW_LSO` brings every line back
+  on all three screens. Do not delete `lsoLine()` or the column.
 
 ## A week-precision deadline has TWO horizons
 

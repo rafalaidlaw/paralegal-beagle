@@ -191,11 +191,60 @@ function cycleTheme() {
 const isDeadlinesOnly = () => LS.get("beagle-deadlines-only") === "1";
 function toggleDeadlinesOnly() { LS.set("beagle-deadlines-only", isDeadlinesOnly() ? "" : "1"); render(); }
 
+/* The line at the bottom of the sidebar. It changes with the date and cycles,
+   so the same day always shows the same one -- nothing random, because a line
+   that flickered on every re-render would be noise rather than a note.
+
+   Kept short and level. Nothing that congratulates him for existing, nothing
+   with three exclamation marks, nothing that pretends a 40% midterm is fun.
+   Edit the list freely: it is just strings, and the length can be anything. */
+const PEP = [
+  "You can do it.",
+  "This is easy.",
+  "One chapter at a time.",
+  "Start with the hardest one.",
+  "Two pages beats zero.",
+  "The hard part is starting.",
+  "Twenty minutes counts.",
+  "Done beats perfect.",
+  "Slow is fine. Stopping isn't.",
+  "Pick one thing. Begin.",
+  "Momentum, not motivation.",
+  "You've handled harder.",
+  "Write it down, it sticks.",
+  "Read it once, then explain it.",
+  "Confusion is the first draft.",
+  "Ask the question in class.",
+  "You know more than last week.",
+  "Make the note now.",
+  "It gets familiar fast.",
+  "Close the tabs. Open the book.",
+  "Show up. That's most of it.",
+  "Future you is grateful.",
+  "Small and steady wins this.",
+  "Curiosity beats cramming.",
+  "Trust the schedule.",
+  "You're further along than it feels.",
+  "Keep the streak.",
+  "The reading is the work.",
+];
+/* Indexed by the day, not by chance: same day, same line. */
+function pepToday() {
+  const n = daysBetween(D.term.week1_monday, today());
+  return PEP[((n % PEP.length) + PEP.length) % PEP.length];
+}
+/* Class meetings still ahead, today's included. Study-week rows are not
+   classes, and never were -- they are the two-per-course markers the syllabi
+   print for the break. */
+function classesLeft() {
+  return D.schedule.filter((r) => r.due_type !== "study_week" && r.class_date >= today()).length;
+}
+
 /* ------------------------------------------------------------ chrome */
 const VIEW_META = {
   week: ["Upcoming", () => weekSubtitle()],
   deadlines: ["Deadlines", () => "Every graded item and hard milestone in date order — what it covers, when it lands, what it is worth."],
-  grid: ["Weekly Calendar", () => `Fifteen weeks against ${words(D.courses.length)} courses. The one view no single syllabus can give you.`],
+  grid: ["Weekly Calendar", () => ""],
   timetable: ["Timetable", () => {
     const n = D.timetable.filter((t) => t.confidence === "low").length;
     return `Your week, hour by hour${n ? ` — ${words(n)} block${n === 1 ? "" : "s"} still to confirm` : ""}.`;
@@ -265,8 +314,10 @@ function paintChrome() {
   $("#vtitle").textContent = title;
   $("#vsub").textContent = sub();
   $("#todaychip").textContent = fmtLong(today());
-  const weighted = D.assessments.filter((a) => a.weight_pct).length;
-  $("#footstats").innerHTML = `${D.courses.length} courses · ${D.schedule.length} classes<br>${D.assessments.length} items, ${weighted} carry weight · ${D.readings.length} readings`;
+  const left = classesLeft(), lastDay = D.term.end;
+  $("#footstats").innerHTML = left
+    ? `<b>${left}</b> class${left === 1 ? "" : "es"} left<br>to ${fmt(lastDay)}<div class="pep">${esc(pepToday())}</div>`
+    : `<b>Term over</b><br>${fmt(lastDay)} was the last class<div class="pep">${esc(pepToday())}</div>`;
   const tb = $("#theme"); if (tb) tb.textContent = THEME_LABEL[currentTheme()];
 }
 
@@ -355,19 +406,37 @@ VIEWS.week = () => {
         <div class="days"><b>${c.n}</b><span>${c.word}</span></div>
         <div class="who">${pill(a.course)} ${typeWord(a.type)}</div>
         <div class="name">${nm(a.name)}</div>
+        <div class="course">${esc(courseName(a.course))}</div>
         <div class="when">${whenLabel(a)} · ${weightLabel(a)}</div>
       </div>`;
     }).join("") || `<div class="card"><div class="name">Nothing graded ahead</div><div class="when">Every dated item in the syllabi has passed.</div></div>`}</div>
-    ${within14 > 3 ? `<div class="note">${words(within14 - 3)} more inside the fortnight — <a href="#deadlines">see every deadline</a>.</div>` : ""}
   </section>`;
+
+  /* Everything else inside the fortnight, in full. The three cards above carry
+     the nearest items large; this carries the rest, because a screen called
+     Upcoming that hides a 30% test six days out is not doing its job (Rafael
+     caught exactly that on 26 Sep 2026). */
+  const rest = upcoming.slice(3).filter((a) => daysLeft(a) <= 14);
+  if (rest.length) {
+    h += `<section class="sec"><span class="lbl">Then, inside the fortnight</span>
+      <div class="upnext">${rest.map((a) => `<a class="uprow" href="#deadlines" data-c="${esc(a.course)}">
+        <span class="when"><b>${daysLeft(a)}</b> ${daysLeft(a) === 1 ? "day" : "days"}</span>
+        <span class="what"><b>${nm(a.name)}</b><span class="course">${esc(a.course)} · ${esc(courseName(a.course))}</span></span>
+        <span class="tag ${esc(a.type)}">${esc(a.type)}</span>
+        <span class="date">${whenLabel(a)}</span>
+        <span class="wt">${a.weight_pct ? a.weight_pct + "%" : "—"}</span></a>`).join("")}</div>
+      <div class="note"><a href="#deadlines">See every deadline</a> for the rest of the term.</div>
+    </section>`;
+  }
 
   /* ---- overdue, before anything else ------------------------------ */
   const over = dueSorted().filter((a) => isOverdue(a) && !gm[a.id]?.earned_pct);
   if (over.length) {
-    h += `<div class="callout"><span class="lbl">Past its date — ${words(over.length)} item${over.length === 1 ? "" : "s"}</span>
-      <ul>${over.map((a) => `<li><b>${esc(a.course)} ${nm(a.name)}</b> · ${a.weight_pct}% · ${whenLabel(a)}
+    h += `<div class="callout"><span class="lbl">Already happened — ${words(over.length)} item${over.length === 1 ? "" : "s"}</span>
+      <ul>${over.map((a) => `<li><b>${esc(a.course)} ${nm(a.name)}</b> <span class="quiet">${esc(courseName(a.course))}</span> · ${a.weight_pct}% · ${whenLabel(a)}
         <span class="tag overdue">${Math.abs(dMax(a))}d ago</span></li>`).join("")}</ul>
-      <div class="quiet">These stay listed until their week has fully run out — a week-dated item is not late while its week is still going.</div></div>`;
+      <div class="quiet">Listed so nothing slips past unnoticed, not as a warning — most of these you have simply sat.
+        A week-dated item stays out of this list until its whole week has run out, because it is not late while its week is still going.</div></div>`;
   }
 
   /* ---- the week band: items the syllabus dates only to a week ------ */
@@ -375,6 +444,7 @@ VIEWS.week = () => {
   if (band.length) {
     h += `<div class="weekband" style="margin-top:16px"><span class="lbl">The syllabus gives a week, not a day</span>
       ${band.map((a) => `<div class="wbrow">${pill(a.course)} ${typeWord(a.type)} <b>${nm(a.name)}</b>
+        <span class="quiet">${esc(courseName(a.course))}</span>
         <span>${a.weight_pct ? a.weight_pct + "%" : ""}</span>
         <div class="quiet" style="flex:1 1 100%">${esc(a.due_date_raw)}${a.note ? " — " + esc(a.note) : ""}</div></div>`).join("")}
       <div class="quiet" style="margin-top:6px">Filing these on a Monday would be a guess. Confirm the day in class, then correct
@@ -466,8 +536,14 @@ const sameText = (a, b) => !!a && !!b && a.trim().toLowerCase() === b.trim().toL
    none. Written with the class, not the chapter, because that is how the
    syllabi attach them. */
 const LSO_TITLE = "Law Society of Ontario paralegal competencies, numbered as in the syllabus";
+/* SWITCHED OFF on 26 Sep 2026 at Rafael's request -- the numbers were adding
+   a line to every class without telling him anything he could act on, since no
+   syllabus gives the wording behind a number. The data is untouched: lso_nums
+   is still in data/schedule.csv, still exported to the wiki's context/ files.
+   Set SHOW_LSO back to true and every line returns, on all three screens. */
+const SHOW_LSO = false;
 function lsoLine(r, short) {
-  if (!r.lso_nums) return "";
+  if (!SHOW_LSO || !r.lso_nums) return "";
   return `<div class="lso${short ? "" : " meta"}" title="${LSO_TITLE}">${short ? "LSO" : "LSO competencies"} ${esc(list(r.lso_nums))}</div>`;
 }
 
@@ -615,6 +691,12 @@ VIEWS.timetable = () => {
   const hours = [];
   for (let m = from; m <= to; m += 60) hours.push(m);
 
+  /* Only the days with a class in them. Monday is empty this term and a
+     hatched column with "no class" in it was width spent on nothing (Rafael,
+     26 Sep 2026). Derived rather than hardcoded to Tue-Fri, so the column
+     comes back by itself the day a Monday class appears in the data -- and the
+     stat below still names the clear days, which is worth knowing. */
+  const days = TT_DAYS.filter((d) => tt.some((t) => t.day === d));
   const open = tt.filter((t) => !t.end);
   const inPerson = tt.filter((t) => t.mode === "in person");
   const busiest = TT_DAYS.map((d) => ({ d, n: tt.filter((t) => t.day === d).length })).sort((a, b) => b.n - a.n)[0];
@@ -624,18 +706,20 @@ VIEWS.timetable = () => {
     <div class="stat"><span class="lbl">Classes a week</span><div class="v">${tt.length}</div><div class="n">${words(inPerson.length)} on campus, ${words(tt.length - inPerson.length)} online</div></div>
     <div class="stat"><span class="lbl">Heaviest day</span><div class="v">${busiest.d}</div><div class="n">${words(busiest.n)} classes</div></div>
     <div class="stat"><span class="lbl">Clear days</span><div class="v">${free.length ? free.join(", ") : "none"}</div><div class="n">${free.length ? "nothing timetabled" : "every weekday has a class"}</div></div>
-    <div class="stat"><span class="lbl">End times unknown</span><div class="v">${open.length || "0"}</div><div class="n">${open.length ? "your enrolment gives starts, not finishes" : "every block has both ends"}</div></div>
+    ${open.length
+      ? `<div class="stat"><span class="lbl">End times unknown</span><div class="v">${open.length}</div><div class="n">your enrolment gives their start, not their finish</div></div>`
+      : `<div class="stat"><span class="lbl">Hours in class</span><div class="v">${(tt.reduce((s, t) => s + mins(t.end) - mins(t.start), 0) / 60).toFixed(1)}</div><div class="n">every block has both ends stated</div></div>`}
   </div>`;
 
-  h += `<div class="ttwrap"><div class="tt">
-    <div class="ttrow tthead"><div class="ttgut"></div>${TT_DAYS.map((d) =>
-      `<div class="ttday${free.includes(d) ? " off" : ""}">${d}</div>`).join("")}</div>
+  h += `<div class="ttwrap"><div class="tt" style="--cols:${days.length}">
+    <div class="ttrow tthead"><div class="ttgut"></div>${days.map((d) =>
+      `<div class="ttday">${d}</div>`).join("")}</div>
     <div class="ttrow ttbody">
       <div class="ttgut">${hours.map((m) =>
         `<span class="tthr" style="top:${pos(hhmm(m))}%">${clock(hhmm(m))}</span>`).join("")}</div>
-      ${TT_DAYS.map((d) => {
+      ${days.map((d) => {
         const blocks = tt.filter((t) => t.day === d).sort((a, b) => mins(a.start) - mins(b.start));
-        return `<div class="ttcol${free.includes(d) ? " off" : ""}">
+        return `<div class="ttcol">
           ${hours.slice(1, -1).map((m) => `<span class="ttline" style="top:${pos(hhmm(m))}%"></span>`).join("")}
           ${blocks.map((t) => {
             const soft = !t.end;
@@ -650,7 +734,6 @@ VIEWS.timetable = () => {
               <span class="when">${clock(t.start)}${t.end ? "–" + clock(t.end) : " –"}</span>
               ${where ? `<span class="where">${where}</span>` : ""}</a>`;
           }).join("")}
-          ${blocks.length ? "" : `<span class="ttfree">no class</span>`}
         </div>`;
       }).join("")}
     </div></div></div>`;
@@ -664,12 +747,14 @@ VIEWS.timetable = () => {
     <div class="scroll" style="padding:0 var(--secpad)"><table class="rtable"><thead><tr>
       <th scope="col" style="width:72px">Course</th><th scope="col" style="width:56px">Day</th>
       <th scope="col" style="width:136px">Time</th><th scope="col" style="width:60px">Length</th>
+      <th scope="col" style="width:62px">Class</th>
       <th scope="col">Where, and where the times came from</th></tr></thead><tbody>`;
-  for (const t of TT_DAYS.flatMap((d) => tt.filter((x) => x.day === d).sort((a, b) => mins(a.start) - mins(b.start)))) {
+  for (const t of days.flatMap((d) => tt.filter((x) => x.day === d).sort((a, b) => mins(a.start) - mins(b.start)))) {
     h += `<tr data-c="${esc(t.course)}"><td>${pill(t.course)}</td>
       <td data-label="Day">${esc(t.day)}</td>
       <td class="nowrap" data-label="Time">${clock(t.start)} – ${t.end ? clock(t.end) : `<span class="quiet">not stated</span>`}</td>
       <td class="nowrap quiet" data-label="Length">${durWords(t.start, t.end)}</td>
+      <td class="mono quiet" data-label="Class">${t.class_nbr ? esc(t.class_nbr) : "—"}</td>
       <td>${t.room ? esc(t.room) : ""}${t.room && t.mode ? " · " : ""}${t.mode ? esc(t.mode) : ""}
         ${t.confidence === "low" ? `<span class="tag unstated">read off the picture</span>` : ""}
         ${t.note ? `<div class="quiet" style="margin-top:3px">${esc(t.note)}</div>` : ""}</td></tr>`;
@@ -677,12 +762,12 @@ VIEWS.timetable = () => {
   h += `</tbody></table></div>`;
 
   h += `<div class="callout"><span class="lbl red">Three courses meet on a different day from the one their syllabus describes</span>
-    <p style="margin:6px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">This chart is your <b>enrolment listing</b> — the one that says <i>Enrolled</i> beside each class.
-      Three of the syllabi describe a different section:</p>
+    <p style="margin:6px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">This chart is your <b>class listing</b> — the one giving a class number and <i>Enrolled</i> beside each course.
+      Five of those numbers match what the syllabi say. Two do not, and a third course meets on another day entirely:</p>
     <ul style="margin:8px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">
-      <li><b>LGL151</b> — you are enrolled <b>Tue 1:30pm</b> in A-A4526. Every LGL151 row in <code>data/schedule.csv</code> is dated to a <b>Monday</b>.</li>
-      <li><b>LGL152</b> — you are enrolled <b>Thu 11:40am online</b> and <b>Fri 9:50am</b> in A-A3518. The syllabus describes section <b>NPE</b>: Thu 2:25pm online, Fri 8:00am in A-A4513.</li>
-      <li><b>LGL156</b> — you are enrolled <b>Tue 11:40am</b> in A-A4519 and <b>Thu 1:30pm online</b>. The syllabus describes section <b>NPE</b>: Wed 5:10pm in C-C3036, Thu 9:50am online.</li>
+      <li><b>LGL151</b> — enrolled <b>Tue 1:30–4:10pm</b> in A-A4526, class <b>4532</b>. Every LGL151 row in <code>data/schedule.csv</code> is dated to a <b>Monday</b>.</li>
+      <li><b>LGL152</b> — enrolled in class <b>4533</b>, section <b>NPF</b>. The syllabus on file is class <b>3966</b>, section <b>NPE</b>.</li>
+      <li><b>LGL156</b> — enrolled in class <b>4535</b>, section <b>NPF</b>. The syllabus on file is class <b>4050</b>, section <b>NPE</b>.</li>
     </ul>
     <p style="margin:8px 0 0;font-size:13.5px;color:var(--ink2);max-width:74ch">This reaches past the drawing. LGL152 and LGL156 date work to <i>during in person class</i>,
       so their in-person day is the day that work is due — and it has moved. Nothing in <code>schedule.csv</code> or <code>assessments.csv</code> has been changed:

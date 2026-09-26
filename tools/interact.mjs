@@ -163,6 +163,26 @@ const sideWeek = await evalJs(`document.querySelector('#wk-big')?.textContent.tr
 check("the sidebar shows the current week, zero-padded",
   sideWeek.v === String(here).padStart(2, "0"), { sideWeek: sideWeek.v, here });
 
+// ---------------------------------------------------------- sidebar footer
+// The footer counts the classes still ahead and carries a line that changes
+// with the date -- same day, same line, so it is never noise.
+await go("week");
+const foot = await evalJs(`JSON.stringify({
+  text: document.querySelector('#footstats')?.textContent.replace(/\s+/g, " ").trim(),
+  pep: document.querySelector('#footstats .pep')?.textContent.trim(),
+  n: Number(document.querySelector('#footstats b')?.textContent.trim())
+})`);
+const fj = JSON.parse(foot.v);
+const srvLeft = await (await fetch("http://127.0.0.1:8787/api/data")).json();
+const wantLeft = srvLeft.schedule.filter((r) => r.due_type !== "study_week" && r.class_date >= srvLeft.today).length;
+check("the footer counts the classes still ahead", fj.n === wantLeft, { shown: fj.n, wantLeft });
+check("the footer names the last day of term", /to \w{3} \d+ \w+/.test(fj.text || ""), fj.text);
+check("the footer carries a line for the day", !!fj.pep && fj.pep.length < 40, fj.pep);
+// it must be the same line on a re-render, not a fresh roll of the dice
+await go("deadlines"); await go("week");
+const pep2 = await evalJs(`document.querySelector('#footstats .pep')?.textContent.trim()`);
+check("that line does not change on a re-render", pep2.v === fj.pep, { first: fj.pep, second: pep2.v });
+
 // -------------------------------------------------- Upcoming rolls forward
 // From Saturday, "this week" means the week ahead: its classes are done and
 // what is worth reading for is next week's. Asserted as an invariant rather
@@ -223,17 +243,14 @@ check("theme cycles back to light", t.attr === "light" && t.ls === "light", t);
 // ---------------------------------------------------------------- deadlines only
 await go("grid");
 const chVisible = () => evalJs(`getComputedStyle(document.querySelector('.gcell .chips')).display`);
-const lsoVisible = () => evalJs(`getComputedStyle(document.querySelector('.gcell .lso')).display`);
 check("the Weekly Calendar shows chapters by default", (await chVisible()).v !== "none", (await chVisible()).v);
 await click("#deadlines-only"); await sleep(900);
 check("deadlines-only hides the chapter runs", (await chVisible()).v === "none", (await chVisible()).v);
-check("deadlines-only hides the competency lines too", (await lsoVisible()).v === "none", (await lsoVisible()).v);
 check("deadlines-only persisted on its own key", (await evalJs(`localStorage.getItem("beagle-deadlines-only")`)).v === "1", null);
 await go("grid");   // reload: must not flash the wide layout
 check("deadlines-only survives a reload", (await chVisible()).v === "none", (await chVisible()).v);
 await click("#deadlines-only"); await sleep(900);
 check("toggling deadlines-only back shows chapters", (await chVisible()).v !== "none", (await chVisible()).v);
-check("...and the competency lines", (await lsoVisible()).v !== "none", (await lsoVisible()).v);
 // the spacing toggle is gone (compact is the only spacing now); the sidebar
 // footer holds the theme button alone
 check("no density button in the sidebar", (await evalJs(`document.querySelector('#density')`)).v === null, null);
@@ -268,24 +285,19 @@ await click(`.gcell [data-reading="${rid}"]`); await sleep(600);   // back to bl
 await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1200, deviceScaleFactor: 1, mobile: false }, S);
 
 // ---------------------------------------------------------------- competencies
-// Six syllabi print "LSO Competencies: n, n" beside a class's readings; the
-// numbers travel with the schedule row and are shown wherever its chapters are.
-await go("week/2");
-const lsoWeek = await evalJs(`[...document.querySelectorAll('.rrow .lso')].map(e => e.textContent.trim())`);
-check("This Week lists a class's LSO competencies", (lsoWeek.v || []).includes("LSO competencies 171, 172, 170"), lsoWeek.v);
-await go("grid");
-const lsoGrid = await evalJs(`JSON.stringify({ n: document.querySelectorAll('.gcell .lso').length, first: document.querySelector('.gcell .lso')?.textContent.trim() })`);
-const lg = JSON.parse(lsoGrid.v);
-check("the grid carries them in short form", lg.n >= 60 && /^LSO \d+(, \d+)*$/.test(lg.first || ""), lg);
-// LGL154's column, found by reading the header rather than counted from the
-// left -- the columns are in Rafael's week order now, not alphabetical.
-const lsoNone = await evalJs(`(() => {
-  const heads = [...document.querySelectorAll('.grow.head .gcell .code')].map(e => e.textContent.trim());
-  const i = heads.indexOf("LGL154");
-  if (i < 0) return "LGL154 column not found";
-  return [...document.querySelectorAll('.grow:not(.head)')].some(r => r.children[i + 1].querySelector('.lso'));
-})()`);
-check("LGL154 lists none, so its column shows none", lsoNone.v === false, lsoNone.v);
+// The LSO competency numbers were switched off on 26 Sep 2026: a line on every
+// class, and no syllabus gives the wording behind a number, so there was
+// nothing there to act on. SHOW_LSO in app.js brings them back. Until then no
+// screen may show one -- and the numbers must still be in the data, so that
+// switch is all it takes.
+for (const view of ["week/2", "grid"]) {
+  await go(view);
+  const n = await evalJs(`document.querySelectorAll('.lso').length`);
+  check(`no competency lines on ${view}`, n.v === 0, n.v);
+}
+const lsoKept = await (await fetch("http://127.0.0.1:8787/api/data")).json();
+const lsoRows = lsoKept.schedule.filter((r) => r.lso_nums).length;
+check("the numbers are still in the data, ready to switch back on", lsoRows === 65, lsoRows);
 const colOrder = await evalJs(`[...document.querySelectorAll('.grow.head .gcell .code')].map(e => e.textContent.trim())`);
 check("the calendar's columns run in Rafael's week order",
   JSON.stringify(colOrder.v) === JSON.stringify(["LGL156", "LGL151", "LGL250", "LGL225", "LGL154", "LGL160", "LGL152", "LGL153"]), colOrder.v);
@@ -329,32 +341,38 @@ for (const [hash, want] of [["grid", "Weekly Calendar"], ["calendar", "Weekly Ca
   const t = await evalJs(`document.querySelector("#vtitle")?.textContent.trim()`);
   check(`#${hash} opens the Weekly Calendar`, t.v === want, t.v);
 }
+const calSub = await evalJs(`document.querySelector("#vsub")?.textContent.trim()`);
+check("the Weekly Calendar carries no subtitle", calSub.v === "", JSON.stringify(calSub.v));
 const navText = await evalJs(`[...document.querySelectorAll('#nav a[data-view]')].map(a => a.firstChild.textContent.trim())`);
 check("the sidebar names its screens and shows no group headings",
   JSON.stringify(navText.v) === JSON.stringify(["Weekly Calendar", "Upcoming", "Deadlines", "Timetable"])
   && (await evalJs(`document.querySelectorAll('#nav .grp').length`)).v === 0, navText.v);
 
 // ---------------------------------------------------------------- timetable
-// Rafael's week from his enrolment listing, drawn to scale out of
-// data/timetable.csv. That listing gives a start time and a room for each
-// class but never a finish, so six of the eleven blocks must stay visibly
-// open-ended rather than be given an invented duration.
+// Rafael's week from his class listing, drawn to scale out of
+// data/timetable.csv: every block has a start, a finish, a room and the class
+// number he is enrolled in. The open-ended drawing is kept for the case where
+// a row arrives without an end -- it must never be given an invented one.
 await go("timetable");
 const ttShape = await evalJs(`JSON.stringify({
   days: [...document.querySelectorAll('.tthead .ttday')].map(e => e.textContent.trim()),
   blocks: document.querySelectorAll('.ttblock').length,
   open: document.querySelectorAll('.ttblock.open').length,
   rooms: [...document.querySelectorAll('.ttblock .where')].length,
-  free: [...document.querySelectorAll('.ttcol.off')].length,
+  clear: document.querySelector('.stats .stat:nth-child(3) .v')?.textContent.trim(),
   rows: document.querySelectorAll('.rtable tbody tr').length
 })`);
 const ts = JSON.parse(ttShape.v);
-check("the timetable draws five day columns",
-  JSON.stringify(ts.days) === JSON.stringify(["Mon", "Tue", "Wed", "Thu", "Fri"]), ts.days);
+// Monday has no class this term, so it is not drawn at all -- but it is still
+// named in the stats, because a clear day is worth knowing about.
+check("the timetable draws only the days with a class in them",
+  JSON.stringify(ts.days) === JSON.stringify(["Tue", "Wed", "Thu", "Fri"]), ts.days);
 check("every row in timetable.csv is drawn and listed", ts.blocks === 11 && ts.rows === 11, ts);
-check("the six blocks with no stated finish are drawn open", ts.open === 6, ts);
+check("no block is open-ended now that every finish is known", ts.open === 0, ts);
 check("every block says where it is, room or online", ts.rooms === 11, ts);
-check("Monday is drawn as a clear day", ts.free === 1, ts);
+check("Monday is left out of the chart but still named as clear", ts.clear === "Mon", ts);
+const ttCols = await evalJs(`getComputedStyle(document.querySelector('.tt')).getPropertyValue('--cols').trim()`);
+check("the chart is as wide as the days it draws", ttCols.v === "4", ttCols.v);
 // A block must sit where the clock says. LGL225 runs 8:55-10:40 in a chart that
 // starts at 8:00 and ends at 19:00 -- 55 minutes down a 660-minute span.
 const ttPos = await evalJs(`(() => {
@@ -374,9 +392,14 @@ const ttTimes = await evalJs(`JSON.stringify([...document.querySelectorAll('.ttb
 const ttEnrol = await evalJs(`JSON.stringify([...document.querySelectorAll('.rtable tbody tr')].map(r =>
   [...r.children].slice(0, 3).map(c => c.textContent.trim().replace(/\\s+/g, " ")).join(" | ")))`);
 const rows = JSON.parse(ttEnrol.v);
-for (const want of ["LGL151 | Tue | 1:30pm", "LGL152 | Fri | 9:50am", "LGL156 | Tue | 11:40am", "LGL156 | Thu | 1:30pm"]) {
-  check(`the listing's own time survives: ${want}`, rows.some((r) => r.startsWith(want)), rows);
+for (const want of ["LGL151 | Tue | 1:30pm – 4:10pm", "LGL152 | Fri | 9:50am – 11:35am",
+                    "LGL156 | Tue | 11:40am – 1:25pm", "LGL156 | Thu | 1:30pm – 2:20pm",
+                    "LGL153 | Fri | 1:30pm – 3:15pm", "LGL152 | Thu | 11:40am – 1:25pm"]) {
+  check(`the listing's own hours survive: ${want}`, rows.some((r) => r.startsWith(want)), rows);
 }
+const ttHours = await evalJs(`document.querySelector('.stats .stat:nth-child(4) .v')?.textContent.trim()`);
+check("the weekly total can be stated now", ttHours.v === "19.3", ttHours.v);
+
 
 // ------------------------------------------------------- "# 1" -> "#1"
 // LGL154's syllabus prints "Assignment # 1" and the CSV keeps that, because

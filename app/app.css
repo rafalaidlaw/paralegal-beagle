@@ -220,6 +220,9 @@ i, em { font-style: normal; font-weight: 600; }
 .sidefoot { border-top: 2px solid var(--rule); padding: 12px 18px 14px; display: flex; flex-direction: column; gap: 9px; }
 .sidefoot .row { display: flex; gap: 8px; }
 .sidefoot .footstats { font-size: 12px; color: var(--ink3); line-height: 1.45; }
+.sidefoot .footstats b { font: 700 15px var(--sans); color: var(--ink); }
+/* the line that changes with the day: set apart by a rule, not by colour */
+.footstats .pep { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--ink2); }
 
 main { min-width: 0; display: flex; flex-direction: column; }
 
@@ -314,7 +317,28 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
 .card .days span { font: 700 12px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); }
 .card .who { display: flex; align-items: center; gap: 8px; margin: 12px 0 5px; flex-wrap: wrap; }
 .card .name { font: 700 19px/1.2 var(--sans); letter-spacing: -.012em; }
+.card .course { margin-top: 3px; font-size: 13px; color: var(--ink2); }
 .card .when { margin-top: 5px; font-size: 13px; color: var(--ink2); }
+
+/* ------------------------------------------- what follows the three cards */
+.upnext { border-top: 1px solid var(--line); }
+.uprow {
+  display: grid; grid-template-columns: 74px minmax(0, 1fr) 92px 132px 48px;
+  gap: var(--s3); align-items: center; padding: 10px var(--secpad);
+  border-bottom: 1px solid var(--line); border-left: 3px solid var(--c, transparent);
+  text-decoration: none; color: inherit;
+}
+.uprow:hover { background: var(--hover); }
+.uprow .when b { font: 700 19px var(--sans); }
+.uprow .when { font-size: 12px; color: var(--ink3); }
+.uprow .what b { font: 700 14.5px var(--sans); display: block; }
+.uprow .what .course { font-size: 12.5px; color: var(--ink2); }
+.uprow .date { font-size: 12.5px; color: var(--ink2); }
+.uprow .wt { font: 700 13px var(--mono); text-align: right; }
+@media (max-width: 720px) {
+  .uprow { grid-template-columns: 62px minmax(0, 1fr) 46px; }
+  .uprow .tag, .uprow .date { display: none; }
+}
 
 /* ================================================================ rows */
 /* a ruled row: a narrow key column, then content */
@@ -426,14 +450,16 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
 /* the gutter's first and last hour labels are centred on their line, so they
    reach half a line above and below the chart; the padding is their room */
 .ttwrap { padding: var(--s4) var(--secpad) var(--s4); overflow-x: auto; }
-.tt { min-width: 660px; }
-.ttrow { display: grid; grid-template-columns: 58px repeat(5, minmax(0, 1fr)); }
+/* --cols is the number of days actually drawn: a term with no Monday class
+   gets four columns, not five with a blank one. */
+.tt { min-width: calc(58px + var(--cols, 5) * 120px); }
+.ttrow { display: grid; grid-template-columns: 58px repeat(var(--cols, 5), minmax(0, 1fr)); }
 .tthead { border-bottom: 2px solid var(--rule); }
 .tthead .ttday {
   padding: 7px 10px; border-left: 1px solid var(--line);
   font: 700 12px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink2);
 }
-.tthead .ttday.off { color: var(--ink3); }
+
 .ttbody { height: 520px; position: relative; border-bottom: 1px solid var(--line); }
 .ttbody .ttgut { position: relative; }
 .tthr {
@@ -441,9 +467,7 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
   font: 500 12px var(--mono); color: var(--ink3); white-space: nowrap;
 }
 .ttcol { position: relative; border-left: 1px solid var(--line); min-width: 0; }
-.ttcol.off { background: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--ink4) 14%, transparent) 5px 10px); }
 .ttline { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line); }
-.ttfree { position: absolute; top: 12px; left: 0; right: 0; text-align: center; font-size: 12px; color: var(--ink3); }
 .ttblock {
   position: absolute; left: 3px; right: 3px; overflow: hidden;
   padding: 5px 7px; text-decoration: none; color: var(--ink);
