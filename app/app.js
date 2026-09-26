@@ -194,7 +194,13 @@ function cycleTheme() {
   if (r) { if (next === "auto") delete r.dataset.theme; else r.dataset.theme = next; }
   paintChrome();
 }
-const isDeadlinesOnly = () => LS.get("beagle-deadlines-only") === "1";
+/* "Show deadlines only" was switched off on 26 Sep 2026: the chapter runs are
+   the reason to open the Weekly Calendar, so a button that hid them had nothing
+   to offer. DL_ONLY is checked FIRST on purpose -- a switch left on in
+   localStorage before today must not go on hiding the readings. To bring the
+   button back, set this to true and restore the block in VIEWS.grid. */
+const DL_ONLY = false;
+const isDeadlinesOnly = () => DL_ONLY && LS.get("beagle-deadlines-only") === "1";
 function toggleDeadlinesOnly() { LS.set("beagle-deadlines-only", isDeadlinesOnly() ? "" : "1"); render(); }
 
 /* The line at the bottom of the sidebar. It changes with the date and cycles,
@@ -603,9 +609,11 @@ VIEWS.grid = () => {
   const codes = byWeekOrder(D.courses.map((c) => c.code));
   const prog = progressMap();
   const nowWk = nowWeek(), last = LAST_WEEK();
-  let h = `<div class="gtools">
-    <button id="deadlines-only" aria-pressed="${isDeadlinesOnly()}">${isDeadlinesOnly() ? "showing deadlines only" : "show deadlines only"}</button></div>`;
-  h += `<div class="gridwrap"><div class="grid ${isDeadlinesOnly() ? "deadlines-only" : ""}">
+  /* The "show deadlines only" button stood here in a .gtools band until
+     26 Sep 2026. To restore it, set DL_ONLY = true above and put back a .gtools
+     div holding a button with id="deadlines-only", aria-pressed bound to
+     isDeadlinesOnly(), reading "showing deadlines only" when it is on. */
+  let h = `<div class="gridwrap"><div class="grid ${isDeadlinesOnly() ? "deadlines-only" : ""}">
     <div class="grow head"><div class="gwk lbl">Week</div>${codes.map((c) => `<div class="gcell" data-c="${esc(c)}">
       <a class="code" href="#courses/${esc(c)}" style="text-decoration:none;color:inherit">${esc(c)}</a><div class="short">${esc(courseName(c))}</div></div>`).join("")}</div>`;
   for (let w = 1; w <= last; w++) {
@@ -1076,6 +1084,7 @@ document.addEventListener("click", async (e) => {
   if (e.target.id === "wk-prev") { state.week = clampWeek(shownWeek() - 1); location.hash = `week/${state.week}`; return; }
   if (e.target.id === "wk-next") { state.week = clampWeek(shownWeek() + 1); location.hash = `week/${state.week}`; return; }
   if (e.target.id === "wk-today") { state.week = null; location.hash = "week"; render(); return; }
+  // no #deadlines-only button since 26 Sep 2026; kept for the restore
   if (e.target.id === "deadlines-only") { toggleDeadlinesOnly(); return; }
   if (e.target.id === "newnote") {
     const code = $("#newnote-course").value, rowId = $("#newnote-row").value;

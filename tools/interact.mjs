@@ -240,17 +240,20 @@ await click("#theme"); await sleep(250);
 t = JSON.parse((await themeState()).v);
 check("theme cycles back to light", t.attr === "light" && t.ls === "light", t);
 
-// ---------------------------------------------------------------- deadlines only
+// ------------------------------------------------------- deadlines only, off
+// Switched off 26 Sep 2026: the chapter runs are what the Weekly Calendar is
+// for. The second check is the one worth having -- a "1" left in localStorage
+// from before the change must not still hide them.
 await go("grid");
 const chVisible = () => evalJs(`getComputedStyle(document.querySelector('.gcell .chips')).display`);
-check("the Weekly Calendar shows chapters by default", (await chVisible()).v !== "none", (await chVisible()).v);
-await click("#deadlines-only"); await sleep(900);
-check("deadlines-only hides the chapter runs", (await chVisible()).v === "none", (await chVisible()).v);
-check("deadlines-only persisted on its own key", (await evalJs(`localStorage.getItem("beagle-deadlines-only")`)).v === "1", null);
-await go("grid");   // reload: must not flash the wide layout
-check("deadlines-only survives a reload", (await chVisible()).v === "none", (await chVisible()).v);
-await click("#deadlines-only"); await sleep(900);
-check("toggling deadlines-only back shows chapters", (await chVisible()).v !== "none", (await chVisible()).v);
+check("the Weekly Calendar shows its chapter runs", (await chVisible()).v !== "none", (await chVisible()).v);
+check("the deadlines-only button is gone",
+  (await evalJs(`document.querySelector('#deadlines-only')`)).v === null, null);
+await evalJs(`localStorage.setItem("beagle-deadlines-only", "1")`);
+await go("grid"); await sleep(400);
+check("a deadlines-only setting left over from before cannot hide the chapters",
+  (await chVisible()).v !== "none", (await chVisible()).v);
+await evalJs(`localStorage.removeItem("beagle-deadlines-only")`);
 // the spacing toggle is gone (compact is the only spacing now); the sidebar
 // footer holds the theme button alone
 check("no density button in the sidebar", (await evalJs(`document.querySelector('#density')`)).v === null, null);

@@ -339,6 +339,14 @@ reasonable in a stylesheet; re-measure before undoing any of them.
 - **A grid cell reads graded items first**, then the chapter chips, then the
   LSO line, then any "check" flag. Rafael asked for the assessments on top
   (17 Sep 2026): they are what matters most in a week.
+- **The Weekly Calendar's "show deadlines only" button is gone**
+  (26 Sep 2026). It hid the chapter runs, and those are the reason Rafael opens
+  that screen. `DL_ONLY = false` in `app.js` is tested BEFORE `localStorage`,
+  so a switch left on before the change cannot go on hiding the readings —
+  `interact.mjs` asserts exactly that. `.grid.deadlines-only` stays in the
+  stylesheet and `toggleDeadlinesOnly()` stays in the code, so the restore is
+  one flag plus the `.gtools` block described in the comment where the button
+  used to be.
 - **LSO competencies are switched off** (`SHOW_LSO = false`, 26 Sep 2026).
   They put a line on every class and there was nothing to act on: no syllabus
   gives the wording behind a number, and the app must not invent it. The data
