@@ -62,8 +62,18 @@ DIST = ROOT / "dist"
 
 # Exactly what the published screens draw. Anything not named here is not
 # published, including keys build_payload() happens to add later.
+#
+# "generated" is deliberately NOT in this list. build_payload() stamps it to the
+# second, nothing in app.js or index.html ever reads it, and its only effect
+# here was to make dist/data.json differ on every single build -- so --check
+# could never answer the one question it exists to answer ("do I need to rebuild
+# before I deploy?"), and every rebuild put a meaningless diff in the commit.
+# Same rule export_schedule.py already follows: provenance names the commit and
+# a digest of the CSVs, never a wall clock. "today" stays, and it does still
+# change daily -- but the published page overwrites it with the browser's own
+# date in load(), so within a day --check is now honest.
 PUBLISH_KEYS = [
-    "term", "today", "generated", "courses", "schedule",
+    "term", "today", "courses", "schedule",
     "assessments", "readings", "timetable",
 ]
 

@@ -450,6 +450,22 @@ Two things the published copy does differently, both in `load()`:
   screen that is not published, and `post()` says so plainly if one is ever
   switched back on.
 
+**`generated` is not published.** `build_payload()` stamps it to the second and
+nothing reads it, so its only effect on `dist/` was to make `data.json` differ on
+every build: `--check` could never say "same", which is the one question it
+exists to answer before a deploy, and every rebuild carried a meaningless diff
+into the commit. Same rule `export_schedule.py` already follows — provenance
+names the commit and a digest of the CSVs, never a wall clock. `today` stays and
+still changes daily, which is harmless: the published copy overwrites it with
+the browser's own date in `load()`.
+
+**Deploying is a `git push`, if the repo is connected to Netlify in the web UI.**
+There is no build command, so Netlify copies `dist/` and runs nothing. The
+Netlify CLI is installed but this folder is not linked and not logged in —
+`netlify login` opens a browser and is Rafael's to run, not Claude's. Rebuild
+`dist/` and commit it in the same breath; a push with a stale `dist/` deploys
+last week quietly.
+
 `node tools/statictest.mjs` checks all of this against `dist/`. It serves the
 folder itself on its own port, so it never needs 8787 free.
 
