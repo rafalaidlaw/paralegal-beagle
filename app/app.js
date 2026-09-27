@@ -391,7 +391,6 @@ VIEWS.week = () => {
   const nowWk = nowWeek();
   const last = LAST_WEEK();
   const prog = progressMap();
-  const gm = gradeMap();
   let h = "";
 
   /* ---- week stepper ---------------------------------------------- */
@@ -444,15 +443,16 @@ VIEWS.week = () => {
     </section>`;
   }
 
-  /* ---- overdue, before anything else ------------------------------ */
-  const over = dueSorted().filter((a) => isOverdue(a) && !gm[a.id]?.earned_pct);
-  if (over.length) {
-    h += `<div class="callout"><span class="lbl">Already happened — ${words(over.length)} item${over.length === 1 ? "" : "s"}</span>
-      <ul>${over.map((a) => `<li><b>${esc(a.course)} ${nm(a.name)}</b> <span class="quiet">${esc(courseName(a.course))}</span> · ${a.weight_pct}% · ${whenLabel(a)}
-        <span class="tag overdue">${Math.abs(dMax(a))}d ago</span></li>`).join("")}</ul>
-      <div class="quiet">Listed so nothing slips past unnoticed, not as a warning — most of these you have simply sat.
-        A week-dated item stays out of this list until its whole week has run out, because it is not late while its week is still going.</div></div>`;
-  }
+  /* The "Already happened" callout stood here until 26 Sep 2026. This screen
+     is about what is next, and a list of what Rafael has already sat was the
+     one thing on it he could do nothing about. Nothing is lost: those items are
+     still in the Weekly Calendar, and a passed deadline still greys itself
+     wherever a deadline row is drawn. To restore: put back const gm =
+     gradeMap() at the top of this view -- it was read by nothing else, so it no
+     longer runs -- and list
+     dueSorted().filter((a) => isOverdue(a) && !gm[a.id]?.earned_pct)
+     in a .callout here, keeping the note that a week-dated item is not late
+     while its own week is still running. */
 
   /* ---- the week band: items the syllabus dates only to a week ------ */
   const band = D.assessments.filter((a) => a.week_no === wk && a.date_precision !== "exact");
@@ -614,8 +614,10 @@ VIEWS.grid = () => {
      div holding a button with id="deadlines-only", aria-pressed bound to
      isDeadlinesOnly(), reading "showing deadlines only" when it is on. */
   let h = `<div class="gridwrap"><div class="grid ${isDeadlinesOnly() ? "deadlines-only" : ""}">
-    <div class="grow head"><div class="gwk lbl">Week</div>${codes.map((c) => `<div class="gcell" data-c="${esc(c)}">
-      <a class="code" href="#courses/${esc(c)}" style="text-decoration:none;color:inherit">${esc(c)}</a><div class="short">${esc(courseName(c))}</div></div>`).join("")}</div>`;
+    <div class="grow head"><div class="gwk lbl">Week</div>${codes.map((c) => `<div class="gcell">
+      ${isShown("courses")
+        ? `<a class="code" href="#courses/${esc(c)}" style="text-decoration:none;color:inherit">${esc(c)}</a>`
+        : `<span class="code">${esc(c)}</span>`}<div class="short">${esc(courseName(c))}</div></div>`).join("")}</div>`;
   for (let w = 1; w <= last; w++) {
     const mon = weekMonday(w);
     const marks = [];
@@ -645,7 +647,10 @@ VIEWS.grid = () => {
     }
     h += `</div>`;
   }
-  return h + `</div></div>${legend()}<div class="spacer"></div>`;
+  /* No key beneath the calendar since 26 Sep 2026 -- with the course colours
+     gone there is nothing left to explain. To restore, set the coloured
+     border-top back in app.css and put legend() back into this return. */
+  return h + `</div></div><div class="spacer"></div>`;
 };
 
 function legend() {

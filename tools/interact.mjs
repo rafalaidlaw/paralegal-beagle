@@ -240,6 +240,29 @@ await click("#theme"); await sleep(250);
 t = JSON.parse((await themeState()).v);
 check("theme cycles back to light", t.attr === "light" && t.ls === "light", t);
 
+// ----------------------------------------------- a finished tick recedes
+// Lightened 26 Sep 2026. Two things must both hold: a done tick stays filled
+// (fill against empty is how it reads at a glance), and it is clearly lighter
+// than the body ink. Tested by cloning a chip, so no progress row is touched.
+await go("grid");
+const lum = (c) => { const [r, g, b] = c.match(/[0-9]+/g).map(Number); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const tick = await evalJs(`(() => {
+  const c = document.querySelector('.chch');
+  if (!c) return null;
+  const probe = c.cloneNode(true);
+  probe.dataset.s = "done";
+  c.parentNode.appendChild(probe);
+  const v = { done: getComputedStyle(probe.querySelector('.box')).backgroundColor,
+              ink: getComputedStyle(document.body).color };
+  probe.remove();
+  return JSON.stringify(v);
+})()`);
+const tk = tick.v ? JSON.parse(tick.v) : null;
+check("a finished chapter's tick is still filled, not left empty",
+  !!tk && !/, 0\)$/.test(tk.done), tk);
+check("a finished chapter's tick is lighter than the body ink",
+  !!tk && lum(tk.done) > lum(tk.ink) + 40, tk && { ...tk, doneLum: lum(tk.done), inkLum: lum(tk.ink) });
+
 // ------------------------------------------------------- deadlines only, off
 // Switched off 26 Sep 2026: the chapter runs are what the Weekly Calendar is
 // for. The second check is the one worth having -- a "1" left in localStorage
@@ -304,9 +327,18 @@ check("the numbers are still in the data, ready to switch back on", lsoRows === 
 const colOrder = await evalJs(`[...document.querySelectorAll('.grow.head .gcell .code')].map(e => e.textContent.trim())`);
 check("the calendar's columns run in Rafael's week order",
   JSON.stringify(colOrder.v) === JSON.stringify(["LGL156", "LGL151", "LGL250", "LGL225", "LGL154", "LGL160", "LGL152", "LGL153"]), colOrder.v);
-const legOrder = await evalJs(`[...document.querySelectorAll('.legend .code')].map(e => e.textContent.trim())`);
-check("the legend beneath it reads in the same order",
-  JSON.stringify(legOrder.v) === JSON.stringify(colOrder.v), legOrder.v);
+// Course colour and its key came off the calendar on 26 Sep 2026: eight hues
+// over eight columns explained nothing the heading did not already say.
+const plainCal = await evalJs(`JSON.stringify({
+  legends: document.querySelectorAll('.legend').length,
+  tinted: document.querySelectorAll('.grow.head .gcell[data-c]').length,
+  rule: getComputedStyle(document.querySelector('.grow.head .gcell')).borderTopWidth,
+  links: document.querySelectorAll('.grow.head .gcell a').length
+})`);
+const pc = JSON.parse(plainCal.v);
+check("the calendar carries no key", pc.legends === 0, pc);
+check("no column wears a course colour", pc.tinted === 0 && pc.rule === "0px", pc);
+check("a column heading is not a link to a hidden screen", pc.links === 0, pc);
 
 // ---------------------------------------------------------------- timetable
 // Rafael's week from his class listing, drawn to scale out of
@@ -381,10 +413,10 @@ await go("week");
 const deadPills = await evalJs(`JSON.stringify({ links: document.querySelectorAll('.card a.course-pill').length, chips: document.querySelectorAll('.card .course-pill').length })`);
 const dp = JSON.parse(deadPills.v);
 check("course pills are chips, not links to a hidden screen", dp.links === 0 && dp.chips > 0, dp);
-await go("grid");
+await go("timetable");   // the one screen that still shows a legend
 const legendLinks = await evalJs(`JSON.stringify({ links: document.querySelectorAll('.legend a').length, items: document.querySelectorAll('.legend .leg').length })`);
 const ll = JSON.parse(legendLinks.v);
-check("the grid legend is likewise not linked", ll.links === 0 && ll.items === 8, ll);
+check("the timetable legend is likewise not linked", ll.links === 0 && ll.items === 8, ll);
 
 // ------------------------------------------------------------- the calendar
 // The Term Grid became the Weekly Calendar on 24 Sep 2026. #grid stays the
@@ -407,6 +439,10 @@ for (const hash of ["deadlines", "exams"]) {
   check(`#${hash} now lands on Upcoming`, t.v === "Upcoming", t.v);
 }
 await go("week");
+// "Already happened" came off Upcoming on 26 Sep 2026 -- it is a screen about
+// what is next, and a sat exam is not something to act on.
+const gone = await evalJs(`document.body.textContent.includes("Already happened")`);
+check("Upcoming does not list what has already happened", gone.v === false, gone.v);
 const dlLinks = await evalJs(`document.querySelectorAll('a[href="#deadlines"], a[href^="#deadlines/"]').length`);
 check("nothing on Upcoming links to the hidden Deadlines screen", dlLinks.v === 0, dlLinks.v);
 const upRows = await evalJs(`JSON.stringify({

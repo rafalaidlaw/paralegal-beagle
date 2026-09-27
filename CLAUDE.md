@@ -339,6 +339,29 @@ reasonable in a stylesheet; re-measure before undoing any of them.
 - **A grid cell reads graded items first**, then the chapter chips, then the
   LSO line, then any "check" flag. Rafael asked for the assessments on top
   (17 Sep 2026): they are what matters most in a week.
+- **The Weekly Calendar is monochrome, and carries no key** (26 Sep 2026).
+  The 3px coloured rule over each column and the `legend()` at its foot both
+  went: eight hues across eight columns is a code whose only message was the
+  course code printed underneath it. `legend()` and the `--c-lgl*` tokens are
+  untouched — the **Timetable** still uses them, and there the colour earns its
+  place, because it is what tells two classes in the same hour apart. The column
+  heading also stopped being an `<a>` to the hidden Courses screen; it was
+  styled to look like text, so clicking it dropped you on Upcoming with no
+  explanation.
+- **Upcoming does not list what has already happened** (26 Sep 2026). The
+  overdue callout was the one thing on a "what is next" screen that could not
+  be acted on. The items are not hidden: the Weekly Calendar still carries them
+  and a passed deadline still greys itself. `isOverdue()`, `dMax()` and the
+  greying rule are all unchanged.
+- **A ticked chapter greys out; it does not go black** (26 Sep 2026). The
+  done state used to fill its box with `--ink` and outline the whole chip in it,
+  which made finished reading the heaviest mark on the Weekly Calendar. It now
+  fills with `--ink4` over a `--line` border. The box stays filled — fill
+  against empty is what distinguishes done from not-started, and `interact.mjs`
+  asserts both that and that the fill is lighter than the body ink. `--ink4` is
+  allowed here because a 12px square is decorative; the label stays `--ink3`.
+  In-progress deliberately keeps full `--ink` and is now the darkest of the
+  three states: it is the chapter actually open.
 - **The Weekly Calendar's "show deadlines only" button is gone**
   (26 Sep 2026). It hid the chapter runs, and those are the reason Rafael opens
   that screen. `DL_ONLY = false` in `app.js` is tested BEFORE `localStorage`,

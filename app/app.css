@@ -367,9 +367,19 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
 .chch:hover { border-color: var(--accent); background: var(--hover); }
 .chch .box { width: 12px; height: 12px; display: block; border: 2px solid var(--ink3); flex: none; }
 .chch .pg { font-size: 12px; font-weight: 500; color: var(--ink3); }
+/* half-filled, and deliberately the darkest of the three -- this is the
+   chapter actually open in front of you */
 .chch[data-s="in_progress"] .box { border-color: var(--ink); background: linear-gradient(90deg, var(--ink) 50%, transparent 50%); }
-.chch[data-s="done"] { border-color: var(--ink); }
-.chch[data-s="done"] .box { border-color: var(--ink); background: var(--ink); }
+/* A finished chapter is behind you, so its tick recedes rather than shouts.
+   Lightened 26 Sep 2026: a solid box of the darkest ink, plus that ink as the
+   chip's own outline, made the reading Rafael had already done the loudest
+   thing in a grid cell. It stays FILLED, because fill against empty is how
+   done is told from not-started at a glance -- only the weight changes. The
+   fill is decorative (a 12px square), which is why the lightest step is
+   allowed there; the label holds at ink3 because "ch 4" is content and has to
+   clear 4.5:1. */
+.chch[data-s="done"] { border-color: var(--line); }
+.chch[data-s="done"] .box { border-color: var(--ink4); background: var(--ink4); }
 .chch[data-s="done"] .lab { text-decoration: line-through; color: var(--ink3); }
 .statebtn { width: 30px; height: 30px; padding: 0; display: grid; place-items: center; border: 1.5px solid var(--ink3); }
 .statebtn[data-s="done"] { background: var(--ink); color: var(--surf); border-color: var(--ink); }
@@ -495,7 +505,12 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
 .grow.head { border-bottom: 2px solid var(--rule); position: sticky; top: 0; background: var(--surf); z-index: 2; }
 .grow.now { background: var(--accent-tint); }
 .gcell { padding: 9px 10px; border-left: 1px solid var(--line); min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.grow.head .gcell { padding: 10px; border-top: 3px solid var(--c, transparent); }
+/* No course colour in the calendar (26 Sep 2026). Eight hues across eight
+   columns was a code with nothing to decode: the heading already says which
+   course the column is, and the colour only said it again, louder. The hues
+   stay in the palette and the Timetable still earns them -- there, colour is
+   what tells two classes in the same hour apart. */
+.grow.head .gcell { padding: 10px; }
 .grow.head .gcell .code { font: 700 12px var(--mono); }
 .grow.head .gcell .short { margin-top: 3px; font-size: 12px; line-height: 1.3; color: var(--ink3); }
 .gwk { padding: 10px 8px; border-left: 3px solid transparent; position: sticky; left: 0; z-index: 1; background: var(--surf); }
