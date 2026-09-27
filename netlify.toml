@@ -1,0 +1,27 @@
+# Paralegal Beagle, published copy.
+#
+# There is no build here. `dist/` is generated locally by `python build_static.py`
+# and committed, so Netlify has no Python to run and no dependency to resolve --
+# it copies four files. Re-run that script after any change to data/ or app/,
+# in the same breath as validate.py, or the published site quietly shows last
+# week's data.
+#
+# publish is dist/ and nothing else on purpose. The repo also holds Seneca's
+# syllabi, his handouts, his marks and his notes, and a Netlify URL is public
+# to anyone who guesses it. build_static.py names the four files it copies
+# rather than excluding things; read its header before changing either.
+
+[build]
+  publish = "dist"
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+    Referrer-Policy = "no-referrer"
+    X-Content-Type-Options = "nosniff"
+
+# The app routes on the hash (#grid, #week/7), so every URL is the one page.
+# No SPA rewrite is needed, and a catch-all would turn a missing data.json into
+# a 200 of HTML -- which is exactly the case load() has to guess about.

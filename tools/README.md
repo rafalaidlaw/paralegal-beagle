@@ -16,6 +16,7 @@ Rafael never needs to run any of this to use the tracker.
 | `probe.mjs` | Reports every element that sticks out past the viewport, ignoring anything inside a deliberate scroll container. This is how you check a phone layout — **not** by looking at a screenshot. |
 | `shot.mjs` | Screenshots each view at 1440px dark, 1440px light and 412px dark, setting the CSS viewport and the colour scheme over the DevTools protocol. |
 | `measure.mjs` | Prints the box, font, padding and resolved family of any selector. Use it when something looks wrong but you cannot tell why. |
+| `statictest.mjs` | The only one that tests `dist/` rather than the running app: that the published page renders from `data.json` with no server, that it takes today's date from the browser instead of the frozen build stamp, and that a chapter tick saves to `localStorage` and survives a reload. Run `python build_static.py` first; it serves the folder itself, so 8787 can stay busy. |
 | `interact.mjs` | Clicks through the things a static render cannot reach: the chapter tick through its three states, the per-course master tick, the theme toggle against both system schemes, week stepping by button and by key, deep links, and the sort toggle; a tick made in the Weekly Calendar showing on This Week (and back), the grid's sideways scroll surviving a tick, and the LSO competency lines on all three. Asserts against the server, so it proves persistence too. |
 | `contrast.py` | WCAG 2.1 contrast for every pair in the palette. No third-party code. |
 

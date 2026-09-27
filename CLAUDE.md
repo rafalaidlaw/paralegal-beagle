@@ -246,6 +246,47 @@ stamps `data-theme="light"`. The toggle cycles light → dark → auto, where au
 follows Windows. `tools/shot.mjs` therefore requests the theme explicitly with
 `?theme=`, and `tools/interact.mjs` asserts light-on-a-dark-system.
 
+## Publishing it — `dist/`, and what must never go in it
+
+`python build_static.py` writes `dist/`: `index.html`, `app.css`, `app.js`,
+`data.json`, `robots.txt`, `_headers`. `netlify.toml` publishes that folder with
+**no build command** — the files are generated here and committed, so Netlify
+runs nothing and depends on nothing. In the Netlify form: base directory blank,
+build command blank, publish directory `dist`.
+
+**Re-run it after any change to `data/` or `app/`**, in the same breath as
+`validate.py` and `export_schedule.py`. Nothing else notices if you forget; the
+site just shows last week quietly.
+
+**A Netlify URL is public to anyone who guesses it.** The repo is private and
+holds Seneca's eight syllabi (one of them pulled from behind Rafael's student
+login), his handouts, his integrity certificate with his name on it, his marks
+and his notes. So `build_static.py` **names the files it copies** rather than
+copying a folder and excluding things. Never invert that. `grades`, `cases`,
+`notes` and `syllabi` ship as **empty arrays**, not as missing keys — the
+sidebar counts read `.length` off each on first paint, so dropping them killed
+the published page before its first render. That is also why `dist/` is deleted
+and rebuilt rather than written into: a file that stopped being published has
+to stop being served.
+
+Two things the published copy does differently, both in `load()`:
+
+- **The date comes from the browser.** `build_payload()` stamps `today` at build
+  time, and a frozen date on a screen whose whole job is counting down is worse
+  than no date. `localToday()` uses local parts, never `toISOString()`, which is
+  UTC and lands on the wrong day through a Toronto evening.
+- **A tick has nowhere to go but the browser.** `STATIC` is true when
+  `/api/data` did not answer; `setReading()` then writes `beagle-ticks` in
+  `localStorage`, and `withLocalTicks()` lays those over the snapshot on every
+  load. Kept separate on purpose: re-publishing with a newer `progress.csv`
+  never wipes a tick made on the phone, and a phone tick never pretends to be
+  in the CSV. Everything else that writes — notes, cases, marks — lives on a
+  screen that is not published, and `post()` says so plainly if one is ever
+  switched back on.
+
+`node tools/statictest.mjs` checks all of this against `dist/`. It serves the
+folder itself on its own port, so it never needs 8787 free.
+
 `serve.py` serves exactly three static files — `/`, `/app.css`, `/app.js` —
 with no asset route. So **no font file, image or SVG can be added without
 changing the server**, which is why the type uses only faces installed on
