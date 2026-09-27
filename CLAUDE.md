@@ -380,7 +380,10 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   clipping, so the alignment degrades by a few pixels rather than breaking. The
   phone band resets both to 0 — those heights are the desktop composition, and
   under 900px the sidebar folds into a strip. `interact.mjs` measures the two
-  pairs rather than trusting the tokens.
+  pairs rather than trusting the tokens. The course names went to **14px** the
+  same day, which spends most of the headroom `--nowh` was leaving: LGL151's
+  three-line title clears the band's foot by about 15px at the narrow end, so
+  the suite also checks that no column head clips its own code.
 - **The Weekly Calendar is 1100px wide minimum**, which fits beside the 238px
   sidebar at 1440. The reference used 1260 and cut off the eighth column.
   Chips inside grid cells wrap; everywhere else they do not.

@@ -358,6 +358,15 @@ check("the brand rule and the page-header rule are one rule",
   rl.brand === rl.mhead, rl);
 check("the week-ahead rule and the column-head rule are one rule",
   rl.nowblock === rl.colheads, rl);
+// The course names were raised to 14px on 26 Sep 2026, which spends the
+// headroom --nowh was giving them. Nothing may fall out of the bottom of its
+// own column head -- LGL151's title is the long one, three lines at 1440.
+const spill = await evalJs(`JSON.stringify([...document.querySelectorAll('.grow.head .gcell')]
+  .map(e => ({ code: e.querySelector('.code').textContent.trim(),
+               over: Math.round(e.querySelector('.code').getBoundingClientRect().bottom
+                                - e.getBoundingClientRect().bottom) }))
+  .filter(x => x.over > 0))`);
+check("no column head clips its own code", JSON.parse(spill.v).length === 0, spill.v);
 
 // The name is the heading and the code is the subtitle beneath it (26 Sep
 // 2026), so the name must come first in the DOM and carry the darker ink.
