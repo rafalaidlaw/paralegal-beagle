@@ -242,17 +242,19 @@ in `localStorage` and is read before the first paint by an inline script in
 compact for good on 13 Sep 2026, so `--rowpad`/`--secpad` are 8/18 and the
 button is gone. Do not bring it back.
 
-**`color-scheme` is not decoration and must never be dropped.** It sits with
-each of the three palette blocks — `light` on bare `:root`, `dark` in both dark
-blocks. It is how the page tells the BROWSER which palette it is using, and the
-browser owns surfaces no stylesheet can reach: native selects and checkboxes,
-the scrollbar, the text caret, and Chrome on Android deciding whether to
-force-darken the whole page. Without it, choosing Light on a phone set to dark
-leaves exactly those parts dark — Rafael, 26 Sep 2026: "it doesn't set the
-entire site to light, just some elements." The address bar is the one surface
-even that cannot reach, so `index.html` carries a `theme-color` meta, set
-before first paint and again in `paintChrome()` from the body's own computed
-background. `interact.mjs` checks both, in both themes, at phone size.
+**`color-scheme: light dark` is declared ONCE, on `:root`, and is never
+narrowed to a single value.** It is not a colour, and it is not a description
+of what is showing — it is a declaration of what the page SUPPORTS, and
+browsers act on it. Saying `light` while showing the light theme reads as "this
+page has no dark mode", and Chrome on Android then force-darkens it for you:
+that was Rafael on 26 Sep 2026, "it doesn't set the entire site to light, just
+some elements". The cost of declaring both is that a native select or scrollbar
+follows the device rather than the chosen theme, which is worth it and barely
+visible — the three published screens carry no native controls. The address bar
+is the one surface even this cannot reach, so `index.html` carries a
+`theme-color` meta, set before first paint and again in `paintChrome()` from
+the body's own computed background. `interact.mjs` checks the declaration in
+both themes, at phone size.
 
 ## The phone is a different drawing, not a narrower one
 
