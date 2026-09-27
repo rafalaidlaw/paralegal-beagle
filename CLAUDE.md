@@ -369,21 +369,20 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   move it into `data/courses.csv`: that file stays alphabetical, and column
   order is a preference, not a fact from a syllabus. A course missing from
   `WEEK_ORDER` still renders, at the end.
-- **The brand rule and the page-header rule are one rule** (26 Sep 2026).
-  `--bandh` (97px) is a `min-height` shared by `.brand` and `.mhead`, so the
-  heavy rule under PARALEGAL BEAGLE carries straight on under the page title.
-  A subtitle wrapping to a third line grows the band rather than clipping it,
-  and the phone band resets it to 0, because under 900px the sidebar folds into
-  a strip. `interact.mjs` measures the pair rather than trusting the token.
-- **The calendar's column-head row was left alone, twice over** (26 Sep 2026).
-  A second token, `--nowh`, locked `.nowblock` to `.grow.head` so the rule
-  under "Starts Mon 28 Sept" carried on under the course names, and the titles
-  went up from 12.5px to 14 and then 16. Rafael preferred the row as it was and
-  both went back together. They had to go together: matching those two blocks
-  means forcing a height on a row whose content wraps differently at every
-  width, which is what made the type size and the alignment one decision rather
-  than two. The row is back at 12.5px titles, 12px codes, 10px padding, no
-  forced height. **Do not re-apply one without the other.**
+- **The header bands were aligned across the sidebar and back again**
+  (26 Sep 2026). Two `min-height` tokens tried to make the sidebar's rules and
+  the content's rules the same rules: `--bandh` locking `.brand` to `.mhead`,
+  `--nowh` locking `.nowblock` to `.grow.head`. The column heads came with
+  larger course titles at the same time. Rafael asked for it, looked at it, and
+  preferred what was there before — the whole thing went back, and `app.css` is
+  byte-identical to before it started.
+
+  Worth knowing before anyone tries again. The two pairs are not independent:
+  making the second pair line up means forcing a height on a row whose content
+  wraps differently at every width, so the type size and the alignment are one
+  decision. And doing only the first pair leaves the page-header rule aligned
+  while the band below it is not — Rafael's word for that was "a tangent",
+  which is the right one. **It is all or nothing, and he has seen all of it.**
 - **~16px is the ceiling for a course title here, and the limit is sideways.**
   Eight columns across 1100px leaves about 117px of usable width, and a title
   is ordinary prose until one WORD is wider than that — "Administrative",

@@ -70,21 +70,6 @@
 
   /* ---- spacing: the scale the old stylesheet never had --------------- */
   --s1: 4px;  --s2: 8px;  --s3: 12px;  --s4: 16px;  --s5: 20px;  --s6: 24px;  --s8: 32px;
-
-  /* The sidebar and the page beside it read as one grid, so the rule under the
-     brand block carries on under the page title at the same height -- one rule
-     across the full width. Applied as a MINIMUM: a subtitle wrapping to a
-     third line grows the band rather than clipping it, and the phone band
-     resets it, because under 900px the sidebar folds into a strip.
-
-     There was a second pair of this kind, locking the "week ahead" block to
-     the calendar's column heads. It arrived with a larger type size for the
-     course titles, and Rafael preferred that row as it was (26 Sep 2026), so
-     the two went back together. They had to: matching those blocks means
-     forcing a height on a row whose content wraps differently at every width,
-     which is what made the size and the alignment one decision rather than
-     two. */
-  --bandh: 97px;
   --rowpad: 8px;              /* vertical padding of a ruled row */
   --secpad: 18px;             /* horizontal padding of a section */
   /* These were the "Compact" setting of a Roomy/Compact toggle (14/28 was
@@ -207,7 +192,7 @@ i, em { font-style: normal; font-weight: 600; }
   position: sticky; top: 0; align-self: start; height: 100vh;
   display: flex; flex-direction: column; min-width: 0;
 }
-.brand { padding: var(--s5) 18px var(--s4); border-bottom: 2px solid var(--rule); min-height: var(--bandh); }
+.brand { padding: var(--s5) 18px var(--s4); border-bottom: 2px solid var(--rule); }
 .brand .name { font: 700 16px/1.05 var(--sans); letter-spacing: .01em; text-transform: uppercase; }
 .brand .sub { margin-top: 7px; font-size: 12px; color: var(--ink3); }
 
@@ -242,7 +227,7 @@ i, em { font-style: normal; font-weight: 600; }
 main { min-width: 0; display: flex; flex-direction: column; }
 
 .mhead {
-  padding: 22px var(--secpad) 16px; border-bottom: 2px solid var(--rule); min-height: var(--bandh);
+  padding: 22px var(--secpad) 16px; border-bottom: 2px solid var(--rule);
   display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s6); flex-wrap: wrap;
   background: var(--surf);
 }
@@ -654,8 +639,7 @@ details > summary:hover { color: var(--accent-text); }
 @media (max-width: 900px) {
   .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .side { position: static; height: auto; border-right: 0; border-bottom: 2px solid var(--rule); }
-  .brand { padding: 12px 16px 10px; display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--line); min-height: 0; }
-  .mhead { min-height: 0; }
+  .brand { padding: 12px 16px 10px; display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--line); }
   .brand .name br { display: none; }
   .brand .sub { margin: 0; }
   .nowblock { display: flex; align-items: baseline; gap: 12px; padding: 8px 16px; }

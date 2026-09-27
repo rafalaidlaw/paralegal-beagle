@@ -344,18 +344,6 @@ check("the numbers are still in the data, ready to switch back on", lsoRows === 
 const colOrder = await evalJs(`[...document.querySelectorAll('.grow.head .gcell .code')].map(e => e.textContent.trim())`);
 check("the calendar's columns run in Rafael's week order",
   JSON.stringify(colOrder.v) === JSON.stringify(["LGL156", "LGL151", "LGL250", "LGL225", "LGL154", "LGL160", "LGL152", "LGL153"]), colOrder.v);
-// The sidebar and the page read as one grid, so the rule under the brand block
-// carries on under the page title. Measured rather than trusted: what lands on
-// screen is the whole point. (There was a second pair of this kind, locking
-// the "week ahead" block to the calendar's column heads. It went back on
-// 26 Sep 2026 along with the larger type it arrived with -- see app.css.)
-const rules = await evalJs(`JSON.stringify((() => {
-  const b = (sel) => Math.round(document.querySelector(sel).getBoundingClientRect().bottom);
-  return { brand: b('.side .brand'), mhead: b('.mhead') };
-})())`);
-const rl = JSON.parse(rules.v);
-check("the brand rule and the page-header rule are one rule",
-  rl.brand === rl.mhead, rl);
 // A course title is ordinary prose until a single word is wider than the
 // column -- "Communication", "Administrative" -- and a word that cannot break
 // does not wrap, it runs into the next course's column. 22px was tried on
