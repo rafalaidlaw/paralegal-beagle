@@ -367,6 +367,18 @@ const spill = await evalJs(`JSON.stringify([...document.querySelectorAll('.grow.
                                 - e.getBoundingClientRect().bottom) }))
   .filter(x => x.over > 0))`);
 check("no column head clips its own code", JSON.parse(spill.v).length === 0, spill.v);
+// And sideways, which is the one that bites first. A course title is ordinary
+// prose until a single word is wider than the column -- "Communication",
+// "Administrative" -- and a word that cannot break does not wrap, it runs into
+// the next course's column. 22px was tried on 26 Sep 2026 and did exactly
+// that; 16px is the ceiling at eight columns across 1100px.
+const wide = await evalJs(`JSON.stringify([...document.querySelectorAll('.grow.head .gcell')]
+  .map(e => { const t = e.querySelector('.short'), s = getComputedStyle(e);
+    const inner = e.getBoundingClientRect().width - parseFloat(s.paddingLeft) - parseFloat(s.paddingRight);
+    return { code: e.querySelector('.code').textContent.trim(),
+             over: Math.round(t.scrollWidth - inner) }; })
+  .filter(x => x.over > 0))`);
+check("no course title runs into the next column", JSON.parse(wide.v).length === 0, wide.v);
 
 // The name is the heading and the code is the subtitle beneath it (26 Sep
 // 2026), so the name must come first in the DOM and carry the darker ink.

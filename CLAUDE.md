@@ -380,10 +380,20 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   clipping, so the alignment degrades by a few pixels rather than breaking. The
   phone band resets both to 0 — those heights are the desktop composition, and
   under 900px the sidebar folds into a strip. `interact.mjs` measures the two
-  pairs rather than trusting the tokens. The course names went to **14px** the
-  same day, which spends most of the headroom `--nowh` was leaving: LGL151's
-  three-line title clears the band's foot by about 15px at the narrow end, so
-  the suite also checks that no column head clips its own code.
+  pairs rather than trusting the tokens.
+- **16px is the ceiling for a course title in a calendar column**, and the
+  limit is sideways, not down. Eight columns across 1100px leaves about 117px
+  of usable width, and a title is ordinary prose until one WORD is wider than
+  that — "Administrative", "Communication". A word that cannot break does not
+  wrap; it runs into the next course's column. 22px was tried on 26 Sep 2026
+  and did exactly that, with LGL160's "Communication" printed over LGL152's
+  "Paralegals", four- and five-line titles, and the band at 181px instead of
+  111. `--nowh` follows the tallest column head (129px at 16px type) and the
+  sidebar block takes the same height so the rule still crosses. `interact.mjs`
+  checks both directions: nothing clipped at the foot, nothing run into the
+  next column. **Going bigger than 16 needs wider columns**, which means the
+  grid no longer fits beside the sidebar at 1440 and starts scrolling sideways
+  — and seeing all eight courses at once is what the screen is for.
 - **The Weekly Calendar is 1100px wide minimum**, which fits beside the 238px
   sidebar at 1440. The reference used 1260 and cut off the eighth column.
   Chips inside grid cells wrap; everywhere else they do not.

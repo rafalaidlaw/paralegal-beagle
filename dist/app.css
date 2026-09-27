@@ -78,11 +78,13 @@
      Two heights, each shared by the pair of blocks that must end together:
        bandh   the brand block and the page header  -- one rule, full width
        nowh    the "week ahead" block and the calendar's column heads
-     Both are applied as a MINIMUM. If a course title wraps to a fourth line,
+     --nowh was 111 until the course names went to 16px; it is now whatever
+     the tallest column head needs, and the sidebar block takes the same height
+     so the rule still crosses. Both are applied as a MINIMUM. If a course title wraps to a fourth line,
      or a subtitle to a third, the band grows and the alignment degrades by a
      few pixels instead of clipping the words. */
   --bandh: 97px;
-  --nowh: 111px;
+  --nowh: 129px;
   --rowpad: 8px;              /* vertical padding of a ruled row */
   --secpad: 18px;             /* horizontal padding of a section */
   /* These were the "Compact" setting of a Roomy/Compact toggle (14/28 was
@@ -531,7 +533,7 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
    Weights are swapped with them: the name takes the ink and the bold, the code
    drops to ink3 and medium. Held at 12.5px so the sticky header does not grow
    a line on the longest title (LGL151 already wraps to four). */
-.grow.head .gcell .short { font-weight: 700; font-size: 14px; line-height: 1.25; color: var(--ink); }
+.grow.head .gcell .short { font-weight: 700; font-size: 16px; line-height: 1.15; color: var(--ink); }
 .grow.head .gcell .code { display: block; margin-top: 4px; font: 500 12.5px var(--mono); color: var(--ink3); }
 .gwk { padding: 13px 8px 15px; border-left: 3px solid transparent; position: sticky; left: 0; z-index: 1; background: var(--surf); }
 .grow.head .gwk { z-index: 3; }
