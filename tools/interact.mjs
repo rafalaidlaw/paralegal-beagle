@@ -694,6 +694,66 @@ const sk = JSON.parse(stick.v);
 check("the calendar scrolls inside its own box on a phone", sk.scrolled > 0, sk);
 check("the week stepper stays put while the classes scroll past", sk.before === sk.after, sk);
 
+/* The list runs top-to-bottom in the same order the desktop's columns run
+   left-to-right -- WEEK_ORDER, which is Rafael's own week order and not the
+   clock's. Asserted as non-decreasing rank rather than a literal list, so
+   reordering WEEK_ORDER does not fail a test that is about agreement between
+   two screens, not about any particular order. */
+const ord = await evalJs(`JSON.stringify({
+  ranks: [...document.querySelectorAll('.calrow')].map(e => rank(e.dataset.c)),
+  codes: [...document.querySelectorAll('.calrow')].map(e => e.dataset.c)
+})`);
+const od = JSON.parse(ord.v);
+check("the phone list runs in the same order as the desktop's columns",
+  od.ranks.every((r, i) => i === 0 || od.ranks[i - 1] <= r), od.codes);
+
+/* A tick forty rows down must not throw you back to the top. It did until
+   28 Sep 2026: render() restored window.scrollY, and on a phone the window is
+   not the scroller -- #main is -- so the restore silently did nothing and every
+   tick jumped the list to row one.
+
+   render() is called directly rather than by clicking a chip: a tick is the
+   thing that triggers this, but the mechanism under test is the restore, and
+   calling it here keeps data/progress.csv out of it. The chip cycle is
+   not-started -> in progress -> done, so there is no single click that undoes
+   a click, and this test has no business leaving a chapter marked read. */
+const keep = await evalJs(`(() => {
+  const w = document.querySelector('#main');
+  w.scrollTop = 400;
+  const before = Math.round(w.scrollTop);
+  render();
+  const after = Math.round(document.querySelector('#main').scrollTop);
+  document.querySelector('#main').scrollTop = 0;
+  return JSON.stringify({ before, after });
+})()`);
+const kp = JSON.parse(keep.v);
+check("a re-render keeps your place in the list", kp.before > 0 && kp.after === kp.before, kp);
+
+/* ...and stepping the week does the opposite, on purpose: new content starts at
+   the top, because the arrows are in the sticky bar and you have not read the
+   start of the week you just asked for. */
+const step = await evalJs(`(async () => {
+  const w = document.querySelector('#main');
+  w.scrollTop = 400;
+  const before = Math.round(w.scrollTop);
+  document.querySelector('#cal-next').click();
+  await new Promise(r => setTimeout(r, 900));
+  return JSON.stringify({ before, after: Math.round(document.querySelector('#main').scrollTop) });
+})()`);
+const sp = JSON.parse(step.v);
+check("but stepping to another week starts at the top of it",
+  sp.before > 0 && sp.after === 0, sp);
+
+/* The obsolete property that caused it. Its documented failure is exactly what
+   Rafael reported twice -- reach the bottom and the next swipe is swallowed --
+   and it breaks position: sticky in its own descendants on iOS, which .calbar
+   is. There is no version of this app that should declare it. */
+const css = await evalJs(`fetch('/app.css').then(r => r.text()).then(t => JSON.stringify({
+  legacy: /-webkit-overflow-scrolling *:/.test(t)
+}))`);
+check("nothing asks iOS for the obsolete momentum scroller",
+  JSON.parse(css.v).legacy === false, css.v);
+
 // Stepping weeks, from the strip and from the arrows.
 await evalJs(`document.querySelector('[data-calweek="7"]').click(); "ok"`);
 await sleep(900);

@@ -689,10 +689,23 @@ details > summary:hover { color: var(--accent-text); }
     flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
     /* contain, not none: the list still bounces at its own ends, which is the
        feedback that tells you there is nothing more -- it just stops handing
-       the gesture to the document behind it (Rafael, 27 Sep 2026: scrolling
-       back up from the bottom was unresponsive). */
+       the gesture to the document behind it. */
     overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
+    /* There is deliberately no -webkit-overflow-scrolling declaration here,
+       and there must never be one again. It looks like the property that makes
+       a nested scroller feel native, and it was in this rule for that reason
+       -- but it is obsolete (iOS 13 gives nested scrollers momentum with no
+       property at all) and its documented failure is precisely what Rafael
+       reported twice, on 27 and 28 Sep 2026: reach the bottom and the next
+       upward swipe is swallowed settling the momentum layer, so the first
+       gesture does nothing and the second works. It also breaks
+       position: sticky in its own descendants on iOS, which is what .calbar
+       is. One line, two bugs, no benefit.
+
+       Note the property is named WITHOUT its colon above, on purpose. A test
+       in tools/interact.mjs greps this stylesheet for the declaration, and a
+       comment that spelt it out in full would fail the test that exists to
+       keep it out -- the same trap tools/contrast.py hit with "--name:". */
   }
   /* The page title bar goes: the tab bar already says which screen you are on,
      and on a 915px-tall phone that band was 60px of repetition. */

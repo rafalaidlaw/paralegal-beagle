@@ -517,19 +517,51 @@ const isShown = (v) => SHOWN.includes(v);
 /* The route stays #grid so old bookmarks keep working; #calendar matches the
    name it is shown under, and #exams predates the Deadlines rename. */
 const ALIAS = { exams: "deadlines", calendar: "grid", upcoming: "week" };
-let renderedView = null;
+let renderedView = null, renderedWeek = null;
 /* Re-rendering replaces the whole view, so the scroll position has to be put
    back on purpose. A change of SCREEN goes to the top; a tick, a mark, a
-   target change or a week step re-renders in place and stays where you were. */
+   target change or a week step re-renders in place and stays where you were.
+
+   THREE scrollers, and which one is live depends on the width. Above 900px the
+   window scrolls. Below it the window cannot -- the phone shell is a fixed
+   frame and #main is the scroller -- so restoring only window.scrollY put a
+   phone back at the top of the list on every tick, which is what a tap on a
+   chapter chip forty rows down did until 28 Sep 2026. Restore all three and
+   let the two that are not scrollable no-op. */
 function render() {
   paintChrome();
   const y = window.scrollY;
+  const my = main.scrollTop;
   const x = $(".gridwrap")?.scrollLeft || 0;     /* the Weekly Calendar scrolls sideways below 1338px */
   main.innerHTML = VIEWS[state.view]();
-  if (state.view !== renderedView) window.scrollTo(0, 0);
-  else { window.scrollTo(0, y); if (x) { const g = $(".gridwrap"); if (g) g.scrollLeft = x; } }
+  /* Stepping the phone calendar's week is a change of content, not a redraw of
+     what you were reading, so it starts at the top -- the arrows sit in the
+     sticky bar, so without this a tap on > left you half way down a week you
+     had not seen the start of. The desktop grid draws all fifteen weeks at
+     once and has no stepper, so this can only ever fire on a phone. */
+  const fresh = state.view !== renderedView
+    || (PHONE() && state.view === "grid" && shownWeek() !== renderedWeek);
+  if (fresh) { window.scrollTo(0, 0); main.scrollTop = 0; }
+  else {
+    window.scrollTo(0, y);
+    main.scrollTop = my;
+    if (x) { const g = $(".gridwrap"); if (g) g.scrollLeft = x; }
+  }
   renderedView = state.view;
+  renderedWeek = state.view === "grid" ? shownWeek() : null;
 }
+
+/* Insurance, not the fix. iOS can leave a scroller resting exactly at an end
+   with the gesture still owned by its overscroll layer; a scrollTop of 1px off
+   the end is imperceptible and gives the next swipe somewhere to go. Costs
+   nothing where it is not needed: above 900px #main is not a scroll container,
+   so scrollHeight equals clientHeight and both branches clamp back to 0. */
+main.addEventListener("touchstart", () => {
+  const max = main.scrollHeight - main.clientHeight;
+  if (max <= 0) return;
+  if (main.scrollTop <= 0) main.scrollTop = 1;
+  else if (main.scrollTop >= max) main.scrollTop = max - 1;
+}, { passive: true });
 function routeFromHash() {
   const raw = (location.hash || "").replace(/^#/, "");
   if (!raw) return;
@@ -845,8 +877,17 @@ function gridPhone() {
   const loads = crunchWeeks();
   const max = Math.max(...loads.map((x) => x.load), 1);
   const mon = weekMonday(wk);
+  /* WEEK_ORDER, the same order the desktop's eight columns run in, so the
+     list reads top-to-bottom exactly as the grid reads left-to-right (Rafael,
+     28 Sep 2026). It is NOT chronological and must not be re-sorted to be:
+     this is his week order, the one the desktop already uses, and a screen
+     that agrees with the other screen is worth more here than a screen sorted
+     by the clock -- every row prints its own date anyway. Within one course,
+     the two meetings of LGL152, LGL156 and LGL250 stay in date order. */
   const rows = D.schedule.filter((r) => r.week_no === wk)
-    .slice().sort((a, b) => a.class_date.localeCompare(b.class_date) || a.course.localeCompare(b.course));
+    .slice().sort((a, b) => rank(a.course) - rank(b.course)
+      || a.course.localeCompare(b.course)
+      || a.class_date.localeCompare(b.class_date));
   const isBreak = rows.length > 0 && rows.every((r) => r.due_type === "study_week");
 
   const marks = [];

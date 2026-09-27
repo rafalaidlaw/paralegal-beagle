@@ -375,3 +375,33 @@ the same way, by reading each course's syllabus wording against
 LGL152 and LGL156 are the courses whose syllabi describe sections he is not
 enrolled in, so their meeting days cannot be trusted wholesale. Doing them one
 at a time as Rafael confirms them — as here — is the safe path.
+
+---
+
+## 28 Sep 2026 — the phone scroller, and the calendar's own order
+
+**No data changed.** Both are interface, recorded here because the second is a
+stated preference rather than a bug, and preferences need an authority the same
+way a date does.
+
+**1. Scrolling stuck at the foot of the list.** Rafael, twice: "scrolling can be
+a bit finnicky when you get to the bottom of the page, trying to scroll back up
+can be unresponsive", then "still getting stuck occasionally... I can resolve it
+by scrolling down and then back up". The cause was `-webkit-overflow-scrolling:
+touch` on `#main` — obsolete since iOS 13, and its documented failure is exactly
+that: the gesture after an overscroll is swallowed settling the momentum layer.
+Removed. It was also breaking `position: sticky` on `.calbar` in its own
+descendants, which is the week stepper he asked to have stay put on 27 Sep.
+
+Found while looking: `render()` restored `window.scrollY`, but below 900px the
+window does not scroll — `#main` does — so **every tick threw the phone list
+back to row one.** It now restores whichever scroller is live. Stepping the week
+deliberately does not: that is new content and starts at its top.
+
+**2. The phone calendar runs in `WEEK_ORDER`.** Rafael, 28 Sep 2026: "in calander
+the classes should be organized the same horizontally down as they are vertically
+across in the website app", with the eight courses listed in that order. It was
+sorted by class date, so the phone and the desktop disagreed about the same week.
+Now LGL156, LGL151, LGL250, LGL225, LGL154, LGL160, LGL152, LGL153 on both.
+**Authority:** Rafael, a preference — not derived from any syllabus, which is why
+it lives in `app.js` beside `WEEK_ORDER` and not in `data/courses.csv`.

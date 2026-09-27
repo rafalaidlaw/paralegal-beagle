@@ -279,6 +279,16 @@ rotating a phone mid-week is a real thing.
   holds: course, day, anything graded, topic, and `chapterChip()` keyed exactly
   as everywhere else, so one tick is still one row in `progress.csv`. Above it,
   a strip of one cell per week tinted by the share of his grade falling in it.
+  **The list runs down in `WEEK_ORDER`, the same order the desktop's columns run
+  across** (Rafael, 28 Sep 2026) — LGL156, LGL151, LGL250, LGL225, LGL154,
+  LGL160, LGL152, LGL153. It was sorted by class date, which looked reasonable
+  and made the two screens disagree about the same week. It is **not**
+  chronological and must not be re-sorted to be: every row prints its own date,
+  and a phone that reads like the desktop is worth more than a phone sorted by
+  the clock. `interact.mjs` asserts the ranks never decrease, so reordering
+  `WEEK_ORDER` does not fail a test that is about agreement rather than about
+  any particular order. The two meetings of LGL152, LGL156 and LGL250 stay in
+  date order within their course, as one grid column holds both.
 - `timetablePhone()` — the Timetable as day-by-day lists. The chart is drawn to
   scale and that IS the chart; squeezed to 412px the proportions stop being
   legible and what is left is a list pretending to be one. So it is a list,
@@ -307,15 +317,16 @@ fell through to its own system font. One variable file covers 400–800.
 it stays a three-file server with one exception, not a static host, and
 `build_static.py` lists it among the files it copies.
 
-**The phone's theme button has TWO states, not three.** "Auto" renders
-identically to whatever the device is already set to, so on a phone set to dark
-the step from dark to auto changed nothing on screen — one tap in three looked
-like a broken button (Rafael, 27 Sep 2026). `cycleTheme()` uses a two-name ring
-under 900px and the full `THEMES` above it. A phone's system setting is also
-one swipe away where Windows' is not, so the state earns its place on one and
-not the other. The stored value is shared, deliberately: choosing dark on the
-phone and opening the laptop gives dark. `interact.mjs` asserts that every tap
-changes the rendered background.
+**The theme button has TWO states everywhere, not three.** `THEMES` is
+`["light", "dark"]`. "Auto" went on 27 Sep 2026 at Rafael's request and for a
+better reason than tidiness: it rendered identically to whatever the device was
+already set to, so on a phone set to dark the step from dark to auto changed
+nothing on screen — one tap in three looked like a broken button. It also meant
+the page could carry no `data-theme` at all, and a page with no stated theme is
+one Chrome on Android feels free to darken for you. There is now always an
+explicit choice, `cycleTheme()` never deletes the attribute, and the answer to
+"what is it showing" is always the attribute rather than storage.
+`interact.mjs` asserts that every tap changes the rendered background.
 
 **Nothing but `#main` scrolls on a phone.** `html, body` are locked and `#main`
 carries `overscroll-behavior: contain`. Both are needed: the shell is 100dvh
@@ -325,6 +336,38 @@ gesture was handed to them — scrolling back up then had to un-scroll the
 document first, which reads as the screen ignoring your thumb. `contain` rather
 than `none`, so the list still bounces at its own ends: that bounce is the
 feedback saying there is nothing more.
+
+**Never declare `-webkit-overflow-scrolling`.** It reads like the property that
+makes a nested scroller feel native on iOS and it was in `#main` for that
+reason. It is obsolete — iOS 13 and later give a nested scroller momentum with
+no property at all — and its documented failure is exactly what Rafael reported
+on 27 and again on 28 Sep 2026: reach the bottom of the list and the next
+upward swipe is swallowed settling the momentum layer, so the first gesture
+does nothing and the second works. It also breaks `position: sticky` in its own
+descendants on iOS, which is what `.calbar` is. One line, two bugs, no benefit.
+`interact.mjs` greps the stylesheet for the declaration, so **the comment that
+forbids it names it without its colon** — the same trap `tools/contrast.py` hit
+with `--name:`, and for the same reason.
+
+There is also a 1px nudge off either end on `touchstart`, in `app.js`. It is
+insurance and not the fix: iOS can leave a scroller resting exactly at an end
+with the gesture still owned by its overscroll layer. Above 900px `#main` is not
+a scroll container, so both branches clamp back to 0 and it costs nothing.
+
+**`render()` puts back THREE scroll positions, and which one is live depends on
+the width.** Above 900px the window scrolls; below it the window cannot — the
+shell is fixed — and `#main` is the scroller. Restoring only `window.scrollY`
+therefore did nothing on a phone, and every tick threw the list back to row
+one: tapping a chapter chip forty rows down was a trip to the top until
+28 Sep 2026. Restore all three — window, `#main`, and `.gridwrap`'s
+`scrollLeft` — and let the ones that are not scrollable no-op.
+
+**Stepping the phone calendar's week is the exception: it starts at the top.**
+The arrows sit in the sticky bar, so without that a tap on `›` left you half
+way down a week whose start you had never seen. A change of week is a change of
+content, like a change of screen. The desktop grid draws all fifteen weeks at
+once and has no stepper, so the reset is gated on `PHONE()` and can only ever
+fire on a phone.
 
 **The phone tab bar carries no counts and shortens one name.** A count earns
 its place in the desktop sidebar, where it has a column to sit in; a tab bar is
