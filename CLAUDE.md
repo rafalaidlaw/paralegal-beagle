@@ -177,12 +177,21 @@ as `pill()` and `legend()` do for Courses; `interact.mjs` asserts it. Rafael cut
 below. The app still OPENS on Upcoming — sidebar order and landing screen are
 separate things.
 
-**Upcoming shows everything inside the fortnight, not a count of it.** Three
-cards carry the nearest items large, then `.upnext` lists the rest with course
-code, full course name, type, date and weight. Rafael caught the earlier
-version hiding LGL153's 30% test six days out behind the words "seven more
-inside the fortnight". Every graded item on this screen names its course in
-full as well as by code.
+**Upcoming's horizon is the week it names — the five business days of it.**
+Not a rolling 7 or 14 days from today (Rafael, 26 Sep 2026). A rolling window
+slides against the thing he plans around: on a Friday it reached halfway into
+the week after, and on a Monday it stopped short of the Friday he was preparing
+for. Items are selected by `week_no`, which is also what the Weekly Calendar
+places by — so the two screens agree **by construction**. Keep that true: it is
+what let him catch the week-window bug by comparing them.
+
+**Upcoming shows everything in that week, not a count of it.** Three cards
+carry the nearest items large, then `.upnext` lists the rest with course code,
+full course name, type, date and weight. Rafael caught an earlier version
+hiding LGL153's 30% test six days out behind the words "seven more inside the
+fortnight" — a count is a hiding place. A week with nothing graded in it shows
+one `.card.quiet-week` naming the next item beyond, rather than going blank.
+Every graded item on this screen names its course in full as well as by code.
 
 **Upcoming rolls forward at the weekend.** Classes run Mon–Fri, so from
 Saturday the week you are standing in has nothing left to prepare for:
@@ -389,6 +398,36 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   is untouched — `lso_nums` is still on 65 schedule rows and still exported to
   the wiki's `context/` files — so flipping `SHOW_LSO` brings every line back
   on all three screens. Do not delete `lsoLine()` or the column.
+
+## `date_precision: unknown` — an item whose date is not his to know
+
+LGL151's case presentation is worth 15%, and the syllabus dates it to the week
+of 28 Sept — but that is when presentations BEGIN. They run for weeks and each
+student's slot is posted to Blackboard. Counting down to the start of the run
+named a day nobody had given him (Rafael, 26 Sep 2026).
+
+So `date_precision` has a third value. `resolve_due()` returns `""` for it,
+which drops the item off both screens: Upcoming filters on `due_resolved`, and
+the Calendar places by a `week_no` derived from it. What does NOT change:
+
+- `due_week_of` keeps the printed date, so `validate.py` rule 8 still matches
+  the real class row and proves it carries its 15%;
+- the weight still counts toward the course's 100;
+- `validate.py` **names every unknown-precision item on every run**. A graded
+  item that quietly stopped appearing looks exactly like a course with nothing
+  due, which is the failure this project exists to prevent. Never make this
+  silent.
+
+`whenLabel()` and `relLabel()` both have to answer for an undated item — they
+read "date not set" and "still to be announced". Before that guard the Courses
+screen rendered "week of " and "in NaN days", which reads as a fetch that
+failed rather than a date nobody has given yet.
+
+The class row itself is untouched: `schedule.csv` still carries
+"PRESENTATIONS BEGIN (15%)" on Mon 28 Sept with its note that his own slot is
+on Blackboard, and that still shows in Upcoming's readings list. That is a fact
+about the class meeting, not a deadline aimed at him, and it has its caveat
+printed beside it.
 
 ## A week-precision deadline has TWO horizons
 

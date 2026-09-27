@@ -312,3 +312,34 @@ Week numbers are unaffected — the Monday of a week is in the same week as any
 other day of it — so the Weekly Calendar, which places items by week number,
 showed the right thing throughout. That is why comparing the two screens found
 this.
+
+
+## 2026-09-26 — LGL151 case presentation: date unknown, not week-dated
+
+| field | old | new |
+|---|---|---|
+| date_precision | week | **unknown** |
+
+**Authority:** reported by Rafael, 26 Sep 2026. Upcoming was counting down
+"2 days" to it. The presentation slot changes from student to student, so the
+syllabus's "week of Sept. 28" is when presentations BEGIN for the course, not
+when he presents; his own date is posted to Blackboard.
+
+`due_week_of` still holds 2026-09-28, so `validate.py` rule 8 still matches the
+class row and checks it carries its 15%, and the weight still counts toward
+LGL151's 100. `resolve_due()` returns no date for `unknown`, which is what
+keeps it off the Weekly Calendar and Upcoming. `validate.py` prints it as a
+note on every run so it cannot vanish quietly.
+
+**When Blackboard gives him the date:** set `due_date`, set `date_precision`
+back to `exact`, and record the authority here. It reappears on both screens by
+itself.
+
+## 2026-09-26 — Upcoming's horizon is a week, not a rolling fortnight
+
+Not a data change; recorded because it changes what the screen means. Upcoming
+listed everything within a rolling 7 and 14 days of today. It now shows the
+five business days of the week it is standing in, selected by `week_no` — the
+same number the Weekly Calendar places by, so the two screens now agree by
+construction rather than by coincidence. Rafael asked for this on 26 Sep 2026,
+the same day comparing those two screens found the week-window bug above.

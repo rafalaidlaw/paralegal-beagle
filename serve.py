@@ -211,6 +211,14 @@ def resolve_due(a):
     value against the course's real class row, which is the check that catches
     an item filed on the wrong week -- it is not ours to normalise away.
     """
+    if a["date_precision"] == "unknown":
+        # Not undated -- the syllabus DOES print a date; it just is not this
+        # student's. LGL151's presentations begin the week of 28 Sept and run
+        # on from there, one slot per student, posted to Blackboard. Counting
+        # down to the start of the run would name a day nobody has given him.
+        # due_week_of keeps the printed date so rule 8 can still match the row
+        # and prove it carries its 15%; the weight still counts toward the 100.
+        return ""
     if a["due_date"]:
         return a["due_date"]
     if a["due_week_of"]:

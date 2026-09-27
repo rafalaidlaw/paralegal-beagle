@@ -192,6 +192,16 @@ for a in assessments:
     if not (a["due_date"] or a["due_week_of"]):
         err(f"{a['id']} ({a['name']}): no date of any kind")
 
+# date_precision "unknown" holds an item off the screens on purpose. Name every
+# one of them every run: a graded item that silently stopped appearing looks
+# exactly like a course with nothing due, which is the failure this project
+# exists to prevent.
+for a in assessments:
+    if a["date_precision"] == "unknown":
+        info(f"{a['id']} ({a['name']}, {a['weight_pct']}%): date_precision 'unknown' -- "
+             f"kept out of the Weekly Calendar and Upcoming until a real date is known. "
+             f"The syllabus row ({a['due_week_of'] or a['due_date']}) and the weight both stand.")
+
 for code in codes:
     finals = [a for a in by_course[code]
               if a["type"] in ("exam", "test") and "final" in a["name"].lower()]

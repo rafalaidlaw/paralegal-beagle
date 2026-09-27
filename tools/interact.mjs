@@ -484,12 +484,53 @@ check("nothing on Upcoming links to the hidden Deadlines screen", dlLinks.v === 
 const upRows = await evalJs(`JSON.stringify({
   rows: document.querySelectorAll('.uprow').length,
   links: document.querySelectorAll('a.uprow').length,
-  names: [...document.querySelectorAll('.uprow .course')].map(e => e.textContent.trim()).slice(0, 2)
+  names: [...document.querySelectorAll('.uprow .course')].map(e => e.textContent.trim()).slice(0, 2),
+  shown: document.querySelectorAll('.card:not(.quiet-week) .name, .uprow .what b').length,
+  quiet: document.querySelectorAll('.card.quiet-week').length
 })`);
 const ur = JSON.parse(upRows.v);
-check("the fortnight list is still there, as plain rows", ur.rows > 0 && ur.links === 0, ur);
-check("each fortnight row names its course in full",
+check("every row is a plain row, not a link to a hidden screen", ur.links === 0, ur);
+check("each row names its course in full",
   (ur.names || []).every((n) => /^LGL\d{3} · .+/.test(n)), ur.names);
+
+// Upcoming's horizon is the week it names -- the five business days of it --
+// not a rolling 7 or 14 days from today (Rafael, 26 Sep 2026). So what is on
+// screen must be EXACTLY that week's still-standing items, with nothing
+// summarised into a count: a count is where a 30% test hid once before.
+// Date-independent: it derives what it expects from the same payload the page
+// renders, so it keeps meaning something in November.
+const pay2 = await (await fetch("http://127.0.0.1:8787/api/data")).json();
+const plusDays = (iso, n) => new Date(Date.parse(iso + "T00:00:00") + n * 86400000).toISOString().slice(0, 10);
+const wkShown = Number(rj.big);
+const want = pay2.assessments.filter((a) => a.due_resolved && a.week_no === wkShown &&
+  (a.date_precision === "exact" ? a.due_resolved : plusDays(a.due_resolved, 6)) >= pay2.today);
+check(`Upcoming shows every item of week ${wkShown}, and none from another week`,
+  want.length ? ur.shown === want.length : ur.quiet === 1,
+  { shown: ur.shown, quiet: ur.quiet, want: want.map((a) => a.course + " " + a.name) });
+
+// An item whose date is genuinely not known yet -- LGL151's case presentation,
+// where the slot changes from student to student and is posted to Blackboard --
+// is held off both screens by date_precision "unknown". It keeps its weight,
+// and validate.py names it on every run, so it cannot vanish quietly. Derived
+// from the payload rather than hardcoded, so the day Rafael gets his slot and
+// it is dated, this simply stops applying.
+const undated = pay2.assessments.filter((a) => a.date_precision === "unknown");
+check("an item with no settled date resolves to no date and no week",
+  undated.every((a) => !a.due_resolved && !a.week_no), undated.map((a) => a.id));
+check("an undated item still carries its weight toward the course's 100",
+  undated.every((a) => a.weight_pct !== ""), undated.map((a) => a.id + " " + a.weight_pct));
+for (const u of undated) {
+  const onWeek = await evalJs(`document.body.textContent.includes(${JSON.stringify(u.name)})`);
+  check(`${u.id} is not on Upcoming`, onWeek.v === false, u.name);
+}
+if (undated.length) {
+  await go("grid");
+  for (const u of undated) {
+    const onCal = await evalJs(`document.body.textContent.includes(${JSON.stringify(u.name)})`);
+    check(`${u.id} is not on the Weekly Calendar either`, onCal.v === false, u.name);
+  }
+  await go("week");
+}
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (logs.length) { console.log("\nbrowser errors:"); logs.forEach((l) => console.log("  " + l)); }

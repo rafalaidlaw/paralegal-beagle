@@ -135,13 +135,19 @@ function dueSorted() {
   return D.assessments.filter((a) => a.due_resolved).slice()
     .sort((a, b) => a.due_resolved.localeCompare(b.due_resolved) || a.course.localeCompare(b.course));
 }
+/* date_precision "unknown" resolves to no date at all, so every view that asks
+   "when" has to have an answer ready. Without this the Courses screen printed
+   "week of " and "in NaN days" -- which is worse than no date, because it looks
+   like a date the app failed to fetch rather than one nobody has given yet. */
 function whenLabel(a) {
+  if (!a.due_resolved) return "date not set";
   return a.date_precision === "exact" ? fmt(a.due_resolved) : `week of ${fmtShort(a.due_resolved)}`;
 }
 /* Same honesty as the Upcoming cards: once a week-dated item's Monday has
    gone, "this week" names the wrong week -- the app may already have rolled
    into the next one. Count to the day its window shuts instead. */
 function relLabel(a) {
+  if (!a.due_resolved) return "still to be announced";
   const lo = dMin(a), hi = dMax(a);
   if (hi < 0) return `${Math.abs(hi)} days ago`;
   if (lo <= 0) {
@@ -408,12 +414,21 @@ VIEWS.week = () => {
     ${holidayNote(wk)}
   </div>`;
 
-  /* ---- what lands next: three cards ------------------------------ */
-  const upcoming = dueSorted().filter((a) => !isOverdue(a));
-  const within7 = upcoming.filter((a) => daysLeft(a) <= 7).length;
-  const within14 = upcoming.filter((a) => daysLeft(a) <= 14).length;
-  const three = upcoming.slice(0, 3);
-  h += `<section class="sec"><span class="lbl">What lands next — ${within7 ? `${words(within7)} due inside the next 7 days` : "nothing is due inside the next 7 days"}</span>
+  /* ---- what lands in the week this screen is showing --------------- */
+  /* The horizon is the five business days of that week, Monday to Friday --
+     Rafael, 26 Sep 2026 -- not a rolling 7 or 14 days from today. A rolling
+     window slides against the thing he is actually planning: on a Friday it
+     reached halfway into the week after, and on a Monday it stopped short of
+     the Friday he was preparing for. Selecting by week_no also makes this
+     screen and the Weekly Calendar agree by construction, because the Calendar
+     places items by that same number. That agreement is exactly what caught
+     the week-window bug, and it is worth keeping true on purpose. */
+  const inWeek = dueSorted().filter((a) => a.week_no === wk && !isOverdue(a));
+  const beyond = dueSorted().find((a) => !isOverdue(a) && a.week_no > wk);
+  const three = inWeek.slice(0, 3);
+  h += `<section class="sec"><span class="lbl">${inWeek.length
+      ? `${cap(words(inWeek.length))} due in week ${wk} — ${weekRange(wk)}`
+      : `Nothing graded in week ${wk} — ${weekRange(wk)}`}</span>
     <div class="cards">${three.map((a, n) => {
       const c = countdown(a);
       return `<div class="card ${n === 0 ? "next" : ""}" data-c="${esc(a.course)}">
@@ -423,17 +438,21 @@ VIEWS.week = () => {
         <div class="course">${esc(courseName(a.course))}</div>
         <div class="when">${whenLabel(a)} · ${weightLabel(a)}</div>
       </div>`;
-    }).join("") || `<div class="card"><div class="name">Nothing graded ahead</div><div class="when">Every dated item in the syllabi has passed.</div></div>`}</div>
+    }).join("") || `<div class="card quiet-week"><div class="name">Nothing graded this week</div>
+      <div class="when">${beyond
+        ? `Next is ${esc(beyond.course)} ${nm(beyond.name)}, ${whenLabel(beyond)}. Step forward to see it.`
+        : "Every dated item in the syllabi has passed."}</div></div>`}</div>
   </section>`;
 
-  /* Everything else inside the fortnight, in full. The three cards above carry
-     the nearest items large; this carries the rest, because a screen called
-     Upcoming that hides a 30% test six days out is not doing its job (Rafael
-     caught exactly that on 26 Sep 2026). */
-  const rest = upcoming.slice(3).filter((a) => daysLeft(a) <= 14);
+  /* The rest of the same week, in full. The three cards carry the nearest
+     items large; this carries everything else, because a screen called Upcoming
+     that hides a 30% test six days out is not doing its job (Rafael caught
+     exactly that on 26 Sep 2026). Nothing is summarised into a count here --
+     that count was the hiding place. */
+  const rest = inWeek.slice(3);
   if (rest.length) {
     const dlOn = isShown("deadlines");
-    h += `<section class="sec"><span class="lbl">Then, inside the fortnight</span>
+    h += `<section class="sec"><span class="lbl">Also in week ${wk}</span>
       <div class="upnext">${rest.map((a) => `<${dlOn ? "a" : "div"} class="uprow" ${dlOn ? `href="#deadlines"` : ""} data-c="${esc(a.course)}">
         <span class="when"><b>${daysLeft(a)}</b> ${daysLeft(a) === 1 ? "day" : "days"}</span>
         <span class="what"><b>${nm(a.name)}</b><span class="course">${esc(a.course)} · ${esc(courseName(a.course))}</span></span>
@@ -442,7 +461,7 @@ VIEWS.week = () => {
         <span class="wt">${a.weight_pct ? a.weight_pct + "%" : "—"}</span></${dlOn ? "a" : "div"}>`).join("")}</div>
       <div class="note">${dlOn
         ? `<a href="#deadlines">See every deadline</a> for the rest of the term.`
-        : `Further ahead than a fortnight? The <a href="#grid">Weekly Calendar</a> has every item of the term.`}</div>
+        : `Looking further ahead? Step to the next week, or the <a href="#grid">Weekly Calendar</a> has the whole term at once.`}</div>
     </section>`;
   }
 
