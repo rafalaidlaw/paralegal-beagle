@@ -369,6 +369,18 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   move it into `data/courses.csv`: that file stays alphabetical, and column
   order is a preference, not a fact from a syllabus. A course missing from
   `WEEK_ORDER` still renders, at the end.
+- **The sidebar's rules and the content's rules are the same rules**
+  (26 Sep 2026). `--bandh` (97px) is shared by `.brand` and `.mhead`; `--nowh`
+  (111px) by `.nowblock` and `.grow.head`. So the heavy rule under PARALEGAL
+  BEAGLE carries on under the page title, and the rule under "Starts Mon 28
+  Sept" carries on under the course names — "WEEK" and the column heads now sit
+  on the same line as "WEEK AHEAD". Before this the column heads sat 19px high
+  and every rule below them was out by the same amount. Both are `min-height`,
+  not `height`: a title wrapping to a fourth line grows the band instead of
+  clipping, so the alignment degrades by a few pixels rather than breaking. The
+  phone band resets both to 0 — those heights are the desktop composition, and
+  under 900px the sidebar folds into a strip. `interact.mjs` measures the two
+  pairs rather than trusting the tokens.
 - **The Weekly Calendar is 1100px wide minimum**, which fits beside the 238px
   sidebar at 1440. The reference used 1260 and cut off the eighth column.
   Chips inside grid cells wrap; everywhere else they do not.

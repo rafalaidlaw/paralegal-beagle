@@ -344,6 +344,21 @@ check("the numbers are still in the data, ready to switch back on", lsoRows === 
 const colOrder = await evalJs(`[...document.querySelectorAll('.grow.head .gcell .code')].map(e => e.textContent.trim())`);
 check("the calendar's columns run in Rafael's week order",
   JSON.stringify(colOrder.v) === JSON.stringify(["LGL156", "LGL151", "LGL250", "LGL225", "LGL154", "LGL160", "LGL152", "LGL153"]), colOrder.v);
+// The sidebar and the calendar are read as one grid, so a rule crossing the
+// sidebar has to carry on at the same height across the content (Rafael,
+// 26 Sep 2026). Two pairs, locked by --bandh and --nowh in app.css. Measured
+// rather than trusted: the whole point is what lands on screen.
+const rules = await evalJs(`JSON.stringify((() => {
+  const b = (sel) => Math.round(document.querySelector(sel).getBoundingClientRect().bottom);
+  return { brand: b('.side .brand'), mhead: b('.mhead'),
+           nowblock: b('.side .nowblock'), colheads: b('.grow.head') };
+})())`);
+const rl = JSON.parse(rules.v);
+check("the brand rule and the page-header rule are one rule",
+  rl.brand === rl.mhead, rl);
+check("the week-ahead rule and the column-head rule are one rule",
+  rl.nowblock === rl.colheads, rl);
+
 // The name is the heading and the code is the subtitle beneath it (26 Sep
 // 2026), so the name must come first in the DOM and carry the darker ink.
 const headOrder = await evalJs(`(() => {
