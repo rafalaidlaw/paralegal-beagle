@@ -258,8 +258,11 @@ const VIEW_META = {
   deadlines: ["Deadlines", () => ""],
   grid: ["Weekly Calendar", () => ""],
   timetable: ["Timetable", () => {
+    /* No standing subtitle since 26 Sep 2026 -- "Your week, hour by hour" only
+       described the chart directly beneath it. The warning stays: it fires
+       when a row is low confidence, and none is today, so this reads empty. */
     const n = D.timetable.filter((t) => t.confidence === "low").length;
-    return `Your week, hour by hour${n ? ` — ${words(n)} block${n === 1 ? "" : "s"} still to confirm` : ""}.`;
+    return n ? `${cap(words(n))} block${n === 1 ? "" : "s"} still to confirm.` : "";
   }],
   crunch: ["Crunch", () => crunchSubtitle()],
   courses: ["Courses", () => "Per-course syllabus, standing and schedule."],
@@ -615,9 +618,10 @@ VIEWS.grid = () => {
      isDeadlinesOnly(), reading "showing deadlines only" when it is on. */
   let h = `<div class="gridwrap"><div class="grid ${isDeadlinesOnly() ? "deadlines-only" : ""}">
     <div class="grow head"><div class="gwk lbl">Week</div>${codes.map((c) => `<div class="gcell">
+      <div class="short">${esc(courseName(c))}</div>
       ${isShown("courses")
         ? `<a class="code" href="#courses/${esc(c)}" style="text-decoration:none;color:inherit">${esc(c)}</a>`
-        : `<span class="code">${esc(c)}</span>`}<div class="short">${esc(courseName(c))}</div></div>`).join("")}</div>`;
+        : `<span class="code">${esc(c)}</span>`}</div>`).join("")}</div>`;
   for (let w = 1; w <= last; w++) {
     const mon = weekMonday(w);
     const marks = [];
@@ -719,20 +723,13 @@ VIEWS.timetable = () => {
      stat below still names the clear days, which is worth knowing. */
   const days = TT_DAYS.filter((d) => tt.some((t) => t.day === d));
   const open = tt.filter((t) => !t.end);
-  const inPerson = tt.filter((t) => t.mode === "in person");
-  const busiest = TT_DAYS.map((d) => ({ d, n: tt.filter((t) => t.day === d).length })).sort((a, b) => b.n - a.n)[0];
-  const free = TT_DAYS.filter((d) => !tt.some((t) => t.day === d));
 
-  let h = `<div class="stats">
-    <div class="stat"><span class="lbl">Classes a week</span><div class="v">${tt.length}</div><div class="n">${words(inPerson.length)} on campus, ${words(tt.length - inPerson.length)} online</div></div>
-    <div class="stat"><span class="lbl">Heaviest day</span><div class="v">${busiest.d}</div><div class="n">${words(busiest.n)} classes</div></div>
-    <div class="stat"><span class="lbl">Clear days</span><div class="v">${free.length ? free.join(", ") : "none"}</div><div class="n">${free.length ? "nothing timetabled" : "every weekday has a class"}</div></div>
-    ${open.length
-      ? `<div class="stat"><span class="lbl">End times unknown</span><div class="v">${open.length}</div><div class="n">your enrolment gives their start, not their finish</div></div>`
-      : `<div class="stat"><span class="lbl">Hours in class</span><div class="v">${(tt.reduce((s, t) => s + mins(t.end) - mins(t.start), 0) / 60).toFixed(1)}</div><div class="n">every block has both ends stated</div></div>`}
-  </div>`;
-
-  h += `<div class="ttwrap"><div class="tt" style="--cols:${days.length}">
+  /* The stats strip stood here until 26 Sep 2026: classes a week, heaviest
+     day, clear days, hours in class. Every one of them was countable off the
+     chart below in about a second, and they pushed the chart itself under the
+     fold. The chart is the screen. If a figure ever earns its place back, it
+     belongs beside the thing it counts, not in a band above it. */
+  let h = `<div class="ttwrap"><div class="tt" style="--cols:${days.length}">
     <div class="ttrow tthead"><div class="ttgut"></div>${days.map((d) =>
       `<div class="ttday">${d}</div>`).join("")}</div>
     <div class="ttrow ttbody">

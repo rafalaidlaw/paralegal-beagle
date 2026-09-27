@@ -277,3 +277,38 @@ The syllabus still reads "Presentation outlines due: September 28th at
 12:00 p.m.", and `due_date_raw` keeps that wording. `source_file: announced`
 tells `validate.py` not to look for the new date in the syllabus.
 
+
+
+## 2026-09-26 — LGL160 in-class quiz dated to the day, and a week-window bug
+
+Rafael checked Upcoming against the Weekly Calendar and found the LGL160
+in-class quiz still counting down — three days left, for a quiz he sat on
+Wednesday the 23rd. Two separate things were wrong.
+
+**The quiz itself.**
+
+| field | old | new |
+|---|---|---|
+| due_date | *(empty)* | **2026-09-23** |
+| date_precision | week | **exact** |
+
+**Authority:** reported by Rafael, 26 Sep 2026 — he sat it. The date is not new:
+it is the class day the syllabus's own row names ("week of 9/23", a Wednesday).
+Only the precision changed, so `source_file` stays `LGL160` and `validate.py`
+still checks the row carries its 15%.
+
+**The window, which was the real defect.** `resolve_due()` returned
+`due_week_of` verbatim, and the client finds the last day of a week-precision
+window by adding six days to it. That is right when the value is a Monday — and
+eleven rows are not Mondays, because their syllabus prints the course's own
+class day: LGL152's three Thursdays, LGL156's four Wednesdays, LGL160's four
+Wednesdays. Those windows ran up to four days into the NEXT week, so items
+stayed live after their week had gone and nothing was ever called late on time.
+`resolve_due()` now returns the Monday of the week the value falls in. No CSV
+value changed for this: `due_week_of` must keep the printed class date, because
+that is what `validate.py` matches against the real class row.
+
+Week numbers are unaffected — the Monday of a week is in the same week as any
+other day of it — so the Weekly Calendar, which places items by week number,
+showed the right thing throughout. That is why comparing the two screens found
+this.

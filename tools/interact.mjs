@@ -211,6 +211,23 @@ const cards = await evalJs(`[...document.querySelectorAll('.card .days')].map(e 
 check("no card says 'this week' once the week has rolled",
   !weekend || !(cards.v || []).some((c) => /this week/i.test(c)), cards.v);
 
+// A week-precision window runs Monday to Sunday, so due_resolved must BE a
+// Monday. Eleven rows print their course's own class day in due_week_of
+// (LGL152 Thursdays, LGL156 and LGL160 Wednesdays); resolve_due() normalises
+// them. Before 26 Sep 2026 it did not, and adding six days ran those windows
+// up to four days into the next week -- LGL160's quiz, sat on the Wednesday,
+// still read "3 days left" on the Saturday. Date-independent on purpose.
+const payload = await (await fetch("http://127.0.0.1:8787/api/data")).json();
+const weekly = payload.assessments.filter((a) => a.date_precision === "week" && a.due_resolved);
+const strays = weekly.filter((a) => new Date(a.due_resolved + "T00:00:00").getDay() !== 1)
+  .map((a) => a.id + " " + a.due_resolved);
+check("every week-precision item resolves to a Monday", weekly.length > 0 && strays.length === 0, strays);
+// and the week number must not have moved when it was normalised
+const offWeek = payload.assessments.filter((a) => a.due_resolved &&
+  a.week_no !== Math.floor((Date.parse(a.due_resolved + "T00:00:00") -
+    Date.parse(payload.term.week1_monday + "T00:00:00")) / 604800000) + 1).map((a) => a.id);
+check("normalising the window left every week number where it was", offWeek.length === 0, offWeek);
+
 // ---------------------------------------------------------------- theme
 await go("week");
 const themeState = () => evalJs(`JSON.stringify({attr: document.documentElement.dataset.theme || "", btn: document.querySelector("#theme").textContent.trim(), ls: localStorage.getItem("beagle-theme")})`);
@@ -327,6 +344,20 @@ check("the numbers are still in the data, ready to switch back on", lsoRows === 
 const colOrder = await evalJs(`[...document.querySelectorAll('.grow.head .gcell .code')].map(e => e.textContent.trim())`);
 check("the calendar's columns run in Rafael's week order",
   JSON.stringify(colOrder.v) === JSON.stringify(["LGL156", "LGL151", "LGL250", "LGL225", "LGL154", "LGL160", "LGL152", "LGL153"]), colOrder.v);
+// The name is the heading and the code is the subtitle beneath it (26 Sep
+// 2026), so the name must come first in the DOM and carry the darker ink.
+const headOrder = await evalJs(`(() => {
+  const g = document.querySelector('.grow.head .gcell');
+  const kids = [...g.children].map(e => e.className);
+  const name = g.querySelector('.short'), code = g.querySelector('.code');
+  return JSON.stringify({ first: kids[0], weight: getComputedStyle(name).fontWeight,
+    nameInk: getComputedStyle(name).color, codeInk: getComputedStyle(code).color });
+})()`);
+const ho = JSON.parse(headOrder.v);
+check("a column leads with the course name, not the code", ho.first === "short", ho);
+check("the name carries the weight and the darker ink",
+  Number(ho.weight) >= 700 && ho.nameInk !== ho.codeInk, ho);
+
 // Course colour and its key came off the calendar on 26 Sep 2026: eight hues
 // over eight columns explained nothing the heading did not already say.
 const plainCal = await evalJs(`JSON.stringify({
@@ -352,23 +383,28 @@ const ttShape = await evalJs(`JSON.stringify({
   blocks: document.querySelectorAll('.ttblock').length,
   open: document.querySelectorAll('.ttblock.open').length,
   rooms: document.querySelectorAll('.ttblock .where').length,
-  clear: document.querySelector('.stats .stat:nth-child(3) .v')?.textContent.trim(),
-  hours: document.querySelector('.stats .stat:nth-child(4) .v')?.textContent.trim(),
+  stats: document.querySelectorAll('.stats').length,
+  sub: document.querySelector('#vsub')?.textContent.trim(),
   tables: document.querySelectorAll('.rtable').length,
   callouts: document.querySelectorAll('.callout').length
 })`);
 const ts = JSON.parse(ttShape.v);
-// Monday has no class this term, so it is not drawn at all -- but it is still
-// named in the stats, because a clear day is worth knowing about.
+// Monday has no class this term, so it is not drawn at all. Derived from the
+// data, not hardcoded to Tue-Fri, so the column returns by itself the day a
+// Monday class appears.
 check("the timetable draws only the days with a class in them",
   JSON.stringify(ts.days) === JSON.stringify(["Tue", "Wed", "Thu", "Fri"]), ts.days);
 check("every row in timetable.csv is drawn", ts.blocks === 11, ts);
 check("no block is open-ended now that every finish is known", ts.open === 0, ts);
 check("every block says where it is, room or online", ts.rooms === 11, ts);
-check("Monday is left out of the chart but still named as clear", ts.clear === "Mon", ts);
-check("the weekly total can be stated now", ts.hours === "19.3", ts);
-check("the chart stands alone, with no table or callout beneath it",
-  ts.tables === 0 && ts.callouts === 0, ts);
+// Everything around the chart came off on 26 Sep 2026: the table and callout
+// beneath it, then the stats strip and the subtitle above it. The chart IS the
+// screen, and it was being pushed under the fold by figures you could count
+// off it yourself.
+check("the chart stands alone -- no stats, no table, no callout",
+  ts.stats === 0 && ts.tables === 0 && ts.callouts === 0, ts);
+check("the timetable carries no subtitle while every row is confident",
+  ts.sub === "", JSON.stringify(ts.sub));
 const ttCols = await evalJs(`getComputedStyle(document.querySelector('.tt')).getPropertyValue('--cols').trim()`);
 check("the chart is as wide as the days it draws", ttCols.v === "4", ttCols.v);
 // A block must sit where the clock says. LGL225 runs 8:55-10:40 in a chart

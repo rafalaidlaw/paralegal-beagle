@@ -271,9 +271,15 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   `confidence: high`. An earlier version held times read off a screenshot; the
   listing corrected six of them by up to an hour. **Never re-introduce a time
   read off a picture when the listing has one.**
-- **The Timetable is the chart and nothing else** (26 Sep 2026). The table
-  beneath it repeated what the chart said, and the standing callout about the
-  section conflict said the same thing on every visit. That conflict is not
+- **The Timetable is the chart and nothing else** (26 Sep 2026). In three
+  passes it lost the table beneath it, the standing callout about the section
+  conflict, then the stats strip above it (classes a week, heaviest day, clear
+  days, hours in class) and the subtitle. Each was countable off the chart in a
+  second, and together they pushed the chart itself under the fold. The
+  low-confidence warning survives in `VIEW_META` — it fires only when a row is
+  unsure, which none is, so the subtitle reads empty. If a figure earns its
+  place back, it belongs beside the thing it counts, not in a band above it.
+  The table repeated what the chart said, and the callout That conflict is not
   lost: it is in `data/changes.md`, in this file, in `README.md`, and in the
   `note` column of every affected row of `data/timetable.csv`.
 - **The listing gives starts and rooms but no end times.** Five blocks take
@@ -339,6 +345,13 @@ reasonable in a stylesheet; re-measure before undoing any of them.
 - **A grid cell reads graded items first**, then the chapter chips, then the
   LSO line, then any "check" flag. Rafael asked for the assessments on top
   (17 Sep 2026): they are what matters most in a week.
+- **A calendar column is headed by its course NAME, with the code beneath**
+  (26 Sep 2026). The two swapped weight as well as order: the name takes
+  `--ink` at 700, the code drops to `--ink3` at 500. The code stays on the page
+  because every chip, note and validator message elsewhere is keyed to it — it
+  simply stopped being the headline. Held at 12.5px deliberately: LGL151's
+  title already wraps to four lines, and the header row is sticky, so a size
+  bump there costs height on every screen of the term.
 - **The Weekly Calendar is monochrome, and carries no key** (26 Sep 2026).
   The 3px coloured rule over each column and the `legend()` at its foot both
   went: eight hues across eight columns is a code whose only message was the
@@ -381,6 +394,20 @@ reasonable in a stylesheet; re-measure before undoing any of them.
 
 Sixteen of the thirty-five assessments give a week, not a day. `due_resolved`
 holds that week's Monday, and code must pick the right end of the window:
+
+`due_resolved` is the **Monday** of the named week, and `resolve_due()` in
+`serve.py` makes sure of it. It has to: eleven rows do not hold a Monday in
+`due_week_of`, they hold their own course's class day, because that is what the
+syllabus prints — LGL152's three Thursdays, LGL156's four Wednesdays, LGL160's
+four Wednesdays. Until 26 Sep 2026 that value was used verbatim, and since
+`lastPossible()` adds six days, those windows ran up to four days into the NEXT
+week: LGL160's quiz, sat on Wed 23 Sept, still read "3 days left" on Sat
+26 Sept. **Never normalise `due_week_of` in the CSV to fix this** — `validate.py`
+matches that printed date against the course's real class row, and that is the
+check that catches an item filed on the wrong week. Normalise in the
+derivation, where it belongs. Week numbers are unaffected either way, which is
+why the Weekly Calendar was right throughout and comparing the two screens is
+what found it.
 
 - **Planning uses the earliest day** (`dMin`, the Monday). The quiz in the week
   of Mon 21 Sep reads "in 9 days".

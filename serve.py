@@ -188,12 +188,33 @@ def pair_pages(reading_raw, chapters, pages):
     return {}, ";".join(pages)
 
 
+def monday_of(iso):
+    d = dt.date.fromisoformat(iso)
+    return (d - dt.timedelta(days=d.weekday())).isoformat()
+
+
 def resolve_due(a):
-    """The date to sort and count down against, plus how precise it really is."""
+    """The date to sort and count down against.
+
+    An exact date stands as it is. A WEEK-precision item resolves to the MONDAY
+    of the week it names -- never to the date the syllabus happened to print in
+    that row. Eleven rows print their course's own class day instead of a
+    Monday (LGL152 Thursdays, LGL156 and LGL160 Wednesdays), and taking those
+    literally slid the whole window late, because the client adds six days to
+    this value to find the last day of the week. LGL160's quiz, sat on Wed
+    23 Sept, still read "3 days left" on Sat 26 Sept -- its window had been
+    stretched to Tue 29 Sept, four days into the following week. Rafael caught
+    it against the Weekly Calendar, which places items by week number and was
+    therefore right all along.
+
+    The printed date stays untouched in due_week_of. validate.py matches that
+    value against the course's real class row, which is the check that catches
+    an item filed on the wrong week -- it is not ours to normalise away.
+    """
     if a["due_date"]:
         return a["due_date"]
     if a["due_week_of"]:
-        return a["due_week_of"]
+        return monday_of(a["due_week_of"])
     return ""
 
 
