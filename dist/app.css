@@ -42,6 +42,26 @@
    do. Cascadia Mono for codes and chapter runs.
    ========================================================================== */
 
+/* Archivo is the face the design was drawn in, and the ONLY reason it ships is
+   the phone. Windows resolves Bahnschrift and never fetches this file; a phone
+   has neither Bahnschrift nor Segoe UI Variable, so before this the app fell
+   through to whatever the device's system font is and stopped looking like
+   itself. It sits AFTER the Windows faces in --sans so desktop rendering is
+   byte-identical to before -- every measurement in this file was taken in
+   Bahnschrift and none of them move.
+
+   One file: Archivo on Google Fonts is variable, so 400/600/800 are the same
+   35KB download. Latin subset. swap, because the calendar must draw while it
+   arrives. serve.py names this route explicitly -- it is the first asset that
+   server has ever served and the exception should stay visible. */
+@font-face {
+  font-family: Archivo;
+  src: url("archivo.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;        /* see rule 1b: this is not a colour, it is what the BROWSER reads */
   /* ---- surfaces ------------------------------------------------------ */
@@ -86,7 +106,7 @@
   --side: 238px;              /* sidebar width */
 
   /* ---- type ---------------------------------------------------------- */
-  --sans: Bahnschrift, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --sans: Bahnschrift, "Segoe UI Variable Text", "Segoe UI", Archivo, system-ui, sans-serif;
   --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
   --measure: 66ch;
 }
@@ -648,25 +668,163 @@ details > summary:hover { color: var(--accent-text); }
 
 /* ============================================================== phone */
 @media (max-width: 900px) {
-  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-  .side { position: static; height: auto; border-right: 0; border-bottom: 2px solid var(--rule); }
-  .brand { padding: 12px 16px 10px; display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--line); }
+  /* ---- the phone shell ------------------------------------------------
+     One fixed-height frame with a header that never moves and exactly one
+     scroller beneath it (Rafael's mobile design, 27 Sep 2026). Before this the
+     whole page scrolled, which took the week number and the tabs off screen
+     the moment you looked at anything.
+
+     100dvh, not 100vh: a phone browser's toolbars collapse as you scroll and
+     100vh is the tall figure, which hides the last row under the fold. */
+  .app { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: 100vh; height: 100dvh; }
+  main { overflow: hidden; }
+  #main { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+  /* The page title bar goes: the tab bar already says which screen you are on,
+     and on a 915px-tall phone that band was 60px of repetition. */
+  .mhead { display: none; }
+
+  /* ---- the header: brand + theme, then the week, then the tabs ---------
+     Grid areas rather than moving the markup: the theme button lives in
+     .sidefoot at the foot of the desktop sidebar, and on a phone the design
+     puts it top right. One layout, two arrangements, no second DOM. */
+  .side {
+    position: static; height: auto; border-right: 0; border-bottom: 2px solid var(--rule);
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "brand theme" "now now" "nav nav";
+  }
+  .brand { grid-area: brand; padding: 12px 16px 10px; display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--line); }
   .brand .name br { display: none; }
-  .brand .sub { margin: 0; }
-  .nowblock { display: flex; align-items: baseline; gap: 12px; padding: 8px 16px; }
-  .nowblock .lbl { display: none; }
+  .brand .name { font-size: 15px; }
+  .brand .sub { margin: 0; white-space: nowrap; }
+  .sidefoot { grid-area: theme; border-top: 0; border-bottom: 1px solid var(--line); padding: 8px 16px 8px 0; display: flex; align-items: center; }
+  .sidefoot .row { margin: 0; }
+  .sidefoot .footstats { display: none; }
+  .sidefoot button { min-height: 36px; }
+
+  .nowblock { grid-area: now; display: flex; align-items: baseline; gap: 10px; padding: 8px 16px; }
+  .nowblock .lbl { display: block; }          /* the design keeps "week ahead"; it is what the number means */
   .nowblock .big { margin: 0; }
   .nowblock .big b { font-size: 24px; }
-  .nowblock .range { margin: 0; }
-  /* eight tabs wrap to two rows of four: a hidden scroller with four tabs that
-     happened to fill 412px exactly left Courses, Notes, Cases and Review
-     unreachable with no sign that anything was there */
-  .nav { display: flex; flex-wrap: wrap; padding: 0; gap: 0; }
+  .nowblock .range { margin: 0 0 0 auto; white-space: nowrap; }
+
+  /* One column per screen, whatever the count -- auto-columns rather than
+     repeat(3), so bringing a screen back in SHOWN does not need a number
+     changed here too. An earlier version wrapped eight tabs onto two rows;
+     with three there is room to name each one. */
+  .nav { grid-area: nav; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); padding: 0; gap: 0; }
   .nav .grp { display: none; }
-  .nav a { border-left: 0; border-bottom: 3px solid transparent; padding: 9px 12px; white-space: nowrap; }
-  .nav a.on { border-bottom-color: var(--accent); background: transparent; }
-  .sidefoot { border-top: 1px solid var(--line); padding: 8px 16px; flex-direction: row; align-items: center; justify-content: space-between; }
-  .sidefoot .footstats { display: none; }
+  .nav a {
+    display: flex; align-items: center; gap: 6px; min-height: 46px; padding: 10px 12px 7px;
+    border-left: 0; border-right: 1px solid var(--line); border-bottom: 3px solid transparent;
+    white-space: nowrap; font-weight: 500; color: var(--ink2);
+  }
+  .nav a:last-child { border-right: 0; }
+  .nav a.on { border-bottom-color: var(--accent); background: transparent; color: var(--ink); font-weight: 700; }
+  .nav .count { margin-left: 0; opacity: .8; }
+
+  /* ---- the phone calendar: one week, as a list -------------------------
+     Only ever rendered under 900px (gridPhone in app.js), but scoped here
+     anyway so a stray class name cannot reach the desktop grid. */
+  .calbar { position: sticky; top: 0; z-index: 4; background: var(--surf); border-bottom: 2px solid var(--rule); }
+  .calstep { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; align-items: center; }
+  .calnav { height: 52px; border: 0; background: transparent; color: var(--ink); font: 700 20px/1 var(--sans); padding: 0; }
+  .calnav:first-child { border-right: 1px solid var(--line); }
+  .calnav:last-child { border-left: 1px solid var(--line); }
+  .calnav:disabled { opacity: .35; }
+  .calwk { padding: 6px 14px; min-width: 0; }
+  .calwk .t { display: flex; align-items: baseline; gap: 8px; }
+  .calwk .t b { font-size: 19px; letter-spacing: -.012em; }
+  .calwk .t span { font-size: 13px; color: var(--ink2); white-space: nowrap; }
+  .calwk .s { font-size: 12px; color: var(--ink3); }
+  /* one cell per week, tinted by the share of his grade falling in it, so the
+     heavy weeks are visible from whichever week he is standing in */
+  .calstrip { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border-top: 1px solid var(--line); }
+  .calcell {
+    min-width: 0; height: 40px; padding: 0; border: 0; border-right: 1px solid var(--line);
+    border-bottom: 3px solid transparent; background: var(--surf);
+    font: 700 12px var(--mono); color: var(--ink2); text-align: center;
+  }
+  .calcell:last-child { border-right: 0; }
+  .calcell.brk { background: repeating-linear-gradient(135deg, var(--surf2) 0 4px, transparent 4px 8px) !important; }
+  .calcell.now { border-bottom-color: var(--accent); }
+  .calcell.on { box-shadow: inset 0 0 0 2px var(--ink); color: var(--ink); }
+  .calback { padding: 8px 16px; border-top: 1px solid var(--line); }
+  .calback button { min-height: 40px; }
+
+  .callist { background: var(--surf); border-bottom: 2px solid var(--rule); }
+  .calrow { padding: 12px 16px 14px 13px; border-top: 1px solid var(--line); border-left: 3px solid transparent; }
+  .calrow.hot { border-left-color: var(--accent); }
+  .calrow .head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .calrow .who { min-width: 0; }
+  .calrow .who b { display: block; font-size: 15.5px; line-height: 1.3; }
+  .calrow .who .code { font: 500 12px var(--mono); color: var(--ink3); }
+  .calrow .when { font-size: 12.5px; color: var(--ink2); white-space: nowrap; }
+  .calrow .dueline { margin-top: 8px; }
+  .calrow .topic { margin: 6px 0 0; font-size: 13.5px; color: var(--ink2); }
+  .calrow .chips { margin-top: 10px; }
+  .calempty, .calfoot { margin: 0; padding: 24px 16px; color: var(--ink2); font-size: 13px; }
+  .calfoot { color: var(--ink3); font-size: 12.5px; padding: 16px; }
+  .calbreak { background: var(--surf); border-bottom: 2px solid var(--rule); padding: 28px 16px 36px; }
+  .calbreak h2 { margin: 0; font-size: 19px; border-left: 3px solid var(--accent); padding-left: 14px; }
+  .calbreak p { margin: 8px 0 0 17px; color: var(--ink2); }
+
+  /* ---- the phone timetable: read down, not across --------------------- */
+  .ttday { background: var(--surf); border-bottom: 2px solid var(--rule); }
+  .ttday .h { display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px 8px; }
+  .ttday .h h2 { margin: 0; font-size: 21px; letter-spacing: -.02em; line-height: 1.15; }
+  .ttday .h span { font-size: 12.5px; color: var(--ink3); }
+  .ttb {
+    display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px;
+    padding: 12px 16px 12px 13px; border-top: 1px solid var(--line);
+    border-left: 3px solid var(--c, var(--ink3));
+    background: color-mix(in srgb, var(--c, var(--ink3)) 6%, var(--surf));
+  }
+  .ttb.next { background: var(--accent-tint); }
+  .ttb .hrs b { display: block; font-size: 17px; line-height: 1.1; }
+  .ttb .hrs span { font-size: 12px; color: var(--ink3); }
+  .ttb .what { min-width: 0; }
+  .ttb .nextflag {
+    display: inline-block; margin-bottom: 5px; padding: 2px 6px;
+    background: var(--accent-text); color: var(--surf);
+    font: 700 12px/1.35 var(--sans); letter-spacing: .02em;
+  }
+  .ttb .row1 { display: flex; align-items: center; gap: 8px; }
+  .ttb .row1 .dot { width: 10px; height: 10px; flex: none; background: var(--c, var(--ink3)); }
+  .ttb .row1 .code { font: 700 12px var(--mono); }
+  .ttb .nm { display: block; margin-top: 2px; font-size: 15px; line-height: 1.3; }
+  .ttb .where { display: block; margin-top: 2px; font-size: 13px; color: var(--ink2); }
+  .ttb .meta { display: block; margin-top: 2px; font: 500 12px var(--mono); color: var(--ink3); }
+
+  /* the brand must not break across two lines now that it shares its row
+     with the theme button */
+  .brand .name { white-space: nowrap; }
+  .brand .sub { overflow: hidden; text-overflow: ellipsis; }
+
+  /* ---- the detail sheet ----------------------------------------------- */
+  .sheetback { position: fixed; inset: 0; z-index: 20; background: rgba(22, 21, 20, .45); }
+  .sheetbody {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; max-height: 82dvh; overflow-y: auto;
+    background: var(--surf); color: var(--ink); border-top: 2px solid var(--rule);
+  }
+  .sheethead { padding: 16px 16px 12px; border-left: 3px solid var(--accent); }
+  .sheethead .row { gap: 8px; }
+  .sheethead h2 { margin: 10px 0 0; font-size: 21px; letter-spacing: -.02em; line-height: 1.15; }
+  .sheethead .course { margin-top: 3px; font-size: 13px; color: var(--ink2); }
+  .sheetbody dl { margin: 0; border-top: 1px solid var(--line); }
+  .sheetbody dl > div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 9px 16px; border-bottom: 1px solid var(--line); }
+  .sheetbody dt { font: 700 12px/1.55 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--ink3); }
+  .sheetbody dd { margin: 0; min-width: 0; font-size: 14px; }
+  .sheetbody dd.strong { font-weight: 700; }
+  /* an unstated scope is drawn as absence, never shouted -- 27 of 35 items
+     have none, and in red that would be the loudest thing on the screen */
+  .sheetbody dd.unstated { justify-self: start; padding: 1px 6px; border: 1px dashed var(--ink3); color: var(--ink3); font-size: 13px; font-weight: 600; }
+  .sheetbody .note { margin: 0; padding: 12px 16px 0; font-size: 13.5px; color: var(--ink2); }
+  .sheetfoot { padding: 16px; }
+  .sheetfoot button { width: 100%; min-height: 48px; border: 1px solid var(--ink); background: var(--ink); color: var(--surf); font-weight: 700; font-size: 14px; }
+  body.sheeton { overflow: hidden; }
+  /* a due tag that opens the sheet is a button, and must not look like one */
+  .calrow .dueline .tag { border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; font-size: 12px; text-align: left; }
+  .card[data-sheet] { cursor: pointer; }
   .split { grid-template-columns: 1fr; }
   .split > aside { border-left: 0; border-top: 2px solid var(--rule); }
   .card { border-right: 0; }
@@ -693,10 +851,6 @@ details > summary:hover { color: var(--accent-text); }
      you need to read a single cell, since a cell means nothing without both.
      100dvh, not 100vh: a phone browser's toolbars collapse as you scroll and
      100vh is the tall figure, which would push the last week under the fold. */
-  .app:has(.gridwrap) { height: 100vh; height: 100dvh; grid-template-rows: auto minmax(0, 1fr); }
-  .app:has(.gridwrap) main { overflow: hidden; }
-  .app:has(.gridwrap) #main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-  .app:has(.gridwrap) .gridwrap { flex: 1; min-height: 0; overflow: auto; }
 }
 
 @media (max-width: 720px) {

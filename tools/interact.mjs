@@ -598,24 +598,85 @@ check("and it says dark when the theme is dark", dk.scheme === "dark", dk);
 check("with the address bar following", dk.meta === dk.bg, dk);
 await go("grid");   // reload, back to the stored theme
 
-// 2. The calendar's column heads stay put while the term scrolls past. They
-// are sticky, but sticky needs a scrolling ancestor, and .gridwrap only
-// scrolls sideways unless the shell is given a fixed height on the phone.
+// 2. The calendar. On a phone it is not the desktop grid made narrower -- it
+// is one week as a list (gridPhone in app.js), because eight columns across
+// 412px is the wrong artefact rather than a layout problem. Rafael's mobile
+// design, 27 Sep 2026.
+await go("grid");
+const phoneCal = await evalJs(`JSON.stringify({
+  grid: document.querySelectorAll('.gridwrap').length,
+  rows: document.querySelectorAll('.calrow').length,
+  strip: document.querySelectorAll('.calcell').length,
+  weeks: LAST_WEEK(),
+  chips: document.querySelectorAll('.calrow .chch').length
+})`);
+const cal = JSON.parse(phoneCal.v);
+check("the phone calendar is a list, not the eight-column grid",
+  cal.grid === 0 && cal.rows > 0, cal);
+check("the week strip carries the whole term", cal.strip === cal.weeks, cal);
+check("the same tick chips are in it", cal.chips > 0, cal);
+
+// The sub-header holds while the week's classes scroll past it.
 const stick = await evalJs(`(() => {
-  const w = document.querySelector('.gridwrap'), h = document.querySelector('.grow.head');
-  const before = Math.round(h.getBoundingClientRect().top);
-  w.scrollTop = 900; w.scrollLeft = 400;
-  const after = Math.round(h.getBoundingClientRect().top);
-  const wk = Math.round(document.querySelector('.grow:not(.head) .gwk').getBoundingClientRect().left);
-  const wrap = Math.round(w.getBoundingClientRect().left);
+  const w = document.querySelector('#main'), bar = document.querySelector('.calbar');
+  const before = Math.round(bar.getBoundingClientRect().top);
+  w.scrollTop = 600;
+  const after = Math.round(bar.getBoundingClientRect().top);
   const scrolled = Math.round(w.scrollTop);
-  w.scrollTop = 0; w.scrollLeft = 0;
-  return JSON.stringify({ before, after, wk, wrap, scrolled });
+  w.scrollTop = 0;
+  return JSON.stringify({ before, after, scrolled });
 })()`);
-const st = JSON.parse(stick.v);
-check("the calendar scrolls inside its own box on a phone", st.scrolled > 0, st);
-check("the column heads stay put while the term scrolls past", st.before === st.after, st);
-check("and the week column stays put while the courses scroll across", st.wk === st.wrap, st);
+const sk = JSON.parse(stick.v);
+check("the calendar scrolls inside its own box on a phone", sk.scrolled > 0, sk);
+check("the week stepper stays put while the classes scroll past", sk.before === sk.after, sk);
+
+// Stepping weeks, from the strip and from the arrows.
+await evalJs(`document.querySelector('[data-calweek="7"]').click(); "ok"`);
+await sleep(900);
+const wk7 = await evalJs(`JSON.stringify({
+  hash: location.hash,
+  label: document.querySelector('.calwk .t b')?.textContent.trim(),
+  on: document.querySelector('.calcell.on')?.textContent.trim() })`);
+const w7 = JSON.parse(wk7.v);
+check("tapping a week on the strip opens it", w7.label === "Week 7" && w7.on === "7" && /grid\/7$/.test(w7.hash), w7);
+await evalJs(`document.querySelector('#cal-prev').click(); "ok"`);
+await sleep(900);
+const wk6 = await evalJs(`document.querySelector('.calwk .t b')?.textContent.trim()`);
+check("the arrows step it", wk6.v === "Week 6", wk6.v);
+await go("grid");
+
+// 3. The timetable is a day list on a phone, not the drawn-to-scale chart.
+await go("timetable");
+const phoneTT = await evalJs(`JSON.stringify({
+  chart: document.querySelectorAll('.tt').length,
+  days: document.querySelectorAll('.ttday').length,
+  blocks: document.querySelectorAll('.ttb').length,
+  next: document.querySelectorAll('.ttb.next').length
+})`);
+const pt = JSON.parse(phoneTT.v);
+check("the phone timetable is a day list, not the chart",
+  pt.chart === 0 && pt.days === 4 && pt.blocks === 11, pt);
+check("exactly one block is flagged as next", pt.next === 1, pt);
+
+// 4. The detail sheet: a phone row cannot carry "open book, plus tool kit" as
+// well as a name and a date, so a tap brings the lot.
+await go("week");
+await evalJs(`document.querySelector('.card[data-sheet]').click(); "ok"`);
+await sleep(500);
+const sheet = await evalJs(`JSON.stringify({
+  open: !!document.querySelector('.sheetbody'),
+  keys: [...document.querySelectorAll('.sheetbody dt')].map(e => e.textContent.trim()),
+  locked: getComputedStyle(document.body).overflow
+})`);
+const sv = JSON.parse(sheet.v);
+check("tapping a card opens its detail sheet", sv.open, sv);
+check("the sheet always states due, weight and scope",
+  ["Due", "Weight", "Scope"].every((k) => sv.keys.includes(k)), sv.keys);
+check("the page behind it cannot scroll", sv.locked === "hidden", sv.locked);
+await evalJs(`document.querySelector('#sheet-back').click(); "ok"`);
+await sleep(400);
+const shut = await evalJs(`!!document.querySelector('.sheetbody')`);
+check("and the backdrop closes it", shut.v === false, shut.v);
 
 await send("Emulation.setDeviceMetricsOverride",
   { width: 1440, height: 1200, deviceScaleFactor: 1, mobile: false }, S);

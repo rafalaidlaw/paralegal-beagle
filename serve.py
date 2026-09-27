@@ -338,6 +338,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self._static(APP / "app.css", "text/css; charset=utf-8")
         if route == "/app.js":
             return self._static(APP / "app.js", "application/javascript; charset=utf-8")
+        # The first asset this server has ever served, added 27 Sep 2026 for the
+        # mobile design. Windows has Bahnschrift and never fetches this; a phone
+        # has neither Bahnschrift nor Segoe UI Variable, so without it the app
+        # falls all the way through to the system font and stops looking like
+        # itself. One variable file covers 400-800. Named explicitly rather than
+        # opening a directory: this stays a three-file server with one exception,
+        # not a static host.
+        if route == "/archivo.woff2":
+            return self._static(APP / "archivo.woff2", "font/woff2")
         if route == "/api/data":
             return self._send(200, build_payload())
         if route == "/api/note":

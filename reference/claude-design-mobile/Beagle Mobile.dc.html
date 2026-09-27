@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/modernist-da468e0b-9925-43bb-a615-089f61d80b2b/styles.css">
+<script src="_ds/modernist-da468e0b-9925-43bb-a615-089f61d80b2b/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#d6d3d2;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#ae1800;text-underline-offset:3px}
+a:hover{color:#ec3013}
+button{font-family:inherit;border-radius:0;cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+</style>
+</helmet>
+<div style="{{ outerStyle }}">
+<div data-screen-label="Beagle mobile" style="{{ phoneStyle }}">
+<div ref="{{ scrollRef }}" style="height:100%;overflow-y:auto;overflow-x:hidden;background:var(--bg);color:var(--ink);font:400 14px/1.5 Bahnschrift,'Segoe UI Variable Text','Archivo',system-ui,sans-serif;font-variant-numeric:tabular-nums lining-nums">
+
+<header style="position:sticky;top:0;z-index:5;background:var(--surf);border-bottom:2px solid var(--rule)">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px 10px;border-bottom:1px solid var(--line)">
+    <div style="display:flex;align-items:baseline;gap:10px;min-width:0">
+      <span style="font-weight:700;font-size:15px;line-height:1.05;letter-spacing:.01em;text-transform:uppercase">Paralegal Beagle</span>
+      <span style="font-size:12px;color:var(--ink3);white-space:nowrap">Fall 2026</span>
+    </div>
+    <button onClick="{{ toggleTheme }}" aria-label="Switch theme" style="min-height:36px;padding:6px 10px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:12px;line-height:1.3;text-align:left;white-space:nowrap">{{ themeLabel }}</button>
+  </div>
+  <div style="display:flex;align-items:baseline;gap:10px;padding:8px 16px">
+    <span style="font-weight:700;font-size:12px;line-height:1.3;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Week ahead</span>
+    <b style="font-size:24px;line-height:.85;letter-spacing:-.035em;color:var(--accent)">4</b>
+    <span style="font-weight:700;color:var(--ink3)">of 15</span>
+    <span style="font-size:12.5px;color:var(--ink2);margin-left:auto;white-space:nowrap">28 Sep – 2 Oct</span>
+  </div>
+  <nav aria-label="Views" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line)">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+      <button onClick="{{ t.go }}" aria-current="{{ t.current }}" style="{{ t.style }}">
+        <span>{{ t.label }}</span>
+        <span style="font:700 12px 'Cascadia Mono',Consolas,ui-monospace,monospace;color:inherit;opacity:.8">{{ t.count }}</span>
+      </button>
+    </sc-for>
+  </nav>
+</header>
+
+<sc-if value="{{ isUpcoming }}" hint-placeholder-val="{{ true }}">
+<main>
+  <section style="background:var(--surf);border-bottom:2px solid var(--rule);padding:16px 16px 18px">
+    <div style="font-weight:700;font-size:12px;line-height:1.3;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Next graded item</div>
+    <p style="margin:6px 0 0;font-size:19px;line-height:1.3;font-weight:700;letter-spacing:-.012em;text-wrap:pretty">{{ lead.text }}</p>
+    <sc-if value="{{ lead.hasAllowed }}" hint-placeholder-val="{{ true }}">
+      <p style="margin:8px 0 0;font-size:13.5px;color:var(--ink2);text-wrap:pretty">{{ lead.allowed }}</p>
+    </sc-if>
+  </section>
+
+  <section style="background:var(--surf);border-bottom:2px solid var(--rule)">
+    <sc-for list="{{ cards }}" as="c" hint-placeholder-count="3">
+      <button onClick="{{ c.open }}" style="{{ c.style }}">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;width:100%">
+          <div style="display:flex;align-items:baseline;gap:7px">
+            <b style="{{ c.daysStyle }}">{{ c.days }}</b>
+            <span style="font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">{{ c.daysWord }}</span>
+          </div>
+          <b style="{{ c.wtStyle }}">{{ c.wt }}</b>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin:12px 0 5px;flex-wrap:wrap">
+          <span style="{{ c.pillStyle }}">{{ c.code }}</span>
+          <span style="{{ c.typeStyle }}">{{ c.type }}</span>
+        </div>
+        <div style="font-size:19px;line-height:1.2;font-weight:700;letter-spacing:-.012em">{{ c.name }}</div>
+        <div style="margin-top:3px;font-size:13px;color:var(--ink2)">{{ c.course }}</div>
+        <div style="margin-top:5px;font-size:13px;color:var(--ink2)">{{ c.when }}</div>
+      </button>
+    </sc-for>
+  </section>
+
+  <section style="background:var(--surf);border-bottom:2px solid var(--rule);padding-bottom:16px">
+    <div style="padding:15px 16px 9px;font-weight:700;font-size:12px;line-height:1.3;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Also in the next fortnight</div>
+    <sc-for list="{{ rest }}" as="r" hint-placeholder-count="3">
+      <button onClick="{{ r.open }}" style="{{ r.style }}">
+        <div>
+          <b style="display:block;font-size:19px;line-height:1.1">{{ r.dayNum }}</b>
+          <span style="font-size:12px;color:var(--ink3)">{{ r.dayWord }}</span>
+        </div>
+        <div style="min-width:0">
+          <b style="display:block;font-size:14.5px;line-height:1.3">{{ r.name }}</b>
+          <span style="font-size:12.5px;color:var(--ink2)">{{ r.code }} · {{ r.course }}</span>
+        </div>
+        <b style="font:700 13px 'Cascadia Mono',Consolas,ui-monospace,monospace;text-align:right">{{ r.wt }}</b>
+      </button>
+    </sc-for>
+    <div style="margin:14px 16px 0;border:1px dashed var(--rule);padding:10px 13px">
+      <div style="margin-bottom:6px;font-weight:700;font-size:12px;line-height:1.3;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Dated only to a week</div>
+      <sc-for list="{{ band }}" as="b" hint-placeholder-count="1">
+        <button onClick="{{ b.open }}" style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;width:100%;padding:6px 0;border:0;background:transparent;color:var(--ink);text-align:left;min-height:44px;font-size:14px">
+          <span style="font:700 12px 'Cascadia Mono',Consolas,ui-monospace,monospace">{{ b.code }}</span>
+          <b>{{ b.name }}</b>
+          <span style="color:var(--ink2);font-size:13px">{{ b.when }} · {{ b.wt }}</span>
+        </button>
+      </sc-for>
+      <p style="margin:4px 0 0;font-size:12.5px;color:var(--ink3)">The syllabus gives the week, not the day. Ask in class.</p>
+    </div>
+  </section>
+
+  <section style="background:var(--surf);border-bottom:2px solid var(--rule)">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:18px 16px 8px">
+      <h2 style="font-family:inherit;margin:0;font-size:21px;letter-spacing:-.02em;line-height:1.15">Readings this week</h2>
+      <span style="font:700 12px 'Cascadia Mono',Consolas,ui-monospace,monospace;color:var(--ink3)">{{ readDone }}</span>
+    </div>
+    <sc-for list="{{ readDays }}" as="d" hint-placeholder-count="4">
+      <div>
+        <div style="padding:10px 16px 6px;border-top:2px solid var(--rule);font-weight:700;font-size:12px;line-height:1.3;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)">{{ d.label }}</div>
+        <sc-for list="{{ d.rows }}" as="row" hint-placeholder-count="1">
+          <div style="padding:10px 16px 12px;border-top:1px solid var(--line)">
+            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+              <span style="font:700 12px 'Cascadia Mono',Consolas,ui-monospace,monospace">{{ row.code }}</span>
+              <b style="font-size:15px">{{ row.short }}</b>
+            </div>
+            <p style="margin:4px 0 0;font-size:13.5px;color:var(--ink2);text-wrap:pretty">{{ row.topic }}</p>
+            <sc-if value="{{ row.hasDue }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:8px"><span style="{{ row.dueStyle }}">{{ row.due }}</span></div>
+            </sc-if>
+            <sc-if value="{{ row.hasChips }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+                <sc-for list="{{ row.chips }}" as="ch" hint-placeholder-count="2">
+                  <button onClick="{{ ch.cycle }}" aria-label="{{ ch.aria }}" style="{{ ch.style }}">
+                    <span style="{{ ch.boxStyle }}"></span>
+                    <span style="{{ ch.labStyle }}">{{ ch.label }}</span>
+                    <span style="font-size:12px;font-weight:500;color:var(--ink3)">{{ ch.pg }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ row.noReading }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:6px 0 0;font-size:12.5px;color:var(--ink3)">No chapter set for this class.</p>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="background:var(--surf);border-bottom:2px solid var(--rule);padding-bottom:24px">
+    <div style="padding:18px 16px 8px">
+      <h2 style="font-family:inherit;margin:0;font-size:21px;letter-spacing:-.02em;line-height:1.15">The term</h2>
+      <p style="margin:6px 0 0;font-size:12.5px;color:var(--ink2)">Grade points due each week. Tap a week to open it.</p>
+    </div>
+    <sc-for list="{{ runway }}" as="w" hint-placeholder-count="15">
+      <button onClick="{{ w.go }}" aria-label="{{ w.aria }}" style="{{ w.style }}">
+        <span style="{{ w.noStyle }}">{{ w.no }}</span>
+        <span style="{{ w.trkStyle }}"><i style="{{ w.fillStyle }}"></i></span>
+        <span style="{{ w.pctStyle }}">{{ w.pct }}</span>
+      </button>
+    </sc-for>
+  </section>
+</main>
+</sc-if>
+
+<sc-if value="{{ isCalendar }}" hint-placeholder-val="{{ false }}">
+<main>
+  <section style="position:sticky;top:{{ subTop }};z-index:4;background:var(--surf);border-bottom:2px solid var(--rule)">
+    <div style="display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center">
+      <button onClick="{{ prevWeek }}" disabled="{{ atFirst }}" aria-label="Previous week" style="height:52px;border:0;border-right:1px solid var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:20px;padding:0 16px;text-align:left">‹</button>
+      <div style="padding:6px 14px;min-width:0">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <b style="font-size:19px;letter-spacing:-.012em">Week {{ cal.no }}</b>
+          <span style="font-size:13px;color:var(--ink2);white-space:nowrap">{{ cal.range }}</span>
+        </div>
+        <div style="font-size:12px;color:var(--ink3)">{{ cal.sub }}</div>
+      </div>
+      <button onClick="{{ nextWeek }}" disabled="{{ atLast }}" aria-label="Next week" style="height:52px;border:0;border-left:1px solid var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:20px;padding:0 16px;text-align:left">›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(15,minmax(0,1fr));border-top:1px solid var(--line)">
+      <sc-for list="{{ strip }}" as="s" hint-placeholder-count="15">
+        <button onClick="{{ s.go }}" aria-label="{{ s.aria }}" style="{{ s.style }}">{{ s.no }}</button>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;padding:8px 16px;border-top:1px solid var(--line)">
+      <button onClick="{{ toggleDl }}" aria-pressed="{{ dlOnly }}" style="{{ dlStyle }}">Deadlines only</button>
+      <sc-if value="{{ notThisWeek }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ backToWeek }}" style="min-height:40px;padding:6px 12px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:12px;line-height:1.3;text-align:left">Back to this week</button>
+      </sc-if>
+    </div>
+  </section>
+
+  <sc-if value="{{ cal.isBreak }}" hint-placeholder-val="{{ false }}">
+    <section style="background:var(--surf);border-bottom:2px solid var(--rule);padding:32px 16px 40px">
+      <div style="border-left:3px solid var(--accent);padding:2px 0 2px 16px">
+        <h2 style="font-family:inherit;margin:0;font-size:19px;line-height:1.15">Study week</h2>
+        <p style="margin:8px 0 0;color:var(--ink2)">No classes and nothing due. The week after brings LGL152 Test #2, LGL154 Test #2 and the LGL225 midterm.</p>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ cal.hasNote }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:8px 16px;background:var(--surf2);border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink2)">{{ cal.note }}</div>
+  </sc-if>
+
+  <section style="background:var(--surf);border-bottom:2px solid var(--rule)">
+    <sc-for list="{{ cal.rows }}" as="row" hint-placeholder-count="6">
+      <div style="{{ row.style }}">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+          <div style="min-width:0">
+            <b style="display:block;font-size:15.5px;line-height:1.3">{{ row.short }}</b>
+            <span style="font:500 12px 'Cascadia Mono',Consolas,ui-monospace,monospace;color:var(--ink3)">{{ row.code }}</span>
+          </div>
+          <span style="font-size:12.5px;color:var(--ink2);white-space:nowrap">{{ row.date }}</span>
+        </div>
+        <sc-if value="{{ row.hasDue }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:8px"><span style="{{ row.dueStyle }}">{{ row.due }}</span></div>
+        </sc-if>
+        <sc-if value="{{ row.showBody }}" hint-placeholder-val="{{ true }}">
+          <p style="margin:6px 0 0;font-size:13.5px;color:var(--ink2);text-wrap:pretty">{{ row.topic }}</p>
+          <sc-if value="{{ row.hasChips }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+              <sc-for list="{{ row.chips }}" as="ch" hint-placeholder-count="2">
+                <button onClick="{{ ch.cycle }}" aria-label="{{ ch.aria }}" style="{{ ch.style }}">
+                  <span style="{{ ch.boxStyle }}"></span>
+                  <span style="{{ ch.labStyle }}">{{ ch.label }}</span>
+                  <span style="font-size:12px;font-weight:500;color:var(--ink3)">{{ ch.pg }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </sc-if>
+      </div>
+    </sc-for>
+    <sc-if value="{{ cal.dlEmpty }}" hint-placeholder-val="{{ false }}">
+      <p style="margin:0;padding:24px 16px;color:var(--ink2)">Nothing graded this week.</p>
+    </sc-if>
+  </section>
+  <p style="margin:0;padding:16px 16px 40px;font-size:12.5px;color:var(--ink3)">A tick here is the same tick on Upcoming.</p>
+</main>
+</sc-if>
+
+<sc-if value="{{ isTimetable }}" hint-placeholder-val="{{ false }}">
+<main>
+  <section style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--surf);border-bottom:2px solid var(--rule)">
+    <div style="padding:14px 16px;border-right:1px solid var(--line)">
+      <div style="font-weight:700;font-size:12px;line-height:1.3;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Classes</div>
+      <div style="margin-top:6px;font-size:30px;line-height:1;font-weight:700;letter-spacing:-.03em">11</div>
+    </div>
+    <div style="padding:14px 16px;border-right:1px solid var(--line)">
+      <div style="font-weight:700;font-size:12px;line-height:1.3;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">In person</div>
+      <div style="margin-top:6px;font-size:30px;line-height:1;font-weight:700;letter-spacing:-.03em">6</div>
+    </div>
+    <div style="padding:14px 16px">
+      <div style="font-weight:700;font-size:12px;line-height:1.3;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Online</div>
+      <div style="margin-top:6px;font-size:30px;line-height:1;font-weight:700;letter-spacing:-.03em">5</div>
+    </div>
+  </section>
+  <div style="padding:8px 16px;background:var(--surf2);border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink2)">Monday is clear. From your enrolment listing, not the syllabi — three courses meet on a different day from their syllabus.</div>
+
+  <sc-for list="{{ ttDays }}" as="d" hint-placeholder-count="4">
+    <section style="background:var(--surf);border-bottom:2px solid var(--rule)">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;padding:14px 16px 8px">
+        <h2 style="font-family:inherit;margin:0;font-size:21px;letter-spacing:-.02em;line-height:1.15">{{ d.name }}</h2>
+        <span style="font-size:12.5px;color:var(--ink3)">{{ d.count }}</span>
+      </div>
+      <sc-for list="{{ d.blocks }}" as="b" hint-placeholder-count="2">
+        <div style="{{ b.style }}">
+          <div>
+            <b style="display:block;font-size:17px;line-height:1.1">{{ b.start }}</b>
+            <span style="font-size:12px;color:var(--ink3)">to {{ b.end }}</span>
+          </div>
+          <div style="min-width:0">
+            <sc-if value="{{ b.isNext }}" hint-placeholder-val="{{ false }}">
+              <span style="display:inline-block;margin-bottom:5px;padding:2px 6px;background:var(--accent-text);color:var(--accent-ink);font-weight:700;font-size:12px;line-height:1.35;letter-spacing:.02em">Next class</span>
+            </sc-if>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="{{ b.dotStyle }}"></span>
+              <span style="font:700 12px 'Cascadia Mono',Consolas,ui-monospace,monospace">{{ b.code }}</span>
+            </div>
+            <b style="display:block;margin-top:2px;font-size:15px;line-height:1.3">{{ b.short }}</b>
+            <span style="display:block;margin-top:2px;font-size:13px;color:var(--ink2)">{{ b.where }}</span>
+            <span style="display:block;margin-top:2px;font:500 12px 'Cascadia Mono',Consolas,ui-monospace,monospace;color:var(--ink3)">Class {{ b.nbr }} · {{ b.dur }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </section>
+  </sc-for>
+  <div style="height:40px"></div>
+</main>
+</sc-if>
+
+</div>
+
+<sc-if value="{{ hasSheet }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;z-index:20;background:rgba(22,21,20,.45)"></div>
+  <div role="dialog" aria-modal="true" aria-label="{{ sheet.name }}" style="position:absolute;left:0;right:0;bottom:0;z-index:21;max-height:82%;overflow-y:auto;background:var(--surf);color:var(--ink);border-top:2px solid var(--rule);font:400 14px/1.5 Bahnschrift,'Segoe UI Variable Text','Archivo',system-ui,sans-serif;font-variant-numeric:tabular-nums lining-nums">
+    <div style="padding:16px 16px 12px;border-left:3px solid var(--accent)">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="{{ sheet.pillStyle }}">{{ sheet.code }}</span>
+        <span style="{{ sheet.typeStyle }}">{{ sheet.type }}</span>
+      </div>
+      <h2 style="font-family:inherit;margin:10px 0 0;font-size:21px;letter-spacing:-.02em;line-height:1.15">{{ sheet.name }}</h2>
+      <div style="margin-top:3px;font-size:13px;color:var(--ink2)">{{ sheet.course }}</div>
+    </div>
+    <dl style="margin:0;border-top:1px solid var(--line)">
+      <sc-for list="{{ sheet.kv }}" as="k" hint-placeholder-count="4">
+        <div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;padding:9px 16px;border-bottom:1px solid var(--line)">
+          <dt style="font-weight:700;font-size:12px;line-height:1.55;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)">{{ k.k }}</dt>
+          <dd style="{{ k.style }}">{{ k.v }}</dd>
+        </div>
+      </sc-for>
+    </dl>
+    <sc-if value="{{ sheet.hasNote }}" hint-placeholder-val="{{ false }}">
+      <p style="margin:0;padding:12px 16px 0;font-size:13.5px;color:var(--ink2);text-wrap:pretty">{{ sheet.note }}</p>
+    </sc-if>
+    <div style="padding:16px">
+      <button onClick="{{ closeSheet }}" style="width:100%;min-height:48px;padding:12px 16px;border:1px solid var(--ink);background:var(--ink);color:var(--surf);font-weight:700;font-size:14px;line-height:1.3;text-align:left">Close</button>
+    </div>
+  </div>
+</sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;framed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;deadlinesOnly&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const MONO = "'Cascadia Mono',Consolas,ui-monospace,monospace";
+const C = {
+  LGL151:{s:'Intro to the Legal System',n:'Introduction to the Legal System for Paralegals'},
+  LGL152:{s:'Contracts and Torts',n:'Contracts and Torts for Paralegals'},
+  LGL153:{s:'Legal Entities',n:'Legal Entities and Relationships'},
+  LGL154:{s:'Computer Applications I',n:'Computer Applications for Paralegals I'},
+  LGL156:{s:'Administrative Law',n:'Administrative Law for Paralegals'},
+  LGL160:{s:'Legal Drafting',n:'Legal Drafting and Communication'},
+  LGL225:{s:'Immigration Law',n:'Immigration Law'},
+  LGL250:{s:'Legal Research',n:'Legal Research for Paralegals'}
+};
+// [course, mm-dd, topic, chapters "ch:pages ch", due, dueType]
+const S = [
+['LGL151','09-08','Legal analysis and the legal professions; the IRAC method','11'],
+['LGL151','09-14','The court system in Canada: courts, the judiciary, judicial independence','5'],
+['LGL151','09-21','Structure of government: the three branches; responsible government','4:90–91','Quiz #1 · 15%','quiz'],
+['LGL151','09-28','Structure of government (cont’d): executive power; Crown immunity','4:109–117','Presentations begin · 15%','presentation'],
+['LGL151','10-05','Systems of law: civil and common law; precedent; Indigenous legal systems','2 5:144–145 3:60–62 10:295–298'],
+['LGL151','10-12','Legislative power: law-making; statutes; subordinate legislation','4:90–91, 101–103, 106–108, 122–124'],
+['LGL151','10-19','Midterm','','Midterm · 30%','exam'],
+['LGL151','11-02','Types of law; business and consumer law','1:17–20 7:184–185 8:238–243 7:207–213'],
+['LGL151','11-09','The Constitution: repatriation; division of powers; amending formulae','3:70–83 4:91–101'],
+['LGL151','11-16','The Charter: rights and freedoms; application; remedies','6'],
+['LGL151','11-23','The Charter (cont’d): conducting a Charter analysis',''],
+['LGL151','11-30','Key Charter decisions; s. 24(2) and the Grant test',''],
+['LGL151','12-07','Exam review',''],
+['LGL151','12-14','Final exam','','Final Exam · 40%','exam'],
+['LGL152','09-10','Formation of contract: intention, offer, acceptance, consideration','9 10'],
+['LGL152','09-17','Consideration; gratuitous promises; estoppel; form and writing','10'],
+['LGL152','09-24','Legality; Statute of Frauds; capacity; minors','11 12'],
+['LGL152','10-01','Test #1, then contract interpretation: terms, warranties, privity','13','Midterm Test #1 · ch 9–12 · 30%','test'],
+['LGL152','10-08','Discharge and frustration','15'],
+['LGL152','10-15','Contractual defects: misrepresentation, mistake, duress','14'],
+['LGL152','10-22','Breach of contract; remedies; damages','17'],
+['LGL152','11-05','Test #2, then tort law and intentional torts','1 2 3','Midterm Test #2 · ch 11–15, 17 · 30%','test'],
+['LGL152','11-12','Intentional torts (cont’d); defences','2 3 4'],
+['LGL152','11-19','Introduction to negligence','5'],
+['LGL152','11-26','Defences to negligence','6'],
+['LGL152','12-03','Special cases of liability','7 8'],
+['LGL152','12-10','Remedies; final exam in last in-person class','8','Final Exam · ch 1–8 · 40%','exam'],
+['LGL153','09-11','Introduction. Business organizations','1 2'],
+['LGL153','09-18','Business organizations (cont’d)','3'],
+['LGL153','09-25','Personal property law','4'],
+['LGL153','10-02','Test 1','','Test 1 · ch 1–4 · 30%','test'],
+['LGL153','10-09','Real property law','5'],
+['LGL153','10-16','Real property (cont’d). Mortgages and charges','5 6'],
+['LGL153','10-23','Mortgages and charges','6'],
+['LGL153','11-06','Intellectual property','7'],
+['LGL153','11-13','Test 2','','Test 2 · ch 5–7 · 35%','test'],
+['LGL153','11-20','Wills','8'],
+['LGL153','11-27','Estate administration. Powers of attorney','9 10'],
+['LGL153','12-04','Powers of attorney. Exam review','10'],
+['LGL153','12-11','Final exam','','Final Exam · ch 8–10 · 35%','exam'],
+['LGL154','09-09','Symbols, watermarks, footnotes, endnotes, tables',''],
+['LGL154','09-16','Letters, envelopes, labels; professional writing',''],
+['LGL154','09-23','AODA compliance; headers and footers','','Assignment #1 · 6%','assignment'],
+['LGL154','09-30','Section breaks, page breaks, automated page numbers',''],
+['LGL154','10-07','In-Class Test #1 (95 minutes)','','In-Class Test #1 · 20%','test'],
+['LGL154','10-14','Emails, disclaimers, styles, tables of contents',''],
+['LGL154','10-21','Headings, jurats, retainers, memoranda','','Assignment #2 · 6%','assignment'],
+['LGL154','11-04','In-Class Test #2 (95 minutes)','','In-Class Test #2 · 30%','test'],
+['LGL154','11-11','OneDrive and Google Drive; forms using Developer',''],
+['LGL154','11-18','Introduction to Excel',''],
+['LGL154','11-25','Excel (cont’d)','','Assignment #3 · 3%','assignment'],
+['LGL154','12-02','Review for final test',''],
+['LGL154','12-09','In-Class Final Test #3 (95 minutes)','','Final Test #3 · 35%','test'],
+['LGL156','09-09','Introduction; administrative agencies and tribunals','1 2'],
+['LGL156','09-16','Foundations of administrative law','3'],
+['LGL156','09-23','Foundations (cont’d). Fairness: the right to be heard','4 3'],
+['LGL156','09-30','The right to be heard (cont’d). Fairness part 2: bias','4 5'],
+['LGL156','10-07','Fairness part 2: bias (cont’d)','5','Quiz #1 · 10%','quiz'],
+['LGL156','10-14','The Charter and quasi-constitutional laws. Midterm review','6'],
+['LGL156','10-21','Midterm','','Midterm · 40%','exam'],
+['LGL156','11-04','Human rights; advocacy before agencies and tribunals','7 6'],
+['LGL156','11-11','Tribunal procedures before hearings','8'],
+['LGL156','11-18','Procedures during hearings; control of the process','9 11'],
+['LGL156','11-25','Conduct outside the hearing; decision making','12 13','Written Assignment · 10%','assignment'],
+['LGL156','12-02','Challenging decisions; standard of review; enforcement','14 15'],
+['LGL156','12-09','Exam review',''],
+['LGL156','12-16','Final exam','','Final Exam · 40%','exam'],
+['LGL160','09-09','Effective legal writing: audience, purpose, plain language','1 2'],
+['LGL160','09-16','Legal writing with style: jargon, concision, clarity','2 3'],
+['LGL160','09-23','Transitions and headings. Oral communication','3','In-class quiz · 15%','quiz'],
+['LGL160','09-30','The writing process. Writing letters','1:5–6 8'],
+['LGL160','10-07','Letters: tone and civility. Legal arguments and IRAC','3:73–75 7 8','Presentations begin','presentation'],
+['LGL160','10-14','IRAC and the Consumer Protection Act (cont’d). Midterm information',''],
+['LGL160','10-21','Midterm test, in class','','Midterm Test · 25%','exam'],
+['LGL160','11-04','Email and social media. Drafting assignment instructions','10'],
+['LGL160','11-11','Email (cont’d). Writing memoranda','9'],
+['LGL160','11-18','Memoranda exercises. Legal forms','11','Drafting Assignment · 15%','assignment'],
+['LGL160','11-25','Legal forms (cont’d). Editing checklist','','Your presentation · 10%','presentation'],
+['LGL160','12-02','Legal forms exercises. Proofreading',''],
+['LGL160','12-09','Finish presentations; final exam information',''],
+['LGL160','12-16','Final exam, in class','','Final Exam · 35%','exam'],
+['LGL225','09-09','Sources of law: IRPA, IRPR, case law, policy','1 2'],
+['LGL225','09-16','The 11 grounds of inadmissibility. Tool Kit assigned','3'],
+['LGL225','09-23','Overcoming inadmissibility; rehabilitation','3'],
+['LGL225','09-30','Quiz, 40 minutes. Tool Kit is the only material allowed','','Quiz · 20%','quiz'],
+['LGL225','10-07','Permanent residence; the residency obligation','6'],
+['LGL225','10-14','Family class sponsorship','7'],
+['LGL225','10-21','Family class (cont’d): sponsorship process and eligibility','7'],
+['LGL225','11-04','Mid-term exam, 90 minutes, open book','','Mid-term exam · 30%','exam'],
+['LGL225','11-11','Humanitarian and compassionate grounds','9'],
+['LGL225','11-18','Economic class: FSW, FST, CEC','8','Assignment · 20%','assignment'],
+['LGL225','11-25','Temporary residence: visitors, students, workers','4 5'],
+['LGL225','12-02','Citizenship law','10'],
+['LGL225','12-09','Pending matters and review',''],
+['LGL225','12-16','Final exam, 2 hours, open book','','Final exam · 30%','exam'],
+['LGL250','09-08','Introduction to legal research; reading statutes','1 3:65–79'],
+['LGL250','09-15','Citing and finding statutes and regulations','5:107–116'],
+['LGL250','09-22','Reading cases. Case Brief handed out','7:147–154, 163–168 10'],
+['LGL250','09-29','Reading cases (cont’d). Case citations','8'],
+['LGL250','10-06','Analyzing facts. Midterm review','2','Case Brief Assignment · 10%','assignment'],
+['LGL250','10-13','Midterm test','','Midterm Test · 35%','test'],
+['LGL250','10-20','Online sources; Boolean searches','5:117–119 7:154–162 9'],
+['LGL250','11-03','The CED and the Canadian Abridgment. Research Assignment handed out','3 4:92–95'],
+['LGL250','11-10','Lawsource: finding and updating cases','2'],
+['LGL250','11-17','Lexis Advance Quicklaw','9 4:96–100'],
+['LGL250','11-24','Statutes and regulations on government sites','4:80–104'],
+['LGL250','12-01','CanLII; generative AI and research; memo of law','9 4:88–92 11','Research Assignment · 20%','assignment'],
+['LGL250','12-08','Final exam review',''],
+['LGL250','12-15','Final exam','','Final Exam · 35%','exam']
+];
+// [id, course, name, type, wt, date, weekOf, scope, materials, format, duration, note]
+const A = [
+['151-1','LGL151','Quiz #1','quiz',15,'09-22','','','','','','Written Tue 22 Sep.'],
+['151-2','LGL151','Case Presentation','presentation',15,'','?','','','5 minutes, one cue card, no slides','','Your own date is posted to Blackboard.'],
+['151-3','LGL151','Midterm','exam',30,'','10-19'],
+['151-4','LGL151','Final Exam','exam',40,'','12-14'],
+['152-1','LGL152','Midterm Test #1','test',30,'10-02','','Chapters 9–12','','During in-person class','','Fri 2 Oct, the in-person class. LGL153 Test 1 is the same afternoon.'],
+['152-2','LGL152','Midterm Test #2','test',30,'','11-05','Chapters 11–15 and 17','','','','Re-covers chapters 11–12 from Test #1.'],
+['152-3','LGL152','Final Exam','exam',40,'','12-10','Chapters 1–8 (torts text)','','Last in-person class'],
+['153-1','LGL153','Test 1','test',30,'10-02','','Chapters 1–4'],
+['153-2','LGL153','Test 2','test',35,'11-13','','Chapters 5–7'],
+['153-3','LGL153','Final Exam','exam',35,'12-11','','Chapters 8–10','','','','No overlap with the two tests.'],
+['154-1','LGL154','Assignment #1','assignment',6,'09-23'],
+['154-2','LGL154','In-Class Test #1','test',20,'10-07','','','','In class','95 minutes','Covers the lessons to date: symbols, footnotes, tables, letters, AODA, headers and footers, breaks.'],
+['154-3','LGL154','Assignment #2','assignment',6,'10-21'],
+['154-4','LGL154','In-Class Test #2','test',30,'11-04','','','','In class','95 minutes'],
+['154-5','LGL154','Assignment #3','assignment',3,'11-25'],
+['154-6','LGL154','In-Class Final Test #3','test',35,'12-09','','','','In class','95 minutes'],
+['156-1','LGL156','Quiz #1','quiz',10,'','10-05','','','During in-person class','','Reading that week is Chapter 5, Fairness Part 2: Bias.'],
+['156-2','LGL156','Midterm','exam',40,'','10-19','','','During in-person class','','Chapters 1–6 covered by then; the syllabus does not state the scope. Ask.'],
+['156-3','LGL156','Written Assignment','assignment',10,'','11-23'],
+['156-4','LGL156','Final Exam','exam',40,'','12-14'],
+['160-1','LGL160','In-class quiz','quiz',15,'09-23','','','','In class','50 minutes'],
+['160-2','LGL160','Presentation outlines','milestone',0,'09-25','','','','','','Hard deadline, noon. Feeds the 10% oral presentation.'],
+['160-3','LGL160','Oral Presentation','presentation',10,'11-25','','','','','','Your slot: Peacebuilders International (Toronto).'],
+['160-4','LGL160','Midterm Test','exam',25,'','10-19','','','In class'],
+['160-5','LGL160','Drafting Assignment','assignment',15,'','11-16','','','','','Instructions given in the week of 2 Nov.'],
+['160-6','LGL160','Final Exam','exam',35,'','12-14','','','In class'],
+['225-1','LGL225','Immigration Reference Tool Kit','milestone',0,'09-30','','','','','','No marks of its own, but it is the only material allowed in the quiz. Get the IRCC forms from canada.ca, not a search engine — they go stale.'],
+['225-2','LGL225','Quiz','quiz',20,'09-30','','','Immigration Tool Kit only','Multiple choice, true/false, short answer','40 minutes'],
+['225-3','LGL225','Mid-term exam','exam',30,'11-04','','Chapters 1, 2, 3, 6, 7','Open book: textbook, references, forms, calculator','Multiple choice, true/false, short answer','90 minutes'],
+['225-4','LGL225','Assignment','assignment',20,'11-18','','','','','','Handed out the week of 9 Nov.'],
+['225-5','LGL225','Final exam','exam',30,'12-16','','Chapters 3, 4, 5, 6, 8, 10','Open book, plus tool kit','Multiple choice, true/false, short answer','2 hours','Skips chapters 1, 2, 7 and 9. Read the list literally.'],
+['250-1','LGL250','Case Brief Assignment','assignment',10,'10-06','','','','','','Handed out the week of 21 Sep.'],
+['250-2','LGL250','Midterm Test','test',35,'10-13','','','','','','Review in the 6 Oct class. Scope not stated.'],
+['250-3','LGL250','Research Assignment','assignment',20,'12-01'],
+['250-4','LGL250','Final Exam','exam',35,'12-15']
+];
+const TT = [
+['LGL156','Tue','11:40','13:25','in person','Newnham A-A4519','4535'],
+['LGL151','Tue','13:30','16:10','in person','Newnham A-A4526','4532'],
+['LGL250','Tue','17:10','18:55','in person','Newnham C-C3030','3593'],
+['LGL225','Wed','08:55','10:40','online','','5370'],
+['LGL154','Wed','12:35','14:20','in person','Newnham A-A4526','3967'],
+['LGL160','Wed','14:25','17:05','in person','Newnham A-A4526','4536'],
+['LGL250','Thu','09:50','10:40','online','','3593'],
+['LGL152','Thu','11:40','13:25','online','','4533'],
+['LGL156','Thu','13:30','14:20','online','','4535'],
+['LGL152','Fri','09:50','11:35','in person','Newnham A-A3518','4533'],
+['LGL153','Fri','13:30','15:15','online','','4534']
+];
+const SEED = ['LGL151-09-08-11','LGL151-09-14-5','LGL152-09-10-9','LGL152-09-10-10','LGL152-09-17-10','LGL152-09-24-11','LGL152-09-24-12','LGL153-09-11-1','LGL153-09-11-2','LGL156-09-09-1','LGL156-09-09-2','LGL160-09-09-1','LGL160-09-09-2','LGL160-09-16-2','LGL160-09-16-3','LGL250-09-08-1','LGL250-09-08-3'];
+const LIGHT = {'--bg':'#f3f2f2','--surf':'#ffffff','--surf2':'#eae9e9','--hover':'rgba(0,0,0,.04)','--ink':'#201e1d','--ink2':'#605d5d','--ink3':'#6b6767','--ink4':'#9b9797','--line':'#e2dede','--rule':'#bab6b6','--accent':'#ec3013','--accent-text':'#ae1800','--accent-tint':'#fff2ef','--accent-ink':'#ffffff','--c-lgl151':'#845f1f','--c-lgl152':'#567128','--c-lgl153':'#286c48','--c-lgl154':'#236970','--c-lgl156':'#2b5d97','--c-lgl160':'#5138b2','--c-lgl225':'#873993','--c-lgl250':'#79345e',colorScheme:'light'};
+const DARK = {'--bg':'#161514','--surf':'#201e1d','--surf2':'#2d2b2b','--hover':'rgba(255,255,255,.05)','--ink':'#f3f2f2','--ink2':'#bab6b6','--ink3':'#9b9797','--ink4':'#6f6b6b','--line':'#383534','--rule':'#4f4c4b','--accent':'#ff5f45','--accent-text':'#ff9783','--accent-tint':'#33201c','--accent-ink':'#161514','--c-lgl151':'#d8b16e','--c-lgl152':'#a9c775','--c-lgl153':'#70c296','--c-lgl154':'#64bac4','--c-lgl156':'#76a5db','--c-lgl160':'#a192dd','--c-lgl225':'#c483cd','--c-lgl250':'#d5a5c1',colorScheme:'dark'};
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const dt = s => { const [m, d] = s.split('-').map(Number); return new Date(2026, m - 1, d); };
+const TODAY = new Date(2026, 8, 27);
+const NOW_WK = 4;
+const wkOf = d => Math.floor(Math.round((d - new Date(2026, 8, 7)) / 864e5) / 7) + 1;
+const wkMon = n => new Date(2026, 8, 7 + (n - 1) * 7);
+const fmt = d => `${DAYS[d.getDay()]} ${d.getDate()} ${MONS[d.getMonth()]}`;
+const range = n => { const a = wkMon(n), b = new Date(2026, 8, 11 + (n - 1) * 7); return `${a.getDate()} ${MONS[a.getMonth()]} – ${b.getDate()} ${MONS[b.getMonth()]}`; };
+const daysTo = d => Math.round((d - TODAY) / 864e5);
+const cvar = c => `var(--c-${c.toLowerCase()})`;
+const hot = t => t === 'exam' || t === 'test';
+const LBL = {fontFamily:'inherit',fontWeight:700,fontSize:12,lineHeight:1.3,letterSpacing:'.09em',textTransform:'uppercase'};
+const ROWS = S.map(r => ({ course:r[0], mmdd:r[1], date:dt(r[1]), wk:wkOf(dt(r[1])), topic:r[2],
+  chs:(r[3]||'').split(' ').filter(Boolean).map((x, i) => { const [ch, pg] = x.split(':'); return { ch, pg:pg ? 'pp ' + pg : '', id:`${r[0]}-${r[1]}-${ch}-${i}`, seed:`${r[0]}-${r[1]}-${ch}` }; }),
+  due:r[4]||'', dueType:r[5]||'' }));
+const ASSESS = A.map(a => ({ id:a[0], course:a[1], name:a[2], type:a[3], wt:a[4], date:a[5] ? dt(a[5]) : null, weekOf:a[6] && a[6] !== '?' ? dt(a[6]) : null, unknown:a[6] === '?', scope:a[7]||'', materials:a[8]||'', format:a[9]||'', duration:a[10]||'', note:a[11]||'' }));
+ASSESS.forEach(a => { a.wk = a.date ? wkOf(a.date) : a.weekOf ? wkOf(a.weekOf) : null; });
+const WK_TOTAL = Array.from({length:15}, (_, i) => ASSESS.filter(a => a.wk === i + 1).reduce((s, a) => s + a.wt, 0));
+const MAX_T = Math.max(...WK_TOTAL);
+const seedProg = () => { const p = {}; ROWS.forEach(r => r.chs.forEach(c => { if (SEED.includes(c.seed)) p[c.id] = 'done'; })); return p; };
+
+class Component extends DCLogic {
+  state = { tab:'upcoming', dark:null, week:NOW_WK, dl:null, prog:seedProg(), sheet:null };
+  scrollRef = React.createRef();
+
+  go(tab, week) {
+    this.setState(s => ({ tab, week: week ?? s.week }));
+    if (this.scrollRef.current) this.scrollRef.current.scrollTop = 0;
+  }
+  cycle(id) {
+    this.setState(s => { const cur = s.prog[id] || 'none'; const nx = cur === 'none' ? 'in_progress' : cur === 'in_progress' ? 'done' : 'none'; return { prog:{ ...s.prog, [id]:nx } }; });
+  }
+  pill(c) { return { display:'inline-block', font:`700 12px/1.35 ${MONO}`, letterSpacing:'.03em', padding:'2px 5px', border:'1px solid var(--line)', borderLeft:`3px solid ${cvar(c)}`, color:'var(--ink2)', whiteSpace:'nowrap' }; }
+  typeSt(t) { return { ...LBL, color: hot(t) ? 'var(--accent-text)' : 'var(--ink2)' }; }
+  tagSt(t) { return { display:'inline-block', padding:'2px 6px', border:'1px solid currentColor', fontFamily:'inherit', fontWeight:700, fontSize:12, lineHeight:1.35, letterSpacing:'.02em', color: hot(t) ? 'var(--accent-text)' : 'var(--ink2)' }; }
+  chips(r) {
+    return r.chs.map(c => {
+      const st = this.state.prog[c.id] || 'none';
+      const done = st === 'done', prog = st === 'in_progress';
+      return {
+        label:'ch ' + c.ch, pg:c.pg, cycle:() => this.cycle(c.id),
+        aria:`Chapter ${c.ch}: ${done ? 'done' : prog ? 'in progress' : 'not started'}. Tap to change.`,
+        style:{ display:'inline-flex', alignItems:'center', gap:8, minHeight:40, padding:'8px 11px', border:`1px solid ${done ? 'var(--line)' : 'var(--rule)'}`, background:'transparent', color:'var(--ink)', fontFamily:'inherit', fontWeight:600, fontSize:13, lineHeight:1.3, textAlign:'left', whiteSpace:'nowrap' },
+        boxStyle:{ width:12, height:12, flex:'none', display:'block', border:`2px solid ${done ? 'var(--ink4)' : prog ? 'var(--ink)' : 'var(--ink3)'}`, background: done ? 'var(--ink4)' : prog ? 'linear-gradient(90deg,var(--ink) 50%,transparent 50%)' : 'transparent' },
+        labStyle:{ textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--ink3)' : 'var(--ink)' }
+      };
+    });
+  }
+  sheetVals(id) {
+    const a = ASSESS.find(x => x.id === id); if (!a) return null;
+    const when = a.date ? fmt(a.date) : a.weekOf ? 'Week of ' + fmt(wkMon(a.wk)) : 'Not known yet';
+    const kv = [
+      { k:'Due', v:when + (a.date && daysTo(a.date) >= 0 ? ` · ${daysTo(a.date)} days` : '') },
+      { k:'Weight', v:a.wt ? a.wt + '%' : 'No marks of its own' },
+      { k:'Scope', v:a.scope || 'Not stated in the syllabus', unstated:!a.scope }
+    ];
+    if (a.materials) kv.push({ k:'Allowed', v:a.materials });
+    if (a.format) kv.push({ k:'Format', v:a.format });
+    if (a.duration) kv.push({ k:'Length', v:a.duration });
+    kv.forEach(x => { x.style = x.unstated ? { margin:0, justifySelf:'start', padding:'1px 6px', border:'1px dashed var(--ink3)', color:'var(--ink3)', fontSize:13, fontWeight:600 } : { margin:0, minWidth:0, fontSize:14, fontWeight: x.k === 'Due' || x.k === 'Weight' ? 700 : 400 }; });
+    return { code:a.course, name:a.name, type:a.type === 'milestone' ? 'Milestone' : a.type, course:C[a.course].n, kv, note:a.note, hasNote:!!a.note, pillStyle:this.pill(a.course), typeStyle:this.typeSt(a.type) };
+  }
+
+  renderVals() {
+    const s = this.state, p = this.props;
+    const framed = p.framed ?? true;
+    const dark = s.dark ?? ((p.theme ?? 'light') === 'dark');
+    const dlOnly = s.dl ?? (p.deadlinesOnly ?? false);
+    const open = id => () => this.setState({ sheet:id });
+
+    // Upcoming
+    const end = new Date(2026, 8, 27 + 14);
+    const dated = ASSESS.filter(a => a.date && a.date > TODAY && a.date <= end).sort((x, y) => x.date - y.date || y.wt - x.wt);
+    const graded = dated.filter(a => a.wt > 0);
+    const top = graded.slice(0, 3);
+    const rest = dated.filter(a => !top.includes(a));
+    const band = ASSESS.filter(a => !a.date && a.weekOf && a.wk >= NOW_WK && a.wk <= NOW_WK + 1);
+    const first = top[0];
+    const lead = { text:`${first.course} ${first.name}, ${first.wt}% — ${fmt(first.date)}. ${daysTo(first.date)} days left.`,
+      allowed: first.materials ? `Allowed in: ${first.materials}. The Tool Kit is due the same day — finish it first.` : '', hasAllowed:!!first.materials };
+    const cards = top.map((a, i) => ({
+      open:open(a.id), days:daysTo(a.date), daysWord:daysTo(a.date) === 1 ? 'day left' : 'days left', wt:a.wt + '%', code:a.course, type:a.type,
+      name:a.name, course:C[a.course].n, when:fmt(a.date) + (a.scope ? ' · ' + a.scope : ''),
+      style:{ display:'block', width:'100%', textAlign:'left', padding:'16px 16px 20px', border:0, borderTop: i ? '1px solid var(--line)' : 0, borderLeft:`3px solid ${i === 0 ? 'var(--accent)' : 'transparent'}`, background:'transparent', color:'var(--ink)', font:'inherit' },
+      daysStyle:{ fontSize:44, lineHeight:.85, letterSpacing:'-.04em', fontWeight:700, color: i === 0 ? 'var(--accent)' : 'var(--ink)' },
+      wtStyle:{ font:`700 15px ${MONO}`, color: hot(a.type) ? 'var(--accent-text)' : 'var(--ink)' },
+      pillStyle:this.pill(a.course), typeStyle:this.typeSt(a.type)
+    }));
+    const restV = rest.map(a => ({
+      open:open(a.id), dayNum:a.date.getDate(), dayWord:`${DAYS[a.date.getDay()]} ${MONS[a.date.getMonth()]}`, name:a.name, code:a.course, course:C[a.course].s, wt:a.wt ? a.wt + '%' : '—',
+      style:{ display:'grid', gridTemplateColumns:'56px minmax(0,1fr) 44px', gap:12, alignItems:'center', width:'100%', minHeight:56, padding:'10px 16px 10px 13px', border:0, borderTop:'1px solid var(--line)', borderLeft:`3px solid ${cvar(a.course)}`, background:'transparent', color:'var(--ink)', textAlign:'left', font:'inherit' }
+    }));
+    const bandV = band.map(a => ({ open:open(a.id), code:a.course, name:a.name, when:'week of ' + fmt(wkMon(a.wk)), wt:a.wt + '%' }));
+
+    const wkRows = ROWS.filter(r => r.wk === NOW_WK).sort((x, y) => x.date - y.date || x.course.localeCompare(y.course));
+    const groups = [];
+    wkRows.forEach(r => { const l = fmt(r.date); let g = groups.find(x => x.label === l); if (!g) groups.push(g = { label:l, rows:[] }); g.rows.push(r); });
+    let tot = 0, dn = 0;
+    const readDays = groups.map(g => ({ label:g.label, rows:g.rows.map(r => {
+      r.chs.forEach(c => { tot++; if (s.prog[c.id] === 'done') dn++; });
+      return { code:r.course, short:C[r.course].s, topic:r.topic, chips:this.chips(r), hasChips:r.chs.length > 0, noReading:!r.chs.length && !r.due, hasDue:!!r.due, due:r.due, dueStyle:this.tagSt(r.dueType) };
+    }) }));
+
+    const runway = WK_TOTAL.map((t, i) => {
+      const n = i + 1, isNow = n === NOW_WK, isHot = t >= 80, brk = n === 8, past = n < NOW_WK;
+      return {
+        no:n, pct: brk ? 'study' : t, go:() => this.go('calendar', n), aria:`Week ${n}, ${brk ? 'study week' : t + ' grade points'}. Open in calendar.`,
+        style:{ display:'grid', gridTemplateColumns:'26px minmax(0,1fr) 44px', alignItems:'center', gap:10, width:'100%', minHeight:40, padding:'7px 16px', border:0, borderTop:'1px solid var(--line)', background: isNow ? 'var(--accent-tint)' : 'transparent', color:'var(--ink)', textAlign:'left', font:'inherit' },
+        noStyle:{ font:`700 12px ${MONO}`, color: isNow ? 'var(--accent-text)' : 'var(--ink3)' },
+        trkStyle:{ display:'block', height:9, background: brk ? 'repeating-linear-gradient(135deg,var(--surf2) 0 4px,transparent 4px 8px)' : 'var(--surf2)' },
+        fillStyle:{ display:'block', height:'100%', width:`${(t / MAX_T) * 100}%`, background: isHot ? 'var(--accent)' : past ? 'var(--ink4)' : 'var(--ink3)' },
+        pctStyle:{ fontWeight:700, fontSize:12, textAlign:'right', color: isHot ? 'var(--accent-text)' : 'var(--ink2)' }
+      };
+    });
+
+    // Calendar
+    const w = s.week;
+    const cr = ROWS.filter(r => r.wk === w).sort((x, y) => x.date - y.date || x.course.localeCompare(y.course));
+    const shown = dlOnly ? cr.filter(r => r.due) : cr;
+    const wkDue = ASSESS.filter(a => a.wk === w && a.wt > 0);
+    const cal = {
+      no:w, range:range(w), isBreak:w === 8,
+      sub: w === 8 ? 'No classes' : `${cr.length} classes · ${wkDue.length} graded · ${WK_TOTAL[w - 1]} points`,
+      hasNote:w === 6, note:'Mon 12 Oct is Thanksgiving and Seneca is closed, but the LGL151 syllabus still lists a class. Confirm with Prof. Boyle.',
+      dlEmpty: dlOnly && !shown.length && w !== 8,
+      rows: shown.map(r => ({
+        code:r.course, short:C[r.course].s, date:fmt(r.date), topic:r.topic, hasDue:!!r.due, due:r.due, dueStyle:this.tagSt(r.dueType),
+        showBody:!dlOnly, chips:this.chips(r), hasChips:r.chs.length > 0,
+        style:{ padding:'12px 16px 14px 13px', borderTop:'1px solid var(--line)', borderLeft:`3px solid ${hot(r.dueType) ? 'var(--accent)' : 'transparent'}` }
+      }))
+    };
+    const strip = WK_TOTAL.map((t, i) => {
+      const n = i + 1, sel = n === w, isNow = n === NOW_WK;
+      const mix = n === 8 ? 0 : Math.min(40, Math.round((t / MAX_T) * 40));
+      return { no:n, go:() => this.setState({ week:n }), aria:`Week ${n}`,
+        style:{ minWidth:0, height:40, padding:0, border:0, borderRight: n < 15 ? '1px solid var(--line)' : 0, boxShadow: sel ? 'inset 0 0 0 2px var(--ink)' : 'none',
+          borderBottom:`3px solid ${isNow ? 'var(--accent)' : 'transparent'}`,
+          background: n === 8 ? 'repeating-linear-gradient(135deg,var(--surf2) 0 4px,transparent 4px 8px)' : `color-mix(in srgb, var(--accent) ${mix}%, var(--surf))`,
+          color: sel ? 'var(--ink)' : 'var(--ink2)', font:`700 12px ${MONO}`, textAlign:'center' } };
+    });
+
+    // Timetable
+    const ttDays = ['Tue','Wed','Thu','Fri'].map(d => {
+      const bl = TT.filter(t => t[1] === d);
+      const full = { Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday' }[d];
+      return { name:full, count:`${bl.length} ${bl.length === 1 ? 'class' : 'classes'}`, blocks:bl.map((t, i) => {
+        const [sh, sm] = t[2].split(':').map(Number), [eh, em] = t[3].split(':').map(Number);
+        const mins = eh * 60 + em - sh * 60 - sm;
+        const h12 = x => { const [h, m] = x.split(':').map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')}${h < 12 ? 'am' : 'pm'}`; };
+        const isNext = d === 'Tue' && i === 0;
+        return { code:t[0], short:C[t[0]].s, start:h12(t[2]), end:h12(t[3]), where: t[4] === 'online' ? 'Online' : t[5], nbr:t[6], dur:`${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, '0')}m`, isNext,
+          dotStyle:{ display:'inline-block', width:10, height:10, background:cvar(t[0]), flex:'none' },
+          style:{ display:'grid', gridTemplateColumns:'72px minmax(0,1fr)', gap:12, padding:'12px 16px 12px 13px', borderTop:'1px solid var(--line)', borderLeft:`3px solid ${cvar(t[0])}`, background: isNext ? 'var(--accent-tint)' : `color-mix(in srgb, ${cvar(t[0])} 6%, var(--surf))` } };
+      }) };
+    });
+
+    const tabs = [['upcoming','Upcoming',String(dated.length + band.length)],['calendar','Calendar','W' + w],['timetable','Timetable','11']].map(([id, label, count]) => {
+      const on = s.tab === id;
+      return { label, count, current: on ? 'page' : undefined, go:() => this.go(id),
+        style:{ display:'flex', alignItems:'center', justifyContent:'flex-start', gap:6, minHeight:46, padding:'10px 12px 7px', border:0, borderRight: id !== 'timetable' ? '1px solid var(--line)' : 0, borderBottom:`3px solid ${on ? 'var(--accent)' : 'transparent'}`, background:'transparent', color: on ? 'var(--ink)' : 'var(--ink2)', fontFamily:'inherit', fontWeight: on ? 700 : 500, fontSize:14, textAlign:'left', whiteSpace:'nowrap' } };
+    });
+
+    const sheet = s.sheet ? this.sheetVals(s.sheet) : null;
+    return {
+      outerStyle: framed ? { minHeight:'100vh', display:'flex', justifyContent:'flex-start', alignItems:'flex-start', padding:'32px 40px' } : { minHeight:'100vh' },
+      phoneStyle: { ...(dark ? DARK : LIGHT), position:'relative', overflow:'hidden', width: framed ? 412 : '100%', maxWidth:'100%', height: framed ? 892 : '100vh', border: framed ? '2px solid #201e1d' : 0, background:'var(--bg)' },
+      scrollRef:this.scrollRef,
+      themeLabel: dark ? '◑ Dark' : '◐ Light', toggleTheme:() => this.setState({ dark:!dark }),
+      tabs, isUpcoming:s.tab === 'upcoming', isCalendar:s.tab === 'calendar', isTimetable:s.tab === 'timetable',
+      lead, cards, rest:restV, band:bandV, readDays, readDone:`${dn} of ${tot} done`, runway,
+      cal, strip, subTop:'132px', dlOnly, toggleDl:() => this.setState({ dl:!dlOnly }),
+      dlStyle:{ minHeight:40, padding:'6px 12px', border:`1px solid ${dlOnly ? 'var(--accent)' : 'var(--line)'}`, background: dlOnly ? 'var(--accent-tint)' : 'transparent', color: dlOnly ? 'var(--accent-text)' : 'var(--ink)', fontFamily:'inherit', fontWeight:700, fontSize:12, textAlign:'left' },
+      prevWeek:() => this.setState({ week:Math.max(1, w - 1) }), nextWeek:() => this.setState({ week:Math.min(15, w + 1) }),
+      atFirst:w === 1, atLast:w === 15, notThisWeek:w !== NOW_WK, backToWeek:() => this.setState({ week:NOW_WK }),
+      ttDays,
+      hasSheet:!!sheet, sheet: sheet || { kv:[] }, closeSheet:() => this.setState({ sheet:null })
+    };
+  }
+}
+</script>
+</body>
+</html>

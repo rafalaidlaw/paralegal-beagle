@@ -254,16 +254,62 @@ even that cannot reach, so `index.html` carries a `theme-color` meta, set
 before first paint and again in `paintChrome()` from the body's own computed
 background. `interact.mjs` checks both, in both themes, at phone size.
 
-**On a phone the Weekly Calendar is its own scroller.** `.grow.head` and `.gwk`
-have always been `position: sticky`, but sticky sticks to the nearest SCROLLING
-ancestor, and `.gridwrap` is one — it has to scroll sideways to fit eight
-columns. On a phone the page scrolled vertically while `.gridwrap` did not, so
-the column heads had nothing to stick to and scrolled away (Rafael, 26 Sep
-2026). Under 900px, `.app:has(.gridwrap)` becomes a fixed-height shell and
-`.gridwrap` scrolls in both directions, so the heads hold at the top and the
-week column at the left — you need both to read a cell. `100dvh`, not `100vh`:
-a phone browser's toolbars collapse as you scroll and `100vh` is the tall
-figure, which would push the last week under the fold.
+## The phone is a different drawing, not a narrower one
+
+Rafael designed the mobile version in Claude Design and it was built on
+27 Sep 2026. The export and a full account of what was taken live in
+`reference/claude-design-mobile/README.md`; the rules that matter here:
+
+**Under 900px the app is a fixed-height shell.** `100dvh`, one header that
+never moves, and exactly one scroller (`#main`) beneath it. `100dvh` and not
+`100vh`, because a phone browser's toolbars collapse as you scroll and `100vh`
+is the tall figure, which hides the last row under the fold. The page title bar
+is hidden there — the tab bar already names the screen, and it carries
+`aria-current="page"` so that is said out loud and not only in colour.
+
+**Two screens are drawn differently, and only two.** `PHONE()` reads
+`matchMedia` at render time, never cached, and a width change re-renders —
+rotating a phone mid-week is a real thing.
+
+- `gridPhone()` — the Weekly Calendar as **one week, as a list**. The desktop
+  grid is not made narrower; it is not drawn at all. Eight columns across 412px
+  is the wrong artefact, not a layout problem. What survives is what a grid cell
+  holds: course, day, anything graded, topic, and `chapterChip()` keyed exactly
+  as everywhere else, so one tick is still one row in `progress.csv`. Above it,
+  a strip of one cell per week tinted by the share of his grade falling in it.
+- `timetablePhone()` — the Timetable as day-by-day lists. The chart is drawn to
+  scale and that IS the chart; squeezed to 412px the proportions stop being
+  legible and what is left is a list pretending to be one. So it is a list,
+  honestly — and it can say the one thing the chart cannot: which class is next.
+
+**Everything else is one render with CSS doing the work.** Upcoming, the chips,
+the ticks, the data. Do not add a third phone branch without asking whether the
+difference is really structural.
+
+**The detail sheet is phone-only.** A row 412px wide cannot carry "open book:
+textbook, references, forms, calculator" as well as a name, a date and a
+weight, so it carries none of it and a tap brings the lot. It lives in `#sheet`
+outside `.app`, because it covers a screen that scrolls. On desktop the cards
+are wide enough and a modal over a mouse-driven page is a step backwards. It is
+now the only place showing everything known about one graded item, Deadlines
+being off — which is why an unstated scope is drawn there as a dashed chip:
+the absence is the answer, and it is the answer he has to take to a professor.
+
+**Archivo ships for the phone and for nothing else.** It sits AFTER the Windows
+faces in `--sans`, so Bahnschrift still wins on desktop and every measurement
+in `app.css` still holds — the three desktop screens are pixel-identical before
+and after, in both themes, and that comparison is how any future change to this
+should be checked. A phone has neither Bahnschrift nor Segoe UI Variable and
+fell through to its own system font. One variable file covers 400–800.
+`serve.py` names `/archivo.woff2` explicitly rather than opening a directory:
+it stays a three-file server with one exception, not a static host, and
+`build_static.py` lists it among the files it copies.
+
+**Four things in the design were deliberately not built** (Rafael, 27 Sep
+2026): a "deadlines only" filter, the dashed "dated only to a week" band, a
+fortnight horizon on Upcoming, and the Timetable's stats strip. Each is
+something he removed from the desktop the day before, and the design predates
+those decisions. Do not add them back from the canvas.
 
 **Light is the default theme.** Rafael's Windows is in dark mode and he asked
 for light regardless (13 Sep 2026), so with no stored choice `index.html`

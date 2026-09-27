@@ -77,6 +77,11 @@ const check = (name, ok, got) => {
   else { fail++; console.log("  FAIL " + name + "  ->  " + JSON.stringify(got)); }
 };
 
+// Pin the viewport: below 900px the calendar renders as the phone list and
+// .gcell does not exist, so an unset window size silently changed what this
+// was testing.
+await send("Emulation.setDeviceMetricsOverride",
+  { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false }, S);
 await go("grid");
 check("the published copy renders from data.json, with no server",
   (await evalJs(`document.querySelectorAll('.gcell').length`)) > 50,
@@ -117,9 +122,28 @@ check("the published copy carries none of his ticks", snapKept === 0, snapKept);
 const shipped = await (await fetch(`http://127.0.0.1:${SITE}/data.json`)).json();
 check("data.json has no progress rows in it at all",
   Array.isArray(shipped.progress) && shipped.progress.length === 0, shipped.progress?.length);
+// The font ships for the phone. Without it a phone falls through to its own
+// system font, because it has neither Bahnschrift nor Segoe UI Variable.
+const font = await fetch(`http://127.0.0.1:${SITE}/archivo.woff2`);
+check("the font is published beside the page",
+  font.ok && Number(font.headers.get("content-length")) > 10000,
+  { status: font.status, bytes: font.headers.get("content-length") });
 check("nor grades, cases or notes",
   !shipped.grades?.length && !shipped.cases?.length && !shipped.notes?.length,
   { grades: shipped.grades?.length, cases: shipped.cases?.length, notes: shipped.notes?.length });
+
+// The phone build, from the same published files.
+await send("Emulation.setDeviceMetricsOverride",
+  { width: 412, height: 915, deviceScaleFactor: 2, mobile: true }, S);
+await go("grid");
+const phone = await evalJs(`JSON.stringify({
+  rows: document.querySelectorAll('.calrow').length,
+  grid: document.querySelectorAll('.gridwrap').length,
+  font: getComputedStyle(document.body).fontFamily
+})`);
+const ph = JSON.parse(phone);
+check("the published copy draws the phone calendar too", ph.rows > 0 && ph.grid === 0, ph);
+check("and asks for Archivo in its font stack", /Archivo/.test(ph.font), ph.font);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 // Tear down in order and let node exit on its own. Calling process.exit()

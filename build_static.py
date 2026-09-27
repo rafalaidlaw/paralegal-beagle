@@ -75,7 +75,13 @@ PUBLISH_KEYS = [
 # An empty array is also the truth on a copy that cannot save any of them.
 EMPTY_KEYS = ["grades", "cases", "notes", "syllabi", "progress"]
 
-PAGES = [("app/index.html", "index.html"), ("app/app.css", "app.css"), ("app/app.js", "app.js")]
+# archivo.woff2 is here for the phone and nothing else: Windows resolves
+# Bahnschrift and never fetches it, but a phone has neither that nor Segoe UI
+# Variable and would otherwise fall through to its own system font. 35KB, one
+# variable file covering 400-800, referenced from app.css as a relative URL so
+# it resolves the same way locally and on the host.
+PAGES = [("app/index.html", "index.html"), ("app/app.css", "app.css"),
+         ("app/app.js", "app.js"), ("app/archivo.woff2", "archivo.woff2")]
 
 ROBOTS = """User-agent: *
 Disallow: /

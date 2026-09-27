@@ -14,7 +14,7 @@ const state = {
      copy of the name: the sidebar order and the landing screen used to be set
      in two places and drifted apart. Move a name to the front of SHOWN and the
      app opens there. */
-  view: "grid", course: null, notePath: null, target: 70,
+  view: "grid", course: null, notePath: null, target: 70, sheet: null,
   week: null,            // null = follow today; set by the < today > stepper
 };
 
@@ -75,6 +75,22 @@ const clampWeek = (n) => Math.max(1, Math.min(LAST_WEEK(), n));
 const rolledForward = () => { const d = toDate(today()).getDay(); return d === 0 || d === 6; };
 const nowWeek = () => clampWeek(termWeek(today()) + (rolledForward() ? 1 : 0));
 const shownWeek = () => state.week == null ? nowWeek() : state.week;
+
+/* Two of the three screens are drawn differently on a phone, because the
+   difference is structural rather than cosmetic: eight columns of fifteen weeks
+   cannot be squeezed into 412px, and a chart of the week drawn to scale cannot
+   either. Everything else -- Upcoming, the chips, the ticks, the data -- is one
+   render with CSS doing the work, exactly as before.
+
+   PHONE is read at render time, never cached, and a change of width re-renders.
+   Rotating a phone is a real thing that happens mid-week. */
+const PHONE = () => typeof matchMedia === "function" && matchMedia("(max-width: 900px)").matches;
+if (typeof matchMedia === "function") {
+  const mq = matchMedia("(max-width: 900px)");
+  const onFlip = () => { if (D) render(); };
+  if (mq.addEventListener) mq.addEventListener("change", onFlip);
+  else if (mq.addListener) mq.addListener(onFlip);
+}
 
 const progressMap = () => Object.fromEntries(D.progress.map((p) => [p.reading_id, p]));
 const gradeMap = () => Object.fromEntries(D.grades.map((g) => [g.assessment_id, g]));
@@ -398,7 +414,13 @@ function paintChrome() {
     : `Mon ${fmtShort(weekMonday(wk))} — Sun ${fmtShort(plus(weekMonday(wk), 6))}`;
   const c = counts();
   document.querySelectorAll("[data-count]").forEach((el) => { el.textContent = c[el.dataset.count] ?? ""; });
-  document.querySelectorAll("#nav a[data-view]").forEach((a) => a.classList.toggle("on", a.dataset.view === state.view));
+  document.querySelectorAll("#nav a[data-view]").forEach((a) => {
+    const on = a.dataset.view === state.view;
+    a.classList.toggle("on", on);
+    /* On a phone the tab bar is the only thing naming the current screen --
+       the page title bar is hidden there -- so it has to say so out loud. */
+    if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+  });
   const [title, sub] = VIEW_META[state.view] || VIEW_META.week;
   $("#vtitle").textContent = title;
   $("#vsub").textContent = sub();
@@ -457,10 +479,58 @@ function routeFromHash() {
   if (!isShown(v)) { state.view = SHOWN[0]; return; }
   state.view = v;
   if (v === "courses" && arg && D.courses.some((c) => c.code === arg)) state.course = arg;
-  if (v === "week") state.week = arg ? clampWeek(Number(arg)) : null;
+  if (v === "week" || v === "grid") state.week = arg ? clampWeek(Number(arg)) : null;
 }
-window.addEventListener("hashchange", () => { routeFromHash(); render(); });
+window.addEventListener("hashchange", () => { closeSheet(); routeFromHash(); render(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && state.sheet) closeSheet(); });
 $("#theme").addEventListener("click", cycleTheme);
+
+/* The detail sheet. On a phone a row cannot carry "open book: textbook,
+   references, forms, calculator" as well as a name, a date and a weight -- so
+   it carries none of it, and a tap brings the lot. Rafael's mobile design,
+   27 Sep 2026.
+
+   It is the only place in the app that shows everything known about one graded
+   item now that Deadlines is switched off, which is also why "not stated" is
+   drawn here as a dashed chip rather than left blank: the absence is the
+   answer, and it is the answer he has to take to a professor. */
+function sheetHTML() {
+  if (!state.sheet) return "";
+  const a = D.assessments.find((x) => x.id === state.sheet);
+  if (!a) return "";
+  const kv = [];
+  kv.push(["Due", a.due_resolved
+    ? (a.date_precision === "exact" ? fmt(a.due_resolved)
+      : a.date_precision === "unknown" ? "Not known yet" : `Week of ${fmt(a.due_resolved)}`)
+      + (dMin(a) > 0 ? ` · in ${daysLeft(a)} day${daysLeft(a) === 1 ? "" : "s"}` : "")
+    : "Not known yet", "strong"]);
+  kv.push(["Weight", a.weight_pct ? `${a.weight_pct}% of the course` : "No marks of its own", "strong"]);
+  kv.push(["Scope", a.scope_chapters ? `Chapters ${list(a.scope_chapters)}` : "", a.scope_chapters ? "" : "unstated"]);
+  if (a.materials_allowed) kv.push(["Allowed", a.materials_allowed, ""]);
+  if (a.format) kv.push(["Format", a.format, ""]);
+  if (a.duration) kv.push(["Length", a.duration, ""]);
+  return `<div class="sheetback" id="sheet-back"></div>
+  <div class="sheetbody" role="dialog" aria-modal="true" aria-label="${esc(tidyHash(a.name))}">
+    <div class="sheethead">
+      <div class="row">${pill(a.course)} ${typeWord(a.type)}</div>
+      <h2>${nm(a.name)}</h2>
+      <div class="course">${esc(courseName(a.course))}</div>
+    </div>
+    <dl>${kv.map(([k, v, cls]) => `<div><dt>${esc(k)}</dt>
+      <dd class="${cls}">${cls === "unstated" ? "Not stated — ask your professor" : esc(v)}</dd></div>`).join("")}</dl>
+    ${a.note ? `<p class="note">${esc(a.note)}</p>` : ""}
+    <div class="sheetfoot"><button id="sheet-close">Close</button></div>
+  </div>`;
+}
+function openSheet(id) { state.sheet = id; paintSheet(); }
+function closeSheet() { state.sheet = null; paintSheet(); }
+function paintSheet() {
+  const el = $("#sheet");
+  if (!el) return;
+  el.innerHTML = sheetHTML();
+  document.body.classList.toggle("sheeton", !!state.sheet);
+  if (state.sheet) { const b = el.querySelector("#sheet-close"); if (b) b.focus(); }
+}
 
 /* ==================================================================== WEEK */
 VIEWS.week = () => {
@@ -503,7 +573,7 @@ VIEWS.week = () => {
       : `Nothing graded in week ${wk} — ${weekRange(wk)}`}</span>
     <div class="cards">${three.map((a, n) => {
       const c = countdown(a);
-      return `<div class="card ${n === 0 ? "next" : ""}" data-c="${esc(a.course)}">
+      return `<div class="card ${n === 0 ? "next" : ""}" data-c="${esc(a.course)}" data-sheet="${esc(a.id)}">
         <div class="days"><b>${c.n}</b><span>${c.word}</span></div>
         <div class="who">${pill(a.course)} ${typeWord(a.type)}</div>
         <div class="name">${nm(a.name)}</div>
@@ -683,8 +753,87 @@ function deadlineRow(a, isNext, extra) {
   </article>`;
 }
 
+/* The Weekly Calendar on a phone: one week, as a list of the classes in it.
+   Rafael's mobile design, 27 Sep 2026. The desktop grid is not made narrower --
+   it is not drawn at all here, because eight columns across 412px is not a
+   layout problem, it is the wrong artefact. What survives is what a grid cell
+   holds: the course, the day, anything graded, the topic, and the same tick
+   chips, keyed the same way, so a tick made here is a tick made anywhere.
+
+   The week strip along the top is the term at a glance -- one cell per week,
+   tinted by how much of his grade falls in it, so the heavy weeks are visible
+   from any week he happens to be standing in. */
+function gridPhone() {
+  const wk = shownWeek(), nowWk = nowWeek(), last = LAST_WEEK(), prog = progressMap();
+  const loads = crunchWeeks();
+  const max = Math.max(...loads.map((x) => x.load), 1);
+  const mon = weekMonday(wk);
+  const rows = D.schedule.filter((r) => r.week_no === wk)
+    .slice().sort((a, b) => a.class_date.localeCompare(b.class_date) || a.course.localeCompare(b.course));
+  const isBreak = rows.length > 0 && rows.every((r) => r.due_type === "study_week");
+
+  const marks = [];
+  const teaches = (d) => !D.timetable.length || D.timetable.some((t) => TT_DAY_NO[t.day] === toDate(d).getDay());
+  Object.keys(D.term.holidays).forEach((d) => {
+    if (d >= mon && d <= plus(mon, 6) && teaches(d)) marks.push(`${D.term.holidays[d]} — ${fmt(d)}`);
+  });
+  if (D.term.drop_deadline >= mon && D.term.drop_deadline <= plus(mon, 6)) marks.push(`${D.term.drop_deadline_label} — ${fmt(D.term.drop_deadline)}`);
+  if (D.term.grades_released >= mon && D.term.grades_released <= plus(mon, 6)) marks.push(`Grades released — ${fmt(D.term.grades_released)}`);
+
+  const due = D.assessments.filter((a) => a.week_no === wk);
+  const points = due.reduce((s, a) => s + Number(a.weight_pct || 0), 0);
+  const sub = isBreak ? "No classes"
+    : `${words(rows.length)} class${rows.length === 1 ? "" : "es"}${due.length ? ` · ${words(due.length)} graded · ${points} points` : ""}`;
+
+  let h = `<div class="calbar">
+    <div class="calstep">
+      <button class="calnav" id="cal-prev" ${wk <= 1 ? "disabled" : ""} aria-label="Previous week">‹</button>
+      <div class="calwk"><div class="t"><b>Week ${wk}</b><span>${esc(weekRange(wk))}</span></div><div class="s">${esc(sub)}</div></div>
+      <button class="calnav" id="cal-next" ${wk >= last ? "disabled" : ""} aria-label="Next week">›</button>
+    </div>
+    <div class="calstrip">${loads.map((x) => {
+      const on = x.w === wk, isNow = x.w === nowWk;
+      const mix = x.isBreak ? 0 : Math.min(40, Math.round((x.load / max) * 40));
+      return `<button class="calcell ${on ? "on" : ""} ${isNow ? "now" : ""} ${x.isBreak ? "brk" : ""}" data-calweek="${x.w}"
+        style="${x.isBreak ? "" : `background:color-mix(in srgb, var(--accent) ${mix}%, var(--surf))`}"
+        aria-label="Week ${x.w}${x.isBreak ? ", study week" : `, ${x.load}% of your grade`}">${x.w}</button>`;
+    }).join("")}</div>
+    ${wk !== nowWk ? `<div class="calback"><button id="cal-today" class="ghost">Back to ${rolledForward() ? "the week ahead" : "this week"}</button></div>` : ""}
+  </div>`;
+
+  if (marks.length) h += `<div class="gnote">${esc(marks.join("  ·  "))}</div>`;
+
+  if (!rows.length) {
+    h += `<p class="calempty">No class meetings in week ${wk}.</p>`;
+    return h + `<div class="spacer"></div>`;
+  }
+  if (isBreak) {
+    h += `<section class="calbreak"><h2>Study week</h2><p>No classes and nothing due.</p></section>`;
+    return h + `<div class="spacer"></div>`;
+  }
+
+  h += `<section class="callist">${rows.map((r) => {
+    const reads = D.readings.filter((x) => x.course === r.course && x.id.startsWith(r.id));
+    const mine = due.filter((a) => a.course === r.course);
+    const hot = mine.some((a) => a.type === "exam" || a.type === "test");
+    return `<article class="calrow ${hot ? "hot" : ""}" data-c="${esc(r.course)}">
+      <div class="head">
+        <div class="who"><b>${esc(courseName(r.course))}</b><span class="code">${esc(r.course)}</span></div>
+        <span class="when">${esc(fmt(r.class_date))}</span>
+      </div>
+      ${mine.map((a) => `<div class="dueline"><button class="tag ${esc(a.type)}" data-sheet="${esc(a.id)}">${nm(a.name)}${weightTag(a) ? ` <b>${weightTag(a)}</b>` : ""}</button></div>`).join("")}
+      ${r.topic ? `<p class="topic">${nm(r.topic)}</p>` : ""}
+      ${reads.length ? `<div class="chips">${reads.map((x) => chapterChip(x, prog[x.id])).join("")}</div>`
+        : !mine.length ? `<p class="quiet" style="margin:6px 0 0">No chapter set for this class.</p>` : ""}
+    </article>`;
+  }).join("")}</section>`;
+
+  return h + `<p class="calfoot">A tick here is the same tick on Upcoming.</p><div class="spacer"></div>`;
+}
+
 /* ==================================================================== GRID */
 VIEWS.grid = () => {
+  if (PHONE()) return gridPhone();
   const codes = byWeekOrder(D.courses.map((c) => c.code));
   const prog = progressMap();
   const nowWk = nowWeek(), last = LAST_WEEK();
@@ -788,7 +937,58 @@ const OPEN_DRAW_MIN = 45;
 const shortRoom = (room) => String(room || "").replace(/^.*?-\s*/, "").trim();
 const ends = (t) => (t.end ? mins(t.end) : mins(t.start) + OPEN_DRAW_MIN);
 
+/* The Timetable on a phone: the same eleven blocks, read down instead of
+   across. Rafael's mobile design, 27 Sep 2026. The chart is drawn to scale and
+   that is the whole point of it -- squeezed into 412px the proportions stop
+   being legible, and what is left is a list pretending to be a chart. So it is
+   a list, honestly: one section per day, each block giving the hours, where it
+   is, and the class number he is enrolled in. The one thing the chart cannot
+   say and this can: which class is next. */
+function timetablePhone() {
+  const tt = D.timetable.slice();
+  const days = TT_DAYS.filter((d) => tt.some((t) => t.day === d));
+  const FULL = { Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday" };
+
+  /* "Next class" is the next block in the week's own order from this moment --
+     it does NOT wrap past Friday into the following Monday, because a Saturday
+     is not a time when anything is about to start. */
+  const now = new Date();
+  const nowDay = now.getDay(), nowMin = now.getHours() * 60 + now.getMinutes();
+  const ord = (t) => TT_DAY_NO[t.day] * 1440 + mins(t.start);
+  const byClock = tt.slice().sort((a, b) => ord(a) - ord(b));
+  /* Wraps to the start of the week when nothing is left in this one: from a
+     Saturday the next class really is Tuesday's, and a screen that said
+     nothing at all on the two days he does his reading would be the wrong
+     answer. */
+  const nextUp = byClock.find((t) => ord(t) > nowDay * 1440 + nowMin) || byClock[0];
+
+  let h = `<div class="gnote">${esc(TT_DAYS.filter((d) => !tt.some((t) => t.day === d)).join(", ") || "No day")} is clear. From Rafael's enrolment listing, not the syllabi — three courses meet on a different day from the one their syllabus describes.</div>`;
+
+  h += days.map((d) => {
+    const blocks = tt.filter((t) => t.day === d).slice().sort((a, b) => mins(a.start) - mins(b.start));
+    return `<section class="ttday"><div class="h"><h2>${esc(FULL[d])}</h2>
+      <span>${words(blocks.length)} class${blocks.length === 1 ? "" : "es"}</span></div>
+      ${blocks.map((t) => {
+        const isNext = nextUp && nextUp === t;
+        const len = durWords(t.start, t.end);        /* "—" when no end is stated anywhere */
+        return `<div class="ttb ${isNext ? "next" : ""}" data-c="${esc(t.course)}">
+          <div class="hrs"><b>${clock(t.start)}</b><span>${t.end ? `to ${clock(t.end)}` : "end not stated"}</span></div>
+          <div class="what">
+            ${isNext ? `<span class="nextflag">Next class</span>` : ""}
+            <div class="row1"><span class="dot"></span><span class="code">${esc(t.course)}</span></div>
+            <b class="nm">${esc(courseName(t.course))}</b>
+            <span class="where">${t.mode === "online" ? "Online" : esc(t.room || "In person")}</span>
+            <span class="meta">Class ${esc(t.class_nbr)}${t.end ? ` · ${len}` : ""}</span>
+          </div>
+        </div>`;
+      }).join("")}</section>`;
+  }).join("");
+
+  return h + `<div class="spacer"></div>`;
+}
+
 VIEWS.timetable = () => {
+  if (PHONE()) return timetablePhone();
   const tt = D.timetable.slice();
   if (!tt.length) {
     return `<div class="empty"><div class="lead"><h2>No timetable yet</h2>
@@ -1176,11 +1376,24 @@ document.addEventListener("click", async (e) => {
     await setReading(rb.dataset.reading, order[(order.indexOf(rb.dataset.s) + 1) % order.length]);
     render(); return;
   }
+  /* Only on a phone: on desktop the cards are wide enough to carry what the
+     sheet holds, and a modal over a mouse-driven page is a step backwards. */
+  const sh = e.target.closest("[data-sheet]");
+  if (sh && PHONE()) { e.preventDefault(); openSheet(sh.dataset.sheet); return; }
+  if (e.target.id === "sheet-close" || e.target.id === "sheet-back") { closeSheet(); return; }
   const na = e.target.closest("[data-note]");
   if (na) { e.preventDefault(); openNote(na.dataset.note); return; }
   if (e.target.id === "wk-prev") { state.week = clampWeek(shownWeek() - 1); location.hash = `week/${state.week}`; return; }
   if (e.target.id === "wk-next") { state.week = clampWeek(shownWeek() + 1); location.hash = `week/${state.week}`; return; }
   if (e.target.id === "wk-today") { state.week = null; location.hash = "week"; render(); return; }
+  /* The phone calendar's own stepper. It shares state.week with Upcoming's, on
+     purpose: tapping a week on the strip and then switching tabs should land on
+     the week you were just looking at, not snap back to today. */
+  if (e.target.id === "cal-prev") { state.week = clampWeek(shownWeek() - 1); location.hash = `grid/${state.week}`; return; }
+  if (e.target.id === "cal-next") { state.week = clampWeek(shownWeek() + 1); location.hash = `grid/${state.week}`; return; }
+  if (e.target.id === "cal-today") { state.week = null; location.hash = "grid"; render(); return; }
+  const cw = e.target.closest("[data-calweek]");
+  if (cw) { state.week = clampWeek(Number(cw.dataset.calweek)); location.hash = `grid/${state.week}`; return; }
   // no #deadlines-only button since 26 Sep 2026; kept for the restore
   if (e.target.id === "deadlines-only") { toggleDeadlinesOnly(); return; }
   if (e.target.id === "newnote") {
