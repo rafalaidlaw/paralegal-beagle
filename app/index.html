@@ -4,23 +4,35 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Paralegal Beagle</title>
+<!-- Both, always. This is what the page SUPPORTS, and it is what stops a
+     browser deciding to darken a light page for us. See rule 1b in app.css. -->
+<meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3f2f2">
 <link rel="stylesheet" href="app.css">
 <script>
-  /* Read the theme before the first paint so an explicit choice never
-     flashes the other state. ?theme= wins, for screenshot checks. */
+  /* Read the theme before the first paint so an explicit choice never flashes
+     the other state. ?theme= wins, for screenshot checks.
+
+     THE STAMP IS OUTSIDE THE try. This is the whole bug Rafael photographed on
+     27 Sep 2026: an iPhone showing a dark page with a button reading "Light".
+     localStorage THROWS on iOS when site data is blocked or in a private tab,
+     and the assignment used to sit after the read inside the same try -- so
+     one throw and no data-theme was ever set. With the attribute absent, the
+     prefers-color-scheme rule matched, the phone's own dark setting won, and
+     the button (reading a storage that also threw, so "light" by default) sat
+     there claiming otherwise. Never put the stamp back inside a try that
+     touches storage. */
+  var t = "light";
   try {
-    var q = new URLSearchParams(location.search).get("theme");
-    var t = q || localStorage.getItem("beagle-theme") || "light";   /* light is the default; "auto" follows Windows */
-    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    t = new URLSearchParams(location.search).get("theme")
+        || localStorage.getItem("beagle-theme") || "light";
   } catch (e) {}
+  document.documentElement.dataset.theme = (t === "dark") ? "dark" : "light";
   /* The address bar is the one surface no stylesheet can reach, so the meta
      has to be kept in step by hand. Set before first paint here, and again in
      paintChrome() whenever the toggle moves. */
   try {
-    var dark = document.documentElement.dataset.theme === "dark"
-      || (!document.documentElement.dataset.theme
-          && matchMedia("(prefers-color-scheme: dark)").matches);
+    var dark = document.documentElement.dataset.theme === "dark";
     document.querySelector('meta[name="theme-color"]').content = dark ? "#161514" : "#f3f2f2";
   } catch (e) {}
 </script>
@@ -31,7 +43,7 @@
   <aside class="side">
     <div class="brand">
       <div class="name">Paralegal <br>Beagle</div>
-      <div class="sub">Fall 2026 · PLEA accelerated</div>
+      <div class="sub"><span class="full">Fall 2026 · PLEA accelerated</span><span class="short">Fall 2026</span></div>
     </div>
 
     <div class="nowblock">
@@ -63,7 +75,7 @@
 
     <div class="sidefoot">
       <div class="row">
-        <button id="theme" class="flex" title="Theme: follow Windows / light / dark">◐ Auto</button>
+        <button id="theme" class="flex" title="Switch between light and dark">☀ Light</button>
       </div>
       <div class="footstats" id="footstats"></div>
     </div>

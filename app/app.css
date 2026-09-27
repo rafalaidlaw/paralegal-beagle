@@ -7,17 +7,23 @@
 
    Rules this file keeps, so a later edit does not undo them:
 
-   1. LIGHT on bare :root. DARK twice — under prefers-color-scheme for the
-      "system" setting and under [data-theme="dark"] so the toggle wins both
-      ways. No colour lives only inside a media query.
-   1b. color-scheme goes with each of those three, ALWAYS. It is not a colour;
-      it is how the page tells the browser which palette it is using, and the
-      browser owns things the stylesheet cannot reach — native selects and
-      checkboxes, the scrollbar, the text caret, the address bar, and Chrome
-      on Android deciding whether to force-darken the page. Without it,
-      choosing Light on a phone set to dark leaves all of those dark, which is
-      what Rafael saw on 26 Sep 2026: "it doesn't set the entire site to
-      light, just some elements".
+   1. LIGHT on bare :root. DARK twice — under prefers-color-scheme, which is
+      only a fallback now that the theme is always chosen explicitly, and
+      under [data-theme="dark"], which is what actually fires. No colour lives
+      only inside a media query.
+   1b. `color-scheme: light dark` is declared ONCE, on :root, and is never
+      overridden per theme. It is not a colour and it is not a description —
+      it is a declaration of what the page SUPPORTS, and the browser acts on
+      it. Saying `light` while showing the light theme reads as "this page has
+      no dark mode", and Chrome on Android then force-darkens it itself: that
+      is why choosing Light on a phone set to dark gave a page that was
+      mostly-but-not-entirely light (Rafael, 26 and 27 Sep 2026 — "it doesn't
+      set the entire site to light, just some elements", then "still busted
+      looking on my phone"). Declaring both keeps every browser's hands off
+      the palette. **Never narrow it back to a single value.** The cost is
+      that a native select or scrollbar follows the device rather than the
+      chosen theme, which is worth it and is barely visible: the three
+      published screens have no native controls on them.
    2. Every contrast figure in a comment was MEASURED (python tools/contrast.py
       parses this file). Content clears 4.5:1. --ink4 is decorative only.
    3. --accent is the bright red. It is a MARK: rails, bars, fills, and
@@ -63,7 +69,7 @@
 }
 
 :root {
-  color-scheme: light;        /* see rule 1b: this is not a colour, it is what the BROWSER reads */
+  color-scheme: light dark;   /* see rule 1b -- what the page SUPPORTS, never what it is showing */
   /* ---- surfaces ------------------------------------------------------ */
   --bg: #f3f2f2;
   --surf: #ffffff;
@@ -113,7 +119,6 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    color-scheme: dark;
     --bg: #161514;
     --surf: #201e1d;
     --surf2: #2d2b2b;
@@ -141,7 +146,6 @@
 }
 
 :root[data-theme="dark"] {
-  color-scheme: dark;
   --bg: #161514;
   --surf: #201e1d;
   --surf2: #2d2b2b;
@@ -226,6 +230,7 @@ i, em { font-style: normal; font-weight: 600; }
 .brand { padding: var(--s5) 18px var(--s4); border-bottom: 2px solid var(--rule); }
 .brand .name { font: 700 16px/1.05 var(--sans); letter-spacing: .01em; text-transform: uppercase; }
 .brand .sub { margin-top: 7px; font-size: 12px; color: var(--ink3); }
+.brand .sub .short { display: none; }        /* the phone takes the other one */
 
 .nowblock { padding: 13px 18px 15px; border-bottom: 1px solid var(--line); }
 .nowblock .big { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; }
@@ -705,7 +710,11 @@ details > summary:hover { color: var(--accent-text); }
   .brand { grid-area: brand; padding: 12px 16px 10px; display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--line); }
   .brand .name br { display: none; }
   .brand .name { font-size: 15px; }
+  /* "Fall 2026 · PLEA accelerated" was three words of ellipsis beside the
+     theme button; the design says "Fall 2026" and it is right. */
   .brand .sub { margin: 0; white-space: nowrap; }
+  .brand .sub .full { display: none; }
+  .brand .sub .short { display: inline; }
   .sidefoot { grid-area: theme; border-top: 0; border-bottom: 1px solid var(--line); padding: 8px 16px 8px 0; display: flex; align-items: center; }
   .sidefoot .row { margin: 0; }
   .sidefoot .footstats { display: none; }

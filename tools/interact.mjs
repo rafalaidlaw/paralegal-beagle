@@ -246,16 +246,26 @@ const bgDark = await evalJs(`getComputedStyle(document.body).backgroundColor`);
 check("explicit dark wins over a light system", bgDark.v === "rgb(22, 21, 20)", bgDark.v);
 await click("#theme"); await sleep(250);
 t = JSON.parse((await themeState()).v);
-check("theme -> auto follows Windows", t.attr === "" && t.ls === "auto", t);
-const bgAuto = await evalJs(`getComputedStyle(document.body).backgroundColor`);
-check("auto follows the light system", bgAuto.v === "rgb(243, 242, 242)", bgAuto.v);
+check("two themes only -- it goes straight back to light, never through auto",
+  t.attr === "light" && t.ls === "light" && /Light/.test(t.btn), t);
+// The system setting must not get a vote any more. Rafael asked for light and
+// dark and nothing else (27 Sep 2026), so the attribute is always stamped and
+// the prefers-color-scheme rule can never win.
 await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "dark" }] }, S);
-await sleep(200);
-const bgAutoDark = await evalJs(`getComputedStyle(document.body).backgroundColor`);
-check("auto follows a dark system too", bgAutoDark.v === "rgb(22, 21, 20)", bgAutoDark.v);
+await sleep(250);
+const bgHeld = await evalJs(`getComputedStyle(document.body).backgroundColor`);
+check("a dark system cannot override the chosen light", bgHeld.v === "rgb(243, 242, 242)", bgHeld.v);
+// And the declaration stays "light dark" WHICHEVER is showing: it states what
+// the page supports, and narrowing it to one value is read by Chrome on
+// Android as "no dark mode here, I will darken it for you".
+const decl = await evalJs(`getComputedStyle(document.documentElement).colorScheme`);
+check("the page always tells the browser it supports both", decl.v === "light dark", decl.v);
 await click("#theme"); await sleep(250);
-t = JSON.parse((await themeState()).v);
-check("theme cycles back to light", t.attr === "light" && t.ls === "light", t);
+const declDark = await evalJs(`JSON.stringify({ s: getComputedStyle(document.documentElement).colorScheme,
+  bg: getComputedStyle(document.body).backgroundColor })`);
+const dd = JSON.parse(declDark.v);
+check("still both when it is showing dark", dd.s === "light dark" && dd.bg === "rgb(22, 21, 20)", dd);
+await click("#theme"); await sleep(250);
 
 // ----------------------------------------------- a finished tick recedes
 // Lightened 26 Sep 2026. Two things must both hold: a done tick stays filled
@@ -581,21 +591,19 @@ await go("grid");
 // the caret, the address bar, and Chrome on Android force-darkening the page.
 // color-scheme is what tells the browser, and it has to track the theme.
 const scheme = await evalJs(`JSON.stringify({
-  light: getComputedStyle(document.documentElement).colorScheme,
+  decl: getComputedStyle(document.documentElement).colorScheme,
   meta: document.querySelector('meta[name="theme-color"]')?.content,
   bg: getComputedStyle(document.body).backgroundColor
 })`);
 const sc = JSON.parse(scheme.v);
-check("the page tells the browser it is in light mode", sc.light === "light", sc);
+check("the page says it supports both schemes", sc.decl === "light dark", sc);
 check("the address bar is sent the page's own background", sc.meta === sc.bg, sc);
 await evalJs(`document.documentElement.dataset.theme = "dark"; paintChrome(); "ok"`);
 await sleep(300);
 const dk = JSON.parse((await evalJs(`JSON.stringify({
-  scheme: getComputedStyle(document.documentElement).colorScheme,
   meta: document.querySelector('meta[name="theme-color"]')?.content,
   bg: getComputedStyle(document.body).backgroundColor })`)).v);
-check("and it says dark when the theme is dark", dk.scheme === "dark", dk);
-check("with the address bar following", dk.meta === dk.bg, dk);
+check("with the address bar following into dark", dk.meta === dk.bg, dk);
 /* Put it back by hand. go() only changes the fragment, so navigating to the
    same #grid does NOT reload -- the attribute set above would have leaked into
    every check after this one, and did. */
@@ -741,6 +749,46 @@ await sleep(400);
 const shut = await evalJs(`!!document.querySelector('.sheetbody')`);
 check("and the backdrop closes it", shut.v === false, shut.v);
 
+await send("Emulation.setDeviceMetricsOverride",
+  { width: 1440, height: 1200, deviceScaleFactor: 1, mobile: false }, S);
+
+// ------------------------------------------- storage that will not answer
+// The bug Rafael photographed on 27 Sep 2026: an iPhone showing a DARK page
+// with the button reading "Light". localStorage throws on iOS when site data
+// is blocked or the tab is private, the stamp that sets data-theme sat inside
+// the same try as the read, and one throw left the attribute absent -- so the
+// prefers-color-scheme rule matched and the phone's own dark setting won,
+// while the button (reading a storage that also threw) said light.
+//
+// Reproduced exactly here: no storage, system set to dark. The page must come
+// up LIGHT, and the button must agree with it. This is the check that was
+// missing; everything else about the theme was already covered.
+const { result: injected } = await send("Page.addScriptToEvaluateOnNewDocument", {
+  source: `Object.defineProperty(window, "localStorage", {
+    get() { throw new DOMException("blocked", "SecurityError"); } });`,
+}, S);
+await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "dark" }] }, S);
+await send("Emulation.setDeviceMetricsOverride",
+  { width: 412, height: 915, deviceScaleFactor: 2, mobile: true }, S);
+await go("week");
+const blocked = await evalJs(`JSON.stringify({
+  attr: document.documentElement.dataset.theme || "(none)",
+  btn: document.querySelector('#theme')?.textContent.trim(),
+  bg: getComputedStyle(document.body).backgroundColor
+})`);
+const bl = JSON.parse(blocked.v);
+check("a phone that cannot use storage still opens light",
+  bl.attr === "light" && bl.bg === "rgb(243, 242, 242)", bl);
+check("and the button says what the page is actually showing",
+  /Light/.test(bl.btn || ""), bl);
+const tapped = await evalJs(`(() => { document.querySelector('#theme').click(); return JSON.stringify({
+  attr: document.documentElement.dataset.theme,
+  btn: document.querySelector('#theme').textContent.trim(),
+  bg: getComputedStyle(document.body).backgroundColor }); })()`);
+const tp = JSON.parse(tapped.v);
+check("and the toggle still works without anywhere to save it",
+  tp.attr === "dark" && tp.bg === "rgb(22, 21, 20)" && /Dark/.test(tp.btn), tp);
+await send("Page.removeScriptToEvaluateOnNewDocument", { identifier: injected.identifier }, S);
 await send("Emulation.setDeviceMetricsOverride",
   { width: 1440, height: 1200, deviceScaleFactor: 1, mobile: false }, S);
 

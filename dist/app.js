@@ -268,34 +268,37 @@ async function post(path, body) {
 /* ------------------------------------------------------------ theme */
 /* Light is the default. Rafael's Windows is in dark mode and he asked for
    light regardless, so "auto" (follow Windows) is a choice, not the start. */
-const THEMES = ["light", "dark", "auto"];
-const THEME_LABEL = { light: "☀ Light", dark: "☾ Dark", auto: "◐ Auto" };
+/* Two themes, and Rafael picks. "Auto" went on 27 Sep 2026, at his request and
+   for a better reason than tidiness: a state that renders identically to
+   whatever the device is already set to is a state you cannot see, so one tap
+   in three appeared to do nothing. It also meant the page sometimes had no
+   data-theme at all, and a page with no stated theme is a page Chrome on
+   Android feels free to darken for you. There is now always an explicit
+   choice, and the answer to "what is it showing" is always the attribute. */
+const THEMES = ["light", "dark"];
+const THEME_LABEL = { light: "☀ Light", dark: "☾ Dark" };
 /* The attribute wins over the stored value. They agree in ordinary use, but
    ?theme= sets the attribute without storing anything -- so the screenshot
    tools were photographing a dark page with a button that said "Light", and
    every one of those images has been slightly lying. */
+/* The ATTRIBUTE is the answer, always. It is stamped before the first paint
+   and it is what the stylesheet renders from, so asking anything else -- a
+   localStorage that can throw, a media query -- risks a button that disagrees
+   with the page it is sitting on. That disagreement is exactly what Rafael
+   photographed on 27 Sep 2026. Storage is only consulted when there is somehow
+   no attribute at all, which should now never happen. */
 function currentTheme() {
   const a = root() && root().dataset.theme;
   if (THEMES.includes(a)) return a;
   const t = LS.get("beagle-theme");
   return THEMES.includes(t) ? t : "light";
 }
-/* Three states on a desktop: light, dark, follow-Windows. TWO on a phone, and
-   that is a fix rather than a simplification. "Auto" renders identically to
-   whichever the device is already set to, so on a phone set to dark the step
-   from dark to auto changed nothing on screen -- one tap in three appeared to
-   do nothing at all, which is exactly what a broken button looks like
-   (Rafael, 27 Sep 2026). A phone's system setting is also one swipe away,
-   where Windows' is not, so the state earns its place on one and not the
-   other. The stored value is shared: choosing dark on the phone and opening
-   the laptop gives dark, which is the point of storing it. */
 function cycleTheme() {
-  const ring = PHONE() ? ["light", "dark"] : THEMES;
-  const at = ring.indexOf(currentTheme());
-  const next = ring[(at < 0 ? 0 : at + 1) % ring.length];
+  const at = THEMES.indexOf(currentTheme());
+  const next = THEMES[(at < 0 ? 0 : at + 1) % THEMES.length];
   LS.set("beagle-theme", next);
   const r = root();
-  if (r) { if (next === "auto") delete r.dataset.theme; else r.dataset.theme = next; }
+  if (r) r.dataset.theme = next;
   paintChrome();
 }
 /* "Show deadlines only" was switched off on 26 Sep 2026: the chapter runs are
