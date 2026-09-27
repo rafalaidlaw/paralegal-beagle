@@ -344,34 +344,25 @@ check("the numbers are still in the data, ready to switch back on", lsoRows === 
 const colOrder = await evalJs(`[...document.querySelectorAll('.grow.head .gcell .code')].map(e => e.textContent.trim())`);
 check("the calendar's columns run in Rafael's week order",
   JSON.stringify(colOrder.v) === JSON.stringify(["LGL156", "LGL151", "LGL250", "LGL225", "LGL154", "LGL160", "LGL152", "LGL153"]), colOrder.v);
-// The sidebar and the calendar are read as one grid, so a rule crossing the
-// sidebar has to carry on at the same height across the content (Rafael,
-// 26 Sep 2026). Two pairs, locked by --bandh and --nowh in app.css. Measured
-// rather than trusted: the whole point is what lands on screen.
+// The sidebar and the page read as one grid, so the rule under the brand block
+// carries on under the page title. Measured rather than trusted: what lands on
+// screen is the whole point. (There was a second pair of this kind, locking
+// the "week ahead" block to the calendar's column heads. It went back on
+// 26 Sep 2026 along with the larger type it arrived with -- see app.css.)
 const rules = await evalJs(`JSON.stringify((() => {
   const b = (sel) => Math.round(document.querySelector(sel).getBoundingClientRect().bottom);
-  return { brand: b('.side .brand'), mhead: b('.mhead'),
-           nowblock: b('.side .nowblock'), colheads: b('.grow.head') };
+  return { brand: b('.side .brand'), mhead: b('.mhead') };
 })())`);
 const rl = JSON.parse(rules.v);
 check("the brand rule and the page-header rule are one rule",
   rl.brand === rl.mhead, rl);
-check("the week-ahead rule and the column-head rule are one rule",
-  rl.nowblock === rl.colheads, rl);
-// The course names were raised to 14px on 26 Sep 2026, which spends the
-// headroom --nowh was giving them. Nothing may fall out of the bottom of its
-// own column head -- LGL151's title is the long one, three lines at 1440.
-const spill = await evalJs(`JSON.stringify([...document.querySelectorAll('.grow.head .gcell')]
-  .map(e => ({ code: e.querySelector('.code').textContent.trim(),
-               over: Math.round(e.querySelector('.code').getBoundingClientRect().bottom
-                                - e.getBoundingClientRect().bottom) }))
-  .filter(x => x.over > 0))`);
-check("no column head clips its own code", JSON.parse(spill.v).length === 0, spill.v);
-// And sideways, which is the one that bites first. A course title is ordinary
-// prose until a single word is wider than the column -- "Communication",
-// "Administrative" -- and a word that cannot break does not wrap, it runs into
-// the next course's column. 22px was tried on 26 Sep 2026 and did exactly
-// that; 16px is the ceiling at eight columns across 1100px.
+// A course title is ordinary prose until a single word is wider than the
+// column -- "Communication", "Administrative" -- and a word that cannot break
+// does not wrap, it runs into the next course's column. 22px was tried on
+// 26 Sep 2026 and did exactly that, printing LGL160's "Communication" over
+// LGL152's "Paralegals". The row is back at 12.5px, but the ceiling is a fact
+// about eight columns across 1100px rather than about whatever size happens to
+// be set, so the check stays.
 const wide = await evalJs(`JSON.stringify([...document.querySelectorAll('.grow.head .gcell')]
   .map(e => { const t = e.querySelector('.short'), s = getComputedStyle(e);
     const inner = e.getBoundingClientRect().width - parseFloat(s.paddingLeft) - parseFloat(s.paddingRight);

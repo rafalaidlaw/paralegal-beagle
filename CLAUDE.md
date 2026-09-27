@@ -369,31 +369,34 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   move it into `data/courses.csv`: that file stays alphabetical, and column
   order is a preference, not a fact from a syllabus. A course missing from
   `WEEK_ORDER` still renders, at the end.
-- **The sidebar's rules and the content's rules are the same rules**
-  (26 Sep 2026). `--bandh` (97px) is shared by `.brand` and `.mhead`; `--nowh`
-  (111px) by `.nowblock` and `.grow.head`. So the heavy rule under PARALEGAL
-  BEAGLE carries on under the page title, and the rule under "Starts Mon 28
-  Sept" carries on under the course names — "WEEK" and the column heads now sit
-  on the same line as "WEEK AHEAD". Before this the column heads sat 19px high
-  and every rule below them was out by the same amount. Both are `min-height`,
-  not `height`: a title wrapping to a fourth line grows the band instead of
-  clipping, so the alignment degrades by a few pixels rather than breaking. The
-  phone band resets both to 0 — those heights are the desktop composition, and
-  under 900px the sidebar folds into a strip. `interact.mjs` measures the two
-  pairs rather than trusting the tokens.
-- **16px is the ceiling for a course title in a calendar column**, and the
-  limit is sideways, not down. Eight columns across 1100px leaves about 117px
-  of usable width, and a title is ordinary prose until one WORD is wider than
-  that — "Administrative", "Communication". A word that cannot break does not
-  wrap; it runs into the next course's column. 22px was tried on 26 Sep 2026
-  and did exactly that, with LGL160's "Communication" printed over LGL152's
-  "Paralegals", four- and five-line titles, and the band at 181px instead of
-  111. `--nowh` follows the tallest column head (129px at 16px type) and the
-  sidebar block takes the same height so the rule still crosses. `interact.mjs`
-  checks both directions: nothing clipped at the foot, nothing run into the
-  next column. **Going bigger than 16 needs wider columns**, which means the
-  grid no longer fits beside the sidebar at 1440 and starts scrolling sideways
-  — and seeing all eight courses at once is what the screen is for.
+- **The brand rule and the page-header rule are one rule** (26 Sep 2026).
+  `--bandh` (97px) is a `min-height` shared by `.brand` and `.mhead`, so the
+  heavy rule under PARALEGAL BEAGLE carries straight on under the page title.
+  A subtitle wrapping to a third line grows the band rather than clipping it,
+  and the phone band resets it to 0, because under 900px the sidebar folds into
+  a strip. `interact.mjs` measures the pair rather than trusting the token.
+- **The calendar's column-head row was left alone, twice over** (26 Sep 2026).
+  A second token, `--nowh`, locked `.nowblock` to `.grow.head` so the rule
+  under "Starts Mon 28 Sept" carried on under the course names, and the titles
+  went up from 12.5px to 14 and then 16. Rafael preferred the row as it was and
+  both went back together. They had to go together: matching those two blocks
+  means forcing a height on a row whose content wraps differently at every
+  width, which is what made the type size and the alignment one decision rather
+  than two. The row is back at 12.5px titles, 12px codes, 10px padding, no
+  forced height. **Do not re-apply one without the other.**
+- **~16px is the ceiling for a course title here, and the limit is sideways.**
+  Eight columns across 1100px leaves about 117px of usable width, and a title
+  is ordinary prose until one WORD is wider than that — "Administrative",
+  "Communication". A word that cannot break does not wrap; it runs into the
+  next course's column. 22px was tried and did exactly that, printing LGL160's
+  "Communication" over LGL152's "Paralegals", with four- and five-line titles
+  and the band at 181px. 17px already spills LGL160. `interact.mjs` keeps the
+  check even though the row is back at 12.5px, because the ceiling is a fact
+  about the column width, not about the size currently set. **Going bigger
+  needs wider columns**, which means the grid stops fitting beside the sidebar
+  at 1440 and starts scrolling sideways — and seeing all eight courses at once
+  is what the screen is for. Short display names would buy it; the full titles
+  will not.
 - **The Weekly Calendar is 1100px wide minimum**, which fits beside the 238px
   sidebar at 1440. The reference used 1260 and cut off the eighth column.
   Chips inside grid cells wrap; everywhere else they do not.
