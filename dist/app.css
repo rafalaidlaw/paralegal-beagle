@@ -676,9 +676,18 @@ details > summary:hover { color: var(--accent-text); }
 
      100dvh, not 100vh: a phone browser's toolbars collapse as you scroll and
      100vh is the tall figure, which hides the last row under the fold. */
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   .app { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: 100vh; height: 100dvh; }
   main { overflow: hidden; }
-  #main { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+  #main {
+    flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+    /* contain, not none: the list still bounces at its own ends, which is the
+       feedback that tells you there is nothing more -- it just stops handing
+       the gesture to the document behind it (Rafael, 27 Sep 2026: scrolling
+       back up from the bottom was unresponsive). */
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
   /* The page title bar goes: the tab bar already says which screen you are on,
      and on a 915px-tall phone that band was 60px of repetition. */
   .mhead { display: none; }
@@ -699,7 +708,9 @@ details > summary:hover { color: var(--accent-text); }
   .sidefoot { grid-area: theme; border-top: 0; border-bottom: 1px solid var(--line); padding: 8px 16px 8px 0; display: flex; align-items: center; }
   .sidefoot .row { margin: 0; }
   .sidefoot .footstats { display: none; }
-  .sidefoot button { min-height: 36px; }
+  /* 44px is the floor for a touch target, and this one sits in the top-right
+     corner where the browser's own chrome crowds it. It was 36. */
+  .sidefoot button { min-height: 44px; min-width: 44px; }
 
   .nowblock { grid-area: now; display: flex; align-items: baseline; gap: 10px; padding: 8px 16px; }
   .nowblock .lbl { display: block; }          /* the design keeps "week ahead"; it is what the number means */
@@ -720,7 +731,12 @@ details > summary:hover { color: var(--accent-text); }
   }
   .nav a:last-child { border-right: 0; }
   .nav a.on { border-bottom-color: var(--accent); background: transparent; color: var(--ink); font-weight: 700; }
-  .nav .count { margin-left: 0; opacity: .8; }
+  /* No counts in the tab bar. A count earns its place in the desktop sidebar,
+     where it sits in a column with room for it; a tab bar is for getting
+     somewhere, and at a third of 412px the number was competing with the name
+     for the space the name needed (Rafael, 27 Sep 2026). */
+  .nav .count { display: none; }
+  .nav a { justify-content: center; text-align: center; padding: 10px 8px 7px; }
 
   /* ---- the phone calendar: one week, as a list -------------------------
      Only ever rendered under 900px (gridPhone in app.js), but scoped here
@@ -762,8 +778,7 @@ details > summary:hover { color: var(--accent-text); }
   .calrow .dueline { margin-top: 8px; }
   .calrow .topic { margin: 6px 0 0; font-size: 13.5px; color: var(--ink2); }
   .calrow .chips { margin-top: 10px; }
-  .calempty, .calfoot { margin: 0; padding: 24px 16px; color: var(--ink2); font-size: 13px; }
-  .calfoot { color: var(--ink3); font-size: 12.5px; padding: 16px; }
+  .calempty { margin: 0; padding: 24px 16px; color: var(--ink2); font-size: 13px; }
   .calbreak { background: var(--surf); border-bottom: 2px solid var(--rule); padding: 28px 16px 36px; }
   .calbreak h2 { margin: 0; font-size: 19px; border-left: 3px solid var(--accent); padding-left: 14px; }
   .calbreak p { margin: 8px 0 0 17px; color: var(--ink2); }

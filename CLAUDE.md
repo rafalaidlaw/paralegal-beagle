@@ -305,6 +305,33 @@ fell through to its own system font. One variable file covers 400–800.
 it stays a three-file server with one exception, not a static host, and
 `build_static.py` lists it among the files it copies.
 
+**The phone's theme button has TWO states, not three.** "Auto" renders
+identically to whatever the device is already set to, so on a phone set to dark
+the step from dark to auto changed nothing on screen — one tap in three looked
+like a broken button (Rafael, 27 Sep 2026). `cycleTheme()` uses a two-name ring
+under 900px and the full `THEMES` above it. A phone's system setting is also
+one swipe away where Windows' is not, so the state earns its place on one and
+not the other. The stored value is shared, deliberately: choosing dark on the
+phone and opening the laptop gives dark. `interact.mjs` asserts that every tap
+changes the rendered background.
+
+**Nothing but `#main` scrolls on a phone.** `html, body` are locked and `#main`
+carries `overscroll-behavior: contain`. Both are needed: the shell is 100dvh
+inside a viewport the browser keeps re-measuring as its toolbars collapse, so a
+few pixels of document scroll always existed, and at the foot of the list the
+gesture was handed to them — scrolling back up then had to un-scroll the
+document first, which reads as the screen ignoring your thumb. `contain` rather
+than `none`, so the list still bounces at its own ends: that bounce is the
+feedback saying there is nothing more.
+
+**The phone tab bar carries no counts and shortens one name.** A count earns
+its place in the desktop sidebar, where it has a column to sit in; a tab bar is
+for getting somewhere, and at a third of 412px the number competed with the name
+for the space the name needed. `NAV_SHORT` narrows "Weekly Calendar" to
+"Calendar" on a phone only — a narrowing, not a rename. `index.html` stays the
+one place the full names are written, `LONG_NAV` reads them from it at startup,
+and a rotated phone puts them back.
+
 **Four things in the design were deliberately not built** (Rafael, 27 Sep
 2026): a "deadlines only" filter, the dashed "dated only to a week" band, a
 fortnight horizon on Upcoming, and the Timetable's stats strip. Each is

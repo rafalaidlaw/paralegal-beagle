@@ -596,7 +596,48 @@ const dk = JSON.parse((await evalJs(`JSON.stringify({
   bg: getComputedStyle(document.body).backgroundColor })`)).v);
 check("and it says dark when the theme is dark", dk.scheme === "dark", dk);
 check("with the address bar following", dk.meta === dk.bg, dk);
-await go("grid");   // reload, back to the stored theme
+/* Put it back by hand. go() only changes the fragment, so navigating to the
+   same #grid does NOT reload -- the attribute set above would have leaked into
+   every check after this one, and did. */
+await evalJs(`document.documentElement.dataset.theme = "light"; paintChrome(); "ok"`);
+await sleep(200);
+
+// 1b. The tab bar, and the one document that may scroll.
+const bar = await evalJs(`JSON.stringify({
+  labels: [...document.querySelectorAll('#nav a .lab')].map(e => e.textContent.trim()),
+  counts: [...document.querySelectorAll('#nav .count')].map(e => getComputedStyle(e).display),
+  justify: getComputedStyle(document.querySelector('#nav a')).justifyContent,
+  tap: Math.round(document.querySelector('#theme').getBoundingClientRect().height),
+  docScroll: document.documentElement.scrollHeight - document.documentElement.clientHeight,
+  chain: getComputedStyle(document.querySelector('#main')).overscrollBehaviorY
+})`);
+const bb = JSON.parse(bar.v);
+check("a phone tab says Calendar, not Weekly Calendar", bb.labels[0] === "Calendar", bb.labels);
+check("the tab bar carries no counts", bb.counts.every((d) => d === "none"), bb.counts);
+check("and its labels are centred", bb.justify === "center", bb.justify);
+check("the theme button clears the 44px touch floor", bb.tap >= 44, bb.tap);
+// Scrolling back up from the bottom was unresponsive because the gesture was
+// handed to a document that had a few pixels of its own to give.
+check("the document itself cannot scroll behind the app", bb.docScroll <= 0, bb.docScroll);
+check("and the list does not hand its overscroll to it", /contain/.test(bb.chain), bb.chain);
+
+// The theme button must DO something on every tap. "Auto" renders identically
+// to whatever the phone is already set to, so on a dark phone one tap in three
+// changed nothing at all and the button read as broken.
+const ring = [];
+for (let i = 0; i < 4; i++) {
+  ring.push((await evalJs(`JSON.stringify({
+    t: localStorage.getItem("beagle-theme"),
+    bg: getComputedStyle(document.body).backgroundColor })`)).v);
+  await evalJs(`document.querySelector('#theme').click(); "ok"`);
+  await sleep(400);
+}
+const seen = ring.map((x) => JSON.parse(x));
+check("every tap of the theme button changes the page",
+  seen.every((x, i) => i === 0 || x.bg !== seen[i - 1].bg), seen);
+check("a phone cycles light and dark only, never through auto",
+  !seen.some((x) => x.t === "auto"), seen.map((x) => x.t));
+await go("grid");
 
 // 2. The calendar. On a phone it is not the desktop grid made narrower -- it
 // is one week as a list (gridPhone in app.js), because eight columns across

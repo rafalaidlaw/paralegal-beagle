@@ -271,8 +271,19 @@ async function post(path, body) {
 const THEMES = ["light", "dark", "auto"];
 const THEME_LABEL = { light: "☀ Light", dark: "☾ Dark", auto: "◐ Auto" };
 function currentTheme() { const t = LS.get("beagle-theme"); return THEMES.includes(t) ? t : "light"; }
+/* Three states on a desktop: light, dark, follow-Windows. TWO on a phone, and
+   that is a fix rather than a simplification. "Auto" renders identically to
+   whichever the device is already set to, so on a phone set to dark the step
+   from dark to auto changed nothing on screen -- one tap in three appeared to
+   do nothing at all, which is exactly what a broken button looks like
+   (Rafael, 27 Sep 2026). A phone's system setting is also one swipe away,
+   where Windows' is not, so the state earns its place on one and not the
+   other. The stored value is shared: choosing dark on the phone and opening
+   the laptop gives dark, which is the point of storing it. */
 function cycleTheme() {
-  const next = THEMES[(THEMES.indexOf(currentTheme()) + 1) % THEMES.length];
+  const ring = PHONE() ? ["light", "dark"] : THEMES;
+  const at = ring.indexOf(currentTheme());
+  const next = ring[(at < 0 ? 0 : at + 1) % ring.length];
   LS.set("beagle-theme", next);
   const r = root();
   if (r) { if (next === "auto") delete r.dataset.theme; else r.dataset.theme = next; }
@@ -337,6 +348,19 @@ function classesLeft() {
 }
 
 /* ------------------------------------------------------------ chrome */
+/* A phone tab is a third of 412px wide, and "Weekly Calendar" does not fit in
+   it next to a count. The count goes there (the sidebar is where a count earns
+   its place; a tab bar is for getting somewhere), and the name shortens. The
+   long name stays in index.html and on the desktop sidebar -- this is a
+   narrowing, not a rename, and #grid is still the route. */
+const NAV_SHORT = { grid: "Calendar" };
+/* Read once from the markup, so index.html stays the one place the full names
+   are written and a rotated phone can put them back. */
+const LONG_NAV = {};
+document.querySelectorAll("#nav a[data-view] .lab").forEach((el) => {
+  LONG_NAV[el.closest("a").dataset.view] = el.textContent.trim();
+});
+
 const VIEW_META = {
   week: ["Upcoming", () => weekSubtitle()],
   deadlines: ["Deadlines", () => ""],
@@ -414,6 +438,11 @@ function paintChrome() {
     : `Mon ${fmtShort(weekMonday(wk))} — Sun ${fmtShort(plus(weekMonday(wk), 6))}`;
   const c = counts();
   document.querySelectorAll("[data-count]").forEach((el) => { el.textContent = c[el.dataset.count] ?? ""; });
+  const phone = PHONE();
+  document.querySelectorAll("#nav a[data-view] .lab").forEach((el) => {
+    const v = el.closest("a").dataset.view;
+    el.textContent = phone && NAV_SHORT[v] ? NAV_SHORT[v] : (LONG_NAV[v] || el.textContent);
+  });
   document.querySelectorAll("#nav a[data-view]").forEach((a) => {
     const on = a.dataset.view === state.view;
     a.classList.toggle("on", on);
@@ -828,7 +857,7 @@ function gridPhone() {
     </article>`;
   }).join("")}</section>`;
 
-  return h + `<p class="calfoot">A tick here is the same tick on Upcoming.</p><div class="spacer"></div>`;
+  return h + `<div class="spacer"></div>`;
 }
 
 /* ==================================================================== GRID */
