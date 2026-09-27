@@ -10,6 +10,14 @@
    1. LIGHT on bare :root. DARK twice — under prefers-color-scheme for the
       "system" setting and under [data-theme="dark"] so the toggle wins both
       ways. No colour lives only inside a media query.
+   1b. color-scheme goes with each of those three, ALWAYS. It is not a colour;
+      it is how the page tells the browser which palette it is using, and the
+      browser owns things the stylesheet cannot reach — native selects and
+      checkboxes, the scrollbar, the text caret, the address bar, and Chrome
+      on Android deciding whether to force-darken the page. Without it,
+      choosing Light on a phone set to dark leaves all of those dark, which is
+      what Rafael saw on 26 Sep 2026: "it doesn't set the entire site to
+      light, just some elements".
    2. Every contrast figure in a comment was MEASURED (python tools/contrast.py
       parses this file). Content clears 4.5:1. --ink4 is decorative only.
    3. --accent is the bright red. It is a MARK: rails, bars, fills, and
@@ -35,6 +43,7 @@
    ========================================================================== */
 
 :root {
+  color-scheme: light;        /* see rule 1b: this is not a colour, it is what the BROWSER reads */
   /* ---- surfaces ------------------------------------------------------ */
   --bg: #f3f2f2;
   --surf: #ffffff;
@@ -84,6 +93,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #161514;
     --surf: #201e1d;
     --surf2: #2d2b2b;
@@ -111,6 +121,7 @@
 }
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --bg: #161514;
   --surf: #201e1d;
   --surf2: #2d2b2b;
@@ -668,6 +679,24 @@ details > summary:hover { color: var(--accent-text); }
   .caseform { grid-template-columns: 1fr; }
   :root { --secpad: 16px; }
   .weekband, .callout { margin-left: 16px; margin-right: 16px; }
+
+  /* The calendar's column heads have to stay put while you scroll the term
+     (Rafael, 26 Sep 2026). They are already position: sticky -- but sticky
+     sticks to the nearest SCROLLING ancestor, and .gridwrap is one: it has to
+     scroll sideways to fit eight columns into a phone. On a phone the PAGE
+     scrolls vertically while .gridwrap does not, so the heads had nothing to
+     stick to and scrolled away with everything else.
+
+     So on the calendar, and only there, the app becomes a fixed-height shell
+     and .gridwrap does the scrolling in both directions. Now the heads stick
+     down the page and the week column sticks across it -- which is the pair
+     you need to read a single cell, since a cell means nothing without both.
+     100dvh, not 100vh: a phone browser's toolbars collapse as you scroll and
+     100vh is the tall figure, which would push the last week under the fold. */
+  .app:has(.gridwrap) { height: 100vh; height: 100dvh; grid-template-rows: auto minmax(0, 1fr); }
+  .app:has(.gridwrap) main { overflow: hidden; }
+  .app:has(.gridwrap) #main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .app:has(.gridwrap) .gridwrap { flex: 1; min-height: 0; overflow: auto; }
 }
 
 @media (max-width: 720px) {

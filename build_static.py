@@ -26,14 +26,22 @@ Kept OUT on purpose, and each for its own reason:
   reference/        holds his integrity-in-action certificate, with his name.
   data/grades.csv   his marks.
   data/cases.csv    his own case briefs.
+  data/progress.csv which chapters HE has read. The published site is usable by
+                    anyone, and a stranger opening it should not find somebody
+                    else's reading already crossed off -- nor should they be
+                    able to see it. Their own ticks live in their own browser
+                    (see withLocalTicks in app.js), which also means Rafael's
+                    phone and his laptop keep separate lists. That is the
+                    honest trade: no server, no shared state.
   notes/            his reading notes.
   data/*.csv        the source files themselves. The payload is derived from
                     them; the files are the working copy and stay private.
 
-data.json therefore carries only what the three published screens draw:
-courses, schedule, assessments, readings, timetable, term, and progress. If a
-screen is ever switched back on that needs grades, cases or notes, the decision
-to publish those has to be taken first -- do not just add the key.
+data.json therefore carries only the syllabus facts the three published
+screens draw: courses, schedule, assessments, readings, timetable and term.
+Nothing about what Rafael has done. If a screen is ever switched back on that
+needs grades, cases or notes, the decision to publish those has to be taken
+first -- do not just add the key.
 
 THE DATE
 --------
@@ -56,7 +64,7 @@ DIST = ROOT / "dist"
 # published, including keys build_payload() happens to add later.
 PUBLISH_KEYS = [
     "term", "today", "generated", "courses", "schedule",
-    "assessments", "readings", "progress", "timetable",
+    "assessments", "readings", "timetable",
 ]
 
 # Read by the client, but NOT published: grades and case briefs are his, notes
@@ -65,7 +73,7 @@ PUBLISH_KEYS = [
 # queue read .length off each of them on first paint -- omitting a key crashed
 # the published page before its first render, which is how this list was found.
 # An empty array is also the truth on a copy that cannot save any of them.
-EMPTY_KEYS = ["grades", "cases", "notes", "syllabi"]
+EMPTY_KEYS = ["grades", "cases", "notes", "syllabi", "progress"]
 
 PAGES = [("app/index.html", "index.html"), ("app/app.css", "app.css"), ("app/app.js", "app.js")]
 

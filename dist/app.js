@@ -9,7 +9,12 @@
 
 let D = null;
 const state = {
-  view: "week", course: null, notePath: null, target: 70,
+  /* Opens on whatever is first in SHOWN -- the Weekly Calendar (Rafael,
+     26 Sep 2026; it opened on Upcoming until then). Deliberately not a second
+     copy of the name: the sidebar order and the landing screen used to be set
+     in two places and drifted apart. Move a name to the front of SHOWN and the
+     app opens there. */
+  view: "grid", course: null, notePath: null, target: 70,
   week: null,            // null = follow today; set by the < today > stepper
 };
 
@@ -377,6 +382,12 @@ function counts() {
 }
 
 function paintChrome() {
+  /* Keep the address bar with the page. color-scheme in app.css handles every
+     other browser-owned surface -- scrollbar, caret, native controls, and
+     Chrome on Android's force-darkening -- but the theme-color meta is the
+     only way to reach this one. */
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = getComputedStyle(document.body).backgroundColor;
   const wk = nowWeek(), last = LAST_WEEK();
   const ahead = rolledForward();
   $("#wk-big").textContent = String(wk).padStart(2, "0");
@@ -416,7 +427,7 @@ const VIEWS = {};
 /* Sidebar order, top to bottom. The Weekly Calendar leads because it is how
    Rafael navigates the term (his call, 26 Sep 2026); the app still OPENS on
    Upcoming, which is a separate thing -- see state.view. */
-const SHOWN = ["grid", "week", "timetable"];
+const SHOWN = ["grid", "week", "timetable"];   /* order in the sidebar; [0] is where the app opens */
 const isShown = (v) => SHOWN.includes(v);
 
 /* The route stays #grid so old bookmarks keep working; #calendar matches the
@@ -442,8 +453,8 @@ function routeFromHash() {
   v = ALIAS[v] || v;
   if (!VIEWS[v]) return;
   /* An old bookmark to a screen that is no longer shown (#courses/LGL225)
-     lands on This Week rather than a blank page. */
-  if (!isShown(v)) { state.view = "week"; return; }
+     lands on the screen the app opens on rather than a blank page. */
+  if (!isShown(v)) { state.view = SHOWN[0]; return; }
   state.view = v;
   if (v === "courses" && arg && D.courses.some((c) => c.code === arg)) state.course = arg;
   if (v === "week") state.week = arg ? clampWeek(Number(arg)) : null;
@@ -690,7 +701,17 @@ VIEWS.grid = () => {
   for (let w = 1; w <= last; w++) {
     const mon = weekMonday(w);
     const marks = [];
-    Object.keys(D.term.holidays).forEach((d) => { if (d >= mon && d <= plus(mon, 6)) marks.push(`${D.term.holidays[d]} — ${fmt(d)}`); });
+    /* A closure is only worth a band if it shuts a class Rafael would otherwise
+       have had. Both of this term's fall on a Monday and he has no Monday
+       class, so Labour Day and Thanksgiving were two rows of the calendar
+       saying nothing (his call, 26 Sep 2026). Derived from timetable.csv
+       rather than hardcoding "not Monday", so the band comes back by itself if
+       a Monday class ever appears -- and if that file is ever empty, every
+       closure shows, because silence is the wrong default here. */
+    const teaches = (d) => !D.timetable.length || D.timetable.some((t) => TT_DAY_NO[t.day] === toDate(d).getDay());
+    Object.keys(D.term.holidays).forEach((d) => {
+      if (d >= mon && d <= plus(mon, 6) && teaches(d)) marks.push(`${D.term.holidays[d]} — ${fmt(d)}`);
+    });
     if (D.term.drop_deadline >= mon && D.term.drop_deadline <= plus(mon, 6)) marks.push(`${D.term.drop_deadline_label} — ${fmt(D.term.drop_deadline)}`);
     if (D.term.grades_released >= mon && D.term.grades_released <= plus(mon, 6)) marks.push(`Grades released — ${fmt(D.term.grades_released)}`);
     if (marks.length) h += `<div class="gnote">${esc(marks.join("  ·  "))}</div>`;
@@ -740,6 +761,7 @@ function legend() {
    contradicts three of them. So every block carries where its times came from,
    and an unconfirmed one is drawn dashed: absence, not alarm, the same way an
    unstated exam scope is drawn. */
+const TT_DAY_NO = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5 };
 const TT_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const mins = (hhmm) => { const [h, m] = String(hhmm).split(":").map(Number); return h * 60 + m; };
 const hhmm = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;

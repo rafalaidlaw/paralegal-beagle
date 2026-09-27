@@ -457,9 +457,25 @@ const navOn = await evalJs(`document.querySelectorAll('#nav a.on').length`);
 check("exactly one nav item is active", navOn.v === 1, navOn.v);
 
 await go("courses/LGL225");   // an old bookmark to a screen that is now hidden
+// No hash at all: the app opens on SHOWN[0], which is the Weekly Calendar
+// (Rafael, 26 Sep 2026 -- it opened on Upcoming until then). Asserted against
+// the sidebar's own first entry rather than the word "Weekly Calendar", so
+// reordering SHOWN moves both together or this fails.
+await send("Page.navigate", { url: "http://127.0.0.1:8787/" }, S);
+await sleep(1800);
+const opened = await evalJs(`JSON.stringify({
+  first: SHOWN[0],
+  topOfNav: document.querySelector('#nav a')?.dataset.view,
+  showing: state.view
+})`);
+const op = JSON.parse(opened.v);
+check("with no hash the app opens on the first screen in the sidebar",
+  op.showing === op.first && op.topOfNav === op.first, op);
+
 const landed = await evalJs(`JSON.stringify({ title: document.querySelector("#vtitle")?.textContent.trim(), csel: !!document.querySelector("#csel") })`);
 const lj = JSON.parse(landed.v);
-check("an old deep link to a hidden screen lands on Upcoming", lj.title === "Upcoming" && !lj.csel, lj);
+check("an old deep link to a hidden screen lands on the opening screen",
+  lj.title === "Weekly Calendar" && !lj.csel, lj);
 await go("week");
 const deadPills = await evalJs(`JSON.stringify({ links: document.querySelectorAll('.card a.course-pill').length, chips: document.querySelectorAll('.card .course-pill').length })`);
 const dp = JSON.parse(deadPills.v);
@@ -487,7 +503,7 @@ check("the Weekly Calendar carries no subtitle", calSub.v === "", JSON.stringify
 for (const hash of ["deadlines", "exams"]) {
   await go(hash);
   const t = await evalJs(`document.querySelector("#vtitle")?.textContent.trim()`);
-  check(`#${hash} now lands on Upcoming`, t.v === "Upcoming", t.v);
+  check(`#${hash} still lands somewhere sensible`, t.v === "Weekly Calendar", t.v);
 }
 await go("week");
 // "Already happened" came off Upcoming on 26 Sep 2026 -- it is a screen about
@@ -552,6 +568,57 @@ if (undated.length) {
   }
   await go("week");
 }
+
+// ------------------------------------------------------------------ phone
+// Everything above runs at 1440. Two things only exist below 900px, and both
+// were reported from a phone on 26 Sep 2026.
+await send("Emulation.setDeviceMetricsOverride",
+  { width: 412, height: 915, deviceScaleFactor: 2, mobile: true }, S);
+await go("grid");
+
+// 1. The colour scheme. Choosing Light used to leave "some elements" dark:
+// everything the STYLESHEET cannot reach -- native controls, the scrollbar,
+// the caret, the address bar, and Chrome on Android force-darkening the page.
+// color-scheme is what tells the browser, and it has to track the theme.
+const scheme = await evalJs(`JSON.stringify({
+  light: getComputedStyle(document.documentElement).colorScheme,
+  meta: document.querySelector('meta[name="theme-color"]')?.content,
+  bg: getComputedStyle(document.body).backgroundColor
+})`);
+const sc = JSON.parse(scheme.v);
+check("the page tells the browser it is in light mode", sc.light === "light", sc);
+check("the address bar is sent the page's own background", sc.meta === sc.bg, sc);
+await evalJs(`document.documentElement.dataset.theme = "dark"; paintChrome(); "ok"`);
+await sleep(300);
+const dk = JSON.parse((await evalJs(`JSON.stringify({
+  scheme: getComputedStyle(document.documentElement).colorScheme,
+  meta: document.querySelector('meta[name="theme-color"]')?.content,
+  bg: getComputedStyle(document.body).backgroundColor })`)).v);
+check("and it says dark when the theme is dark", dk.scheme === "dark", dk);
+check("with the address bar following", dk.meta === dk.bg, dk);
+await go("grid");   // reload, back to the stored theme
+
+// 2. The calendar's column heads stay put while the term scrolls past. They
+// are sticky, but sticky needs a scrolling ancestor, and .gridwrap only
+// scrolls sideways unless the shell is given a fixed height on the phone.
+const stick = await evalJs(`(() => {
+  const w = document.querySelector('.gridwrap'), h = document.querySelector('.grow.head');
+  const before = Math.round(h.getBoundingClientRect().top);
+  w.scrollTop = 900; w.scrollLeft = 400;
+  const after = Math.round(h.getBoundingClientRect().top);
+  const wk = Math.round(document.querySelector('.grow:not(.head) .gwk').getBoundingClientRect().left);
+  const wrap = Math.round(w.getBoundingClientRect().left);
+  const scrolled = Math.round(w.scrollTop);
+  w.scrollTop = 0; w.scrollLeft = 0;
+  return JSON.stringify({ before, after, wk, wrap, scrolled });
+})()`);
+const st = JSON.parse(stick.v);
+check("the calendar scrolls inside its own box on a phone", st.scrolled > 0, st);
+check("the column heads stay put while the term scrolls past", st.before === st.after, st);
+check("and the week column stays put while the courses scroll across", st.wk === st.wrap, st);
+
+await send("Emulation.setDeviceMetricsOverride",
+  { width: 1440, height: 1200, deviceScaleFactor: 1, mobile: false }, S);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (logs.length) { console.log("\nbrowser errors:"); logs.forEach((l) => console.log("  " + l)); }

@@ -108,10 +108,25 @@ for (let i = 0; i < 2; i++) {
 const cleared = await evalJs(`JSON.parse(localStorage.getItem("beagle-ticks") || "{}")["${firstId}"]`);
 check("cycling back to not-started clears it rather than storing a blank", cleared === "", cleared);
 
+// The published site is for anyone, so it carries none of Rafael's reading.
+// A stranger opening it must find nothing crossed off, and must not be able to
+// see what he has read either -- it is not in the file at all (see
+// PUBLISH_KEYS/EMPTY_KEYS in build_static.py), not merely hidden.
 const snapKept = await evalJs(`SNAP.length`);
-check("the published snapshot's own ticks are still there underneath", snapKept > 0, snapKept);
+check("the published copy carries none of his ticks", snapKept === 0, snapKept);
+const shipped = await (await fetch(`http://127.0.0.1:${SITE}/data.json`)).json();
+check("data.json has no progress rows in it at all",
+  Array.isArray(shipped.progress) && shipped.progress.length === 0, shipped.progress?.length);
+check("nor grades, cases or notes",
+  !shipped.grades?.length && !shipped.cases?.length && !shipped.notes?.length,
+  { grades: shipped.grades?.length, cases: shipped.cases?.length, notes: shipped.notes?.length });
 
 console.log(`\n${pass} passed, ${fail} failed`);
+// Tear down in order and let node exit on its own. Calling process.exit()
+// while two spawned children are still closing makes libuv abort on Windows
+// ("UV_HANDLE_CLOSING"), which reported a failure the run did not have.
+sock.close();
 chrome.kill();
 site.kill();
-process.exit(fail ? 1 : 0);
+process.exitCode = fail ? 1 : 0;
+setTimeout(() => process.exit(process.exitCode), 300).unref();

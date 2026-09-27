@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Paralegal Beagle</title>
+<meta name="theme-color" content="#f3f2f2">
 <link rel="stylesheet" href="app.css">
 <script>
   /* Read the theme before the first paint so an explicit choice never
@@ -12,6 +13,15 @@
     var q = new URLSearchParams(location.search).get("theme");
     var t = q || localStorage.getItem("beagle-theme") || "light";   /* light is the default; "auto" follows Windows */
     if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  } catch (e) {}
+  /* The address bar is the one surface no stylesheet can reach, so the meta
+     has to be kept in step by hand. Set before first paint here, and again in
+     paintChrome() whenever the toggle moves. */
+  try {
+    var dark = document.documentElement.dataset.theme === "dark"
+      || (!document.documentElement.dataset.theme
+          && matchMedia("(prefers-color-scheme: dark)").matches);
+    document.querySelector('meta[name="theme-color"]').content = dark ? "#161514" : "#f3f2f2";
   } catch (e) {}
 </script>
 </head>

@@ -174,8 +174,10 @@ Upcoming become plain `div`s and point at the Weekly Calendar instead, exactly
 as `pill()` and `legend()` do for Courses; `interact.mjs` asserts it. Rafael cut the app to three on
 24 Sep 2026, added the Timetable on 25 Sep, and on 26 Sep renamed This Week to
 **Upcoming**, moved the Weekly Calendar to the top, and asked for the roll
-below. The app still OPENS on Upcoming — sidebar order and landing screen are
-separate things.
+below. The app OPENS on `SHOWN[0]`, which is the Weekly Calendar (26 Sep 2026; it
+opened on Upcoming until then, and the landing screen used to be set in a
+second place and drifted). Move a name to the front of `SHOWN` and the app
+opens there. A deep link to a hidden screen lands there too.
 
 **Upcoming's horizon is the week it names — the five business days of it.**
 Not a rolling 7 or 14 days from today (Rafael, 26 Sep 2026). A rolling window
@@ -240,6 +242,29 @@ in `localStorage` and is read before the first paint by an inline script in
 compact for good on 13 Sep 2026, so `--rowpad`/`--secpad` are 8/18 and the
 button is gone. Do not bring it back.
 
+**`color-scheme` is not decoration and must never be dropped.** It sits with
+each of the three palette blocks — `light` on bare `:root`, `dark` in both dark
+blocks. It is how the page tells the BROWSER which palette it is using, and the
+browser owns surfaces no stylesheet can reach: native selects and checkboxes,
+the scrollbar, the text caret, and Chrome on Android deciding whether to
+force-darken the whole page. Without it, choosing Light on a phone set to dark
+leaves exactly those parts dark — Rafael, 26 Sep 2026: "it doesn't set the
+entire site to light, just some elements." The address bar is the one surface
+even that cannot reach, so `index.html` carries a `theme-color` meta, set
+before first paint and again in `paintChrome()` from the body's own computed
+background. `interact.mjs` checks both, in both themes, at phone size.
+
+**On a phone the Weekly Calendar is its own scroller.** `.grow.head` and `.gwk`
+have always been `position: sticky`, but sticky sticks to the nearest SCROLLING
+ancestor, and `.gridwrap` is one — it has to scroll sideways to fit eight
+columns. On a phone the page scrolled vertically while `.gridwrap` did not, so
+the column heads had nothing to stick to and scrolled away (Rafael, 26 Sep
+2026). Under 900px, `.app:has(.gridwrap)` becomes a fixed-height shell and
+`.gridwrap` scrolls in both directions, so the heads hold at the top and the
+week column at the left — you need both to read a cell. `100dvh`, not `100vh`:
+a phone browser's toolbars collapse as you scroll and `100vh` is the tall
+figure, which would push the last week under the fold.
+
 **Light is the default theme.** Rafael's Windows is in dark mode and he asked
 for light regardless (13 Sep 2026), so with no stored choice `index.html`
 stamps `data-theme="light"`. The toggle cycles light → dark → auto, where auto
@@ -263,9 +288,14 @@ holds Seneca's eight syllabi (one of them pulled from behind Rafael's student
 login), his handouts, his integrity certificate with his name on it, his marks
 and his notes. So `build_static.py` **names the files it copies** rather than
 copying a folder and excluding things. Never invert that. `grades`, `cases`,
-`notes` and `syllabi` ship as **empty arrays**, not as missing keys — the
-sidebar counts read `.length` off each on first paint, so dropping them killed
-the published page before its first render. That is also why `dist/` is deleted
+`notes`, `syllabi` **and `progress`** ship as **empty arrays**, not as missing
+keys — the sidebar counts read `.length` off each on first paint, so dropping
+them killed the published page before its first render. `progress` joined them
+on 26 Sep 2026: the site is meant to be usable by other people, and a stranger
+opening it should neither find somebody else's reading already crossed off nor
+be able to see what he has read. It is not in the file at all, not merely
+hidden. The cost is that his phone and his laptop keep separate lists, which is
+the honest trade for having no server. That is also why `dist/` is deleted
 and rebuilt rather than written into: a file that stopped being published has
 to stop being served.
 
@@ -428,6 +458,13 @@ reasonable in a stylesheet; re-measure before undoing any of them.
   click anywhere is one row in `progress.csv` and every view agrees. The
   grid restyles the chip (`.gcell .chch`); it does not have its own. A
   re-render also puts back the grid's sideways scroll, not only `scrollY`.
+- **A closure only earns a band if it shuts a class.** Both of this term's
+  fall on a Monday — Labour Day and Thanksgiving — and Rafael has no Monday
+  class, so they were two rows of the calendar saying nothing (his call,
+  26 Sep 2026). The test is derived from `data/timetable.csv`, not hardcoded to
+  "not Monday", so a band returns by itself if a Monday class ever appears; and
+  if that file is ever empty, every closure shows, because silence is the wrong
+  default here. The drop-deadline and grades-released bands are unaffected.
 - **A grid cell reads graded items first**, then the chapter chips, then the
   LSO line, then any "check" flag. Rafael asked for the assessments on top
   (17 Sep 2026): they are what matters most in a week.
