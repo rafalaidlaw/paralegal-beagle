@@ -656,6 +656,21 @@ check("the phone calendar is a list, not the eight-column grid",
   cal.grid === 0 && cal.rows > 0, cal);
 check("the week strip carries the whole term", cal.strip === cal.weeks, cal);
 check("the same tick chips are in it", cal.chips > 0, cal);
+// The mock names each course the way Rafael does. A 412px row spent two lines
+// on "Introduction to the Legal System for Paralegals", most of it on the word
+// "Paralegals", on a screen where every course is a paralegal course.
+const names = await evalJs(`JSON.stringify({
+  phone: [...document.querySelectorAll('.calrow .who b')].map(e => e.textContent.trim()),
+  full: D.courses.map(c => c.name)
+})`);
+const nm2 = JSON.parse(names.v);
+/* Not "differs from the full name" -- LGL225's syllabus title really is
+   "Immigration Law" and there is nothing to shorten. The test is that the long
+   ones got shorter, and nothing arrives trailing "for Paralegals". */
+check("the phone calendar uses the short course names",
+  nm2.phone.length > 0 && nm2.phone.every((n) => !/ for Paralegals$/.test(n)), nm2.phone);
+check("and courses.csv still holds the syllabus's own titles",
+  nm2.full.some((n) => /for Paralegals$/.test(n)), nm2.full.slice(0, 2));
 
 // The sub-header holds while the week's classes scroll past it.
 const stick = await evalJs(`(() => {
@@ -695,6 +710,13 @@ const phoneTT = await evalJs(`JSON.stringify({
   next: document.querySelectorAll('.ttb.next').length
 })`);
 const pt = JSON.parse(phoneTT.v);
+// the button must name the theme actually on the screen, not the stored one
+const lbl = await evalJs(`JSON.stringify({
+  attr: document.documentElement.dataset.theme || "(none)",
+  btn: document.querySelector('#theme').textContent.trim() })`);
+const lb = JSON.parse(lbl.v);
+check("the theme button names the theme on screen",
+  lb.attr === "(none)" || new RegExp(lb.attr, "i").test(lb.btn), lb);
 check("the phone timetable is a day list, not the chart",
   pt.chart === 0 && pt.days === 4 && pt.blocks === 11, pt);
 check("exactly one block is flagged as next", pt.next === 1, pt);

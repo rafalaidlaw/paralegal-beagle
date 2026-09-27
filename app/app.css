@@ -343,6 +343,7 @@ a.course-pill:hover { border-color: var(--accent); color: var(--ink); }
 }
 .card.next { border-left-color: var(--accent); }
 .card .days { display: flex; align-items: baseline; gap: 7px; }
+.card .days .wt { display: none; }      /* phone only -- see the 900px block */
 .card .days b { font: 700 44px/.85 var(--sans); letter-spacing: -.04em; }
 .card.next .days b { color: var(--accent); }
 .card .days span { font: 700 12px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); }
@@ -844,6 +845,15 @@ details > summary:hover { color: var(--accent-text); }
   .split > aside { border-left: 0; border-top: 2px solid var(--rule); }
   .card { border-right: 0; }
   .card + .card { border-top: 1px solid var(--line); }
+  /* the mock puts the weight opposite the countdown, where the two figures
+     that decide whether to start tonight can be read together */
+  .card .days { width: 100%; }
+  .card .days .wt { display: block; margin-left: auto; font: 700 15px var(--mono); }
+  .card.hot .days .wt, .card .days .wt { color: var(--ink); }
+  .card[data-c] .days .wt { color: inherit; }
+  .lead { padding: 16px var(--secpad) 18px; }
+  .lead p { margin: 6px 0 0; font-size: 19px; line-height: 1.3; font-weight: 700; letter-spacing: -.012em; max-width: none; }
+  .lead p.allowed { margin-top: 8px; font-size: 13.5px; font-weight: 400; color: var(--ink2); letter-spacing: 0; }
   .citems { padding-left: var(--secpad); }
   .stats { gap: 1px; background: var(--line); }
   .stats .stat { background: var(--surf); border-right: 0; }

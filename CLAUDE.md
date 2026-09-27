@@ -332,6 +332,24 @@ for the space the name needed. `NAV_SHORT` narrows "Weekly Calendar" to
 one place the full names are written, `LONG_NAV` reads them from it at startup,
 and a rotated phone puts them back.
 
+**The phone calls each course what Rafael calls it.** `SHORT_NAME` in
+`app.js` — "Intro to the Legal System", "Legal Drafting" — used by the phone
+calendar and the phone timetable. A 412px row spent two of its lines on
+"Introduction to the Legal System for Paralegals", most of that on the word
+"Paralegals", on a screen where every course is a paralegal course. It lives in
+`app.js` and **not** in `data/courses.csv` for the same reason `WEEK_ORDER`
+does: that file holds what the syllabus says, and a display name is a
+preference. `name` stays the syllabus's own title and is what the desktop
+shows. A course missing from the map falls back to its full name — LGL225's
+title really is "Immigration Law", so its short name is the same string, and a
+test that asserted "short differs from full" was wrong about that.
+
+**`currentTheme()` reads the ATTRIBUTE first, then the stored value.** They
+agree in ordinary use, but `?theme=` sets the attribute without storing
+anything, so every screenshot the tools took of a dark page had a button on it
+saying "Light". Fixed 27 Sep 2026; `interact.mjs` asserts the button names the
+theme actually on screen.
+
 **Four things in the design were deliberately not built** (Rafael, 27 Sep
 2026): a "deadlines only" filter, the dashed "dated only to a week" band, a
 fortnight horizon on Upcoming, and the Timetable's stats strip. Each is

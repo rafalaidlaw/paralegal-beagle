@@ -270,7 +270,16 @@ async function post(path, body) {
    light regardless, so "auto" (follow Windows) is a choice, not the start. */
 const THEMES = ["light", "dark", "auto"];
 const THEME_LABEL = { light: "☀ Light", dark: "☾ Dark", auto: "◐ Auto" };
-function currentTheme() { const t = LS.get("beagle-theme"); return THEMES.includes(t) ? t : "light"; }
+/* The attribute wins over the stored value. They agree in ordinary use, but
+   ?theme= sets the attribute without storing anything -- so the screenshot
+   tools were photographing a dark page with a button that said "Light", and
+   every one of those images has been slightly lying. */
+function currentTheme() {
+  const a = root() && root().dataset.theme;
+  if (THEMES.includes(a)) return a;
+  const t = LS.get("beagle-theme");
+  return THEMES.includes(t) ? t : "light";
+}
 /* Three states on a desktop: light, dark, follow-Windows. TWO on a phone, and
    that is a fix rather than a simplification. "Auto" renders identically to
    whichever the device is already set to, so on a phone set to dark the step
@@ -353,6 +362,27 @@ function classesLeft() {
    its place; a tab bar is for getting somewhere), and the name shortens. The
    long name stays in index.html and on the desktop sidebar -- this is a
    narrowing, not a rename, and #grid is still the route. */
+/* The names Rafael calls these courses, taken from his mobile design canvas.
+   A phone row is 412px wide and "Introduction to the Legal System for
+   Paralegals" wraps to two lines in it, which is most of the row spent on the
+   word "Paralegals" -- on a screen where every course is a paralegal course.
+
+   Here and not in data/courses.csv, for the same reason WEEK_ORDER is here:
+   that file holds what the syllabus says, and a display name is a preference.
+   `name` stays the syllabus's own title and is what the desktop shows. A
+   course missing from this map falls back to its full name. */
+const SHORT_NAME = {
+  LGL151: "Intro to the Legal System",
+  LGL152: "Contracts and Torts",
+  LGL153: "Legal Entities",
+  LGL154: "Computer Applications I",
+  LGL156: "Administrative Law",
+  LGL160: "Legal Drafting",
+  LGL225: "Immigration Law",
+  LGL250: "Legal Research",
+};
+const shortName = (code) => SHORT_NAME[code] || courseName(code);
+
 const NAV_SHORT = { grid: "Calendar" };
 /* Read once from the markup, so index.html stays the one place the full names
    are written and a rotated phone can put them back. */
@@ -597,13 +627,28 @@ VIEWS.week = () => {
      look like an afterthought, and in week 4 the fourth item is a 30% test.
      .cards is an auto-fit grid, so four sit across at 1440 and wrap below. */
   const three = inWeek;
+  /* The mock opens with the next graded item as a sentence, above the cards.
+     It reads as an answer rather than a heading, which is what you want from a
+     screen you have opened to ask one question. Drawn on the phone only: on a
+     desktop the first card is already large enough to be that answer, and the
+     desktop is deliberately unchanged. */
+  const first = PHONE() ? inWeek[0] : null;
+  if (first) {
+    const d = daysLeft(first);
+    h += `<section class="sec lead"><span class="lbl">Next graded item</span>
+      <p>${esc(first.course)} ${nm(first.name)}${first.weight_pct ? `, ${first.weight_pct}%` : ""} — ${whenLabel(first)}.
+        ${dMin(first) > 0 ? `${cap(words(d))} day${d === 1 ? "" : "s"} left.` : "Its week is running now."}</p>
+      ${first.materials_allowed ? `<p class="allowed">Allowed in: ${esc(first.materials_allowed)}.</p>` : ""}
+    </section>`;
+  }
   h += `<section class="sec"><span class="lbl">${inWeek.length
       ? `${cap(words(inWeek.length))} due in week ${wk} — ${weekRange(wk)}`
       : `Nothing graded in week ${wk} — ${weekRange(wk)}`}</span>
     <div class="cards">${three.map((a, n) => {
       const c = countdown(a);
       return `<div class="card ${n === 0 ? "next" : ""}" data-c="${esc(a.course)}" data-sheet="${esc(a.id)}">
-        <div class="days"><b>${c.n}</b><span>${c.word}</span></div>
+        <div class="days"><b>${c.n}</b><span>${c.word}</span>
+          <b class="wt">${a.weight_pct ? a.weight_pct + "%" : "—"}</b></div>
         <div class="who">${pill(a.course)} ${typeWord(a.type)}</div>
         <div class="name">${nm(a.name)}</div>
         <div class="course">${esc(courseName(a.course))}</div>
@@ -847,7 +892,7 @@ function gridPhone() {
     const hot = mine.some((a) => a.type === "exam" || a.type === "test");
     return `<article class="calrow ${hot ? "hot" : ""}" data-c="${esc(r.course)}">
       <div class="head">
-        <div class="who"><b>${esc(courseName(r.course))}</b><span class="code">${esc(r.course)}</span></div>
+        <div class="who"><b>${esc(shortName(r.course))}</b><span class="code">${esc(r.course)}</span></div>
         <span class="when">${esc(fmt(r.class_date))}</span>
       </div>
       ${mine.map((a) => `<div class="dueline"><button class="tag ${esc(a.type)}" data-sheet="${esc(a.id)}">${nm(a.name)}${weightTag(a) ? ` <b>${weightTag(a)}</b>` : ""}</button></div>`).join("")}
@@ -1005,7 +1050,7 @@ function timetablePhone() {
           <div class="what">
             ${isNext ? `<span class="nextflag">Next class</span>` : ""}
             <div class="row1"><span class="dot"></span><span class="code">${esc(t.course)}</span></div>
-            <b class="nm">${esc(courseName(t.course))}</b>
+            <b class="nm">${esc(shortName(t.course))}</b>
             <span class="where">${t.mode === "online" ? "Online" : esc(t.room || "In person")}</span>
             <span class="meta">Class ${esc(t.class_nbr)}${t.end ? ` · ${len}` : ""}</span>
           </div>
