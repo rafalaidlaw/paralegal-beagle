@@ -482,16 +482,22 @@ check("Upcoming does not list what has already happened", gone.v === false, gone
 const dlLinks = await evalJs(`document.querySelectorAll('a[href="#deadlines"], a[href^="#deadlines/"]').length`);
 check("nothing on Upcoming links to the hidden Deadlines screen", dlLinks.v === 0, dlLinks.v);
 const upRows = await evalJs(`JSON.stringify({
-  rows: document.querySelectorAll('.uprow').length,
-  links: document.querySelectorAll('a.uprow').length,
-  names: [...document.querySelectorAll('.uprow .course')].map(e => e.textContent.trim()).slice(0, 2),
-  shown: document.querySelectorAll('.card:not(.quiet-week) .name, .uprow .what b').length,
-  quiet: document.querySelectorAll('.card.quiet-week').length
+  links: document.querySelectorAll('#view a[href^="#deadlines"], #view a[href^="#courses"]').length,
+  codes: [...document.querySelectorAll('.card:not(.quiet-week) .who .course-pill')].map(e => e.textContent.trim()),
+  names: [...document.querySelectorAll('.card:not(.quiet-week) .course')].map(e => e.textContent.trim()),
+  shown: document.querySelectorAll('.card:not(.quiet-week) .name').length,
+  quiet: document.querySelectorAll('.card.quiet-week').length,
+  bands: document.querySelectorAll('.weekband, .upnext').length
 })`);
 const ur = JSON.parse(upRows.v);
-check("every row is a plain row, not a link to a hidden screen", ur.links === 0, ur);
-check("each row names its course in full",
-  (ur.names || []).every((n) => /^LGL\d{3} · .+/.test(n)), ur.names);
+check("nothing on Upcoming links to a screen that is not shown", ur.links === 0, ur);
+// Every item of the week is a card now -- no list beneath, and no dashed band
+// about week-precision dates (both went 26 Sep 2026).
+check("the week's items are all cards, with no list or band beneath",
+  ur.bands === 0, ur);
+check("each card names its course by code and in full",
+  ur.codes.length === ur.shown && ur.codes.every((c) => /^LGL\d{3}$/.test(c))
+  && ur.names.length === ur.shown && ur.names.every((n) => n.length > 6), ur);
 
 // Upcoming's horizon is the week it names -- the five business days of it --
 // not a rolling 7 or 14 days from today (Rafael, 26 Sep 2026). So what is on

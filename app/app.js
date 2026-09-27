@@ -425,7 +425,11 @@ VIEWS.week = () => {
      the week-window bug, and it is worth keeping true on purpose. */
   const inWeek = dueSorted().filter((a) => a.week_no === wk && !isOverdue(a));
   const beyond = dueSorted().find((a) => !isOverdue(a) && a.week_no > wk);
-  const three = inWeek.slice(0, 3);
+  /* EVERY item of the week gets a card (Rafael, 26 Sep 2026), not the nearest
+     three with the remainder in a list beneath. The list made the fourth item
+     look like an afterthought, and in week 4 the fourth item is a 30% test.
+     .cards is an auto-fit grid, so four sit across at 1440 and wrap below. */
+  const three = inWeek;
   h += `<section class="sec"><span class="lbl">${inWeek.length
       ? `${cap(words(inWeek.length))} due in week ${wk} — ${weekRange(wk)}`
       : `Nothing graded in week ${wk} — ${weekRange(wk)}`}</span>
@@ -449,21 +453,9 @@ VIEWS.week = () => {
      that hides a 30% test six days out is not doing its job (Rafael caught
      exactly that on 26 Sep 2026). Nothing is summarised into a count here --
      that count was the hiding place. */
-  const rest = inWeek.slice(3);
-  if (rest.length) {
-    const dlOn = isShown("deadlines");
-    h += `<section class="sec"><span class="lbl">Also in week ${wk}</span>
-      <div class="upnext">${rest.map((a) => `<${dlOn ? "a" : "div"} class="uprow" ${dlOn ? `href="#deadlines"` : ""} data-c="${esc(a.course)}">
-        <span class="when"><b>${daysLeft(a)}</b> ${daysLeft(a) === 1 ? "day" : "days"}</span>
-        <span class="what"><b>${nm(a.name)}</b><span class="course">${esc(a.course)} · ${esc(courseName(a.course))}</span></span>
-        <span class="tag ${esc(a.type)}">${esc(a.type)}</span>
-        <span class="date">${whenLabel(a)}</span>
-        <span class="wt">${a.weight_pct ? a.weight_pct + "%" : "—"}</span></${dlOn ? "a" : "div"}>`).join("")}</div>
-      <div class="note">${dlOn
-        ? `<a href="#deadlines">See every deadline</a> for the rest of the term.`
-        : `Looking further ahead? Step to the next week, or the <a href="#grid">Weekly Calendar</a> has the whole term at once.`}</div>
-    </section>`;
-  }
+  /* A ".upnext" list of everything past the third card stood here from
+     26 Sep 2026 until later the same day, when the cards took the whole week.
+     Its .uprow styles stay in app.css for whatever wants a dense list next. */
 
   /* The "Already happened" callout stood here until 26 Sep 2026. This screen
      is about what is next, and a list of what Rafael has already sat was the
@@ -476,17 +468,14 @@ VIEWS.week = () => {
      in a .callout here, keeping the note that a week-dated item is not late
      while its own week is still running. */
 
-  /* ---- the week band: items the syllabus dates only to a week ------ */
-  const band = D.assessments.filter((a) => a.week_no === wk && a.date_precision !== "exact");
-  if (band.length) {
-    h += `<div class="weekband" style="margin-top:16px"><span class="lbl">The syllabus gives a week, not a day</span>
-      ${band.map((a) => `<div class="wbrow">${pill(a.course)} ${typeWord(a.type)} <b>${nm(a.name)}</b>
-        <span class="quiet">${esc(courseName(a.course))}</span>
-        <span>${a.weight_pct ? a.weight_pct + "%" : ""}</span>
-        <div class="quiet" style="flex:1 1 100%">${esc(a.due_date_raw)}${a.note ? " — " + esc(a.note) : ""}</div></div>`).join("")}
-      <div class="quiet" style="margin-top:6px">Filing these on a Monday would be a guess. Confirm the day in class, then correct
-        <code>data/assessments.csv</code> and note who told you in <code>data/changes.md</code>.</div></div>`;
-  }
+  /* The dashed "The syllabus gives a week, not a day" band stood here until
+     26 Sep 2026. Its advice was "confirm the day in class, then correct
+     assessments.csv and note who told you" -- and once Rafael does that, which
+     is how LGL152's midterm got its Friday, the band has nothing left to say
+     but the same sentence on every visit. The fact itself is not lost: a
+     week-precision card still reads "week of Mon 28 Sept" rather than a day,
+     which is the honest label and the reason the two horizons exist at all.
+     .weekband and .wbrow stay in app.css. */
 
   /* ---- readings beside the runway --------------------------------- */
   const reads = D.readings.filter((r) => r.week_no === wk);

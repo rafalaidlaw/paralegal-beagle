@@ -343,3 +343,35 @@ five business days of the week it is standing in, selected by `week_no` — the
 same number the Weekly Calendar places by, so the two screens now agree by
 construction rather than by coincidence. Rafael asked for this on 26 Sep 2026,
 the same day comparing those two screens found the week-window bug above.
+
+
+## 2026-09-26 — LGL152 Midterm Test #1 dated to Fri 2 Oct
+
+| field | old | new |
+|---|---|---|
+| due_date | *(empty)* | **2026-10-02** |
+| date_precision | week | **exact** |
+| source_file | LGL152 | `announced` |
+
+**Authority:** Rafael, 26 Sep 2026 — "torts class is on friday before legal
+entities". This is two things he had already given, read together rather than a
+new fact: the syllabus says "MIDTERM TEST #1 (30%); Chapters 9-12; During in
+person class -- week of 10/1", and his enrolment listing puts LGL152 in person
+on Fridays at 09:50 in A-A3518. Friday of the week of 10/1 is **2 Oct**.
+
+`source_file: announced` because 2 Oct is not an LGL152 row in `schedule.csv` —
+that file still follows the NPE syllabus's Thursdays, and is not being re-dated
+until the section question is settled. The cost of `announced` is that
+`validate.py` stops checking the 30% against the syllabus row; the weight is
+unchanged and LGL152 still sums to 100.
+
+**This settles open question 5.** LGL152's midterm and LGL153's Test 1 are both
+Fri 2 Oct — the midterm at 09:50, the test at 13:30. Not a clash, but a heavy
+day: 60% of two courses in one afternoon.
+
+**Still open, and larger:** fifteen other week-precision items could be resolved
+the same way, by reading each course's syllabus wording against
+`data/timetable.csv`. Not done, for the reason recorded on 25 Sep: LGL151,
+LGL152 and LGL156 are the courses whose syllabi describe sections he is not
+enrolled in, so their meeting days cannot be trusted wholesale. Doing them one
+at a time as Rafael confirms them — as here — is the safe path.

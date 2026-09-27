@@ -185,13 +185,22 @@ for. Items are selected by `week_no`, which is also what the Weekly Calendar
 places by — so the two screens agree **by construction**. Keep that true: it is
 what let him catch the week-window bug by comparing them.
 
-**Upcoming shows everything in that week, not a count of it.** Three cards
-carry the nearest items large, then `.upnext` lists the rest with course code,
-full course name, type, date and weight. Rafael caught an earlier version
-hiding LGL153's 30% test six days out behind the words "seven more inside the
-fortnight" — a count is a hiding place. A week with nothing graded in it shows
-one `.card.quiet-week` naming the next item beyond, rather than going blank.
-Every graded item on this screen names its course in full as well as by code.
+**Every item of that week gets a card** — not the nearest three with the rest
+in a list beneath (26 Sep 2026). The list made the fourth item read as an
+afterthought, and in week 4 the fourth item is a 30% test. Rafael had already
+caught an earlier version hiding that same test behind the words "seven more
+inside the fortnight": **a count is a hiding place**, and so is a smaller row.
+`.cards` is an auto-fit grid, four across at 1440, wrapping below. A week with
+nothing graded shows one `.card.quiet-week` naming the next item beyond rather
+than going blank. Every card names its course in full as well as by code.
+
+Two advisory bands went at the same time. The `.upnext` list had nothing left to
+list. The dashed **"The syllabus gives a week, not a day"** band told him to
+confirm the day in class and correct the CSV — and once he does, which is how
+LGL152's midterm got its Friday, it has only that same sentence left to repeat.
+The fact is not lost: a week-precision card still reads "week of Mon 28 Sept"
+instead of a day. `.upnext`, `.uprow`, `.weekband` and `.wbrow` all stay in
+`app.css`.
 
 **Upcoming rolls forward at the weekend.** Classes run Mon–Fri, so from
 Saturday the week you are standing in has nothing left to prepare for:
@@ -491,7 +500,10 @@ Tracked in the **Review** tab and `data/changes.md`:
    presentations (10%) and says "see and follow instructions".
 3. **LGL156 and LGL250 both list Thu 9:50–10:40 online.** Real clash, or alternating?
 4. **LGL151 lists a class on Mon 12 Oct**, which is Thanksgiving.
-5. **LGL152 Midterm #1 and LGL153 Test 1 both land Fri 2 Oct.**
+5. ~~**LGL152 Midterm #1 and LGL153 Test 1 both land Fri 2 Oct.**~~ Settled
+   by Rafael, 26 Sep 2026: his LGL152 class is the Friday, before LGL153. Both
+   stand, same day — the midterm at 09:50, the test at 13:30. LGL152-A01 is
+   dated exactly now; see `data/changes.md`.
 6. **Textbooks unnamed** for LGL151, LGL152, LGL153. LGL152 almost certainly uses
    **two** books — contracts ch. 9–17 and torts ch. 1–8, numbering restarts.
 
