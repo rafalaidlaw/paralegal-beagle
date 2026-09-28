@@ -8,14 +8,27 @@ shots/
 # the raw Claude Design export; its useful parts live in reference/claude-design/
 Paralegal Study Website Redesign.zip
 
-# Rafael's own coursework. This repo is the SCHEDULE and the things the schedule
-# is derived from; his answers to an assignment are neither, and they were
-# pushed once by mistake on 28 Sep 2026 (his words: "it should never have been
-# pushed... we don't want anything online that isn't related directly to the
-# schedule we've built"). The files stay on disk and style_docx.py still works
-# on them -- they are simply not this repo's business.
+# ---------------------------------------------------------------------------
+# THE SOURCE DOCUMENTS STAY OFF THE REPO.  Rafael, 28 Sep 2026: "the actual pdf
+# documents we got the syllabus information from, those documents should stay
+# offline", and "we don't want anything online that isn't related directly to
+# the schedule we've built".
+#
+# They were in the repo from the first commit and were removed from its whole
+# history that day. They are all still on disk and nothing about running the app
+# needs them: the PDFs were the INPUT to a process that has already run, and
+# data/*.csv is the output and the source of truth.
+#
+# What stays tracked, and why:
+#   build/*.rows.json   validate.py rule 8 reads it to match every schedule row
+#                       against its own row in the source table. Processed data,
+#                       not a document. Do not add it here.
+#   reference/claude-design*/   the app's own design export, not a course file.
 #
 # The test for anything new: is it a fact about WHEN something is due, or a
-# source the schedule was extracted from? If not, it does not go in.
-Immigration ToolKit*.docx
-*Toolkit Answers*
+# derived file the app or its checks read?  If not, it does not go in.
+# ---------------------------------------------------------------------------
+syllabi/
+handouts/
+reference/2026-09-11_integrity-in-action.pdf
+build/*.txt
