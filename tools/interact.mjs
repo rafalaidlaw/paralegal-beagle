@@ -664,6 +664,24 @@ check("the phone calendar is a list, not the eight-column grid",
   cal.grid === 0 && cal.rows > 0, cal);
 check("the week strip carries the whole term", cal.strip === cal.weeks, cal);
 check("the same tick chips are in it", cal.chips > 0, cal);
+
+/* The strip does not rank the weeks by how heavy they are (Rafael, 28 Sep
+   2026). Asserted two ways, because the tint could come back as either an
+   inline background or a rule: no cell carries a style attribute, and every
+   cell that is not a study week paints the same background. .now and .on are
+   left alone -- they say where you are, not how bad it is. */
+const heat = await evalJs(`JSON.stringify((() => {
+  const cells = [...document.querySelectorAll('.calcell')];
+  const plain = cells.filter(c => !c.classList.contains('brk'));
+  return {
+    styled: cells.filter(c => c.getAttribute('style')).length,
+    backgrounds: [...new Set(plain.map(c => getComputedStyle(c).backgroundColor))],
+    cells: cells.length
+  };
+})())`);
+const ht = JSON.parse(heat.v);
+check("the week strip does not tint the weeks by difficulty",
+  ht.styled === 0 && ht.backgrounds.length === 1, ht);
 // The mock names each course the way Rafael does. A 412px row spent two lines
 // on "Introduction to the Legal System for Paralegals", most of it on the word
 // "Paralegals", on a screen where every course is a paralegal course.

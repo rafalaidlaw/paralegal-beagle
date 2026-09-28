@@ -7,3 +7,15 @@ shots/
 
 # the raw Claude Design export; its useful parts live in reference/claude-design/
 Paralegal Study Website Redesign.zip
+
+# Rafael's own coursework. This repo is the SCHEDULE and the things the schedule
+# is derived from; his answers to an assignment are neither, and they were
+# pushed once by mistake on 28 Sep 2026 (his words: "it should never have been
+# pushed... we don't want anything online that isn't related directly to the
+# schedule we've built"). The files stay on disk and style_docx.py still works
+# on them -- they are simply not this repo's business.
+#
+# The test for anything new: is it a fact about WHEN something is due, or a
+# source the schedule was extracted from? If not, it does not go in.
+Immigration ToolKit*.docx
+*Toolkit Answers*

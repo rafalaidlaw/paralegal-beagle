@@ -874,8 +874,8 @@ function deadlineRow(a, isNext, extra) {
    from any week he happens to be standing in. */
 function gridPhone() {
   const wk = shownWeek(), nowWk = nowWeek(), last = LAST_WEEK(), prog = progressMap();
+  /* For the week list and isBreak only -- the strip no longer reads .load. */
   const loads = crunchWeeks();
-  const max = Math.max(...loads.map((x) => x.load), 1);
   const mon = weekMonday(wk);
   /* WEEK_ORDER, the same order the desktop's eight columns run in, so the
      list reads top-to-bottom exactly as the grid reads left-to-right (Rafael,
@@ -911,10 +911,17 @@ function gridPhone() {
     </div>
     <div class="calstrip">${loads.map((x) => {
       const on = x.w === wk, isNow = x.w === nowWk;
-      const mix = x.isBreak ? 0 : Math.min(40, Math.round((x.load / max) * 40));
+      /* No tint by how heavy the week is (Rafael, 28 Sep 2026). The strip is
+         how you get to a week, and fifteen cells in fifteen shades of red made
+         every week look like a warning -- the same mistake as drawing 27
+         unstated scopes in --hot. Red is left saying exactly two things here,
+         both about WHERE you are rather than how bad it is: .now underlines
+         the current week, .on boxes the week on screen. The load figures are
+         not lost, they are on the Crunch screen, which is what that screen is
+         for. crunchWeeks() is still the source of the week list and of
+         isBreak, and This Week's runway still uses its numbers. */
       return `<button class="calcell ${on ? "on" : ""} ${isNow ? "now" : ""} ${x.isBreak ? "brk" : ""}" data-calweek="${x.w}"
-        style="${x.isBreak ? "" : `background:color-mix(in srgb, var(--accent) ${mix}%, var(--surf))`}"
-        aria-label="Week ${x.w}${x.isBreak ? ", study week" : `, ${x.load}% of your grade`}">${x.w}</button>`;
+        aria-label="Week ${x.w}${x.isBreak ? ", study week" : ""}">${x.w}</button>`;
     }).join("")}</div>
     ${wk !== nowWk ? `<div class="calback"><button id="cal-today" class="ghost">Back to ${rolledForward() ? "the week ahead" : "this week"}</button></div>` : ""}
   </div>`;

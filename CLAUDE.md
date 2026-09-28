@@ -22,6 +22,38 @@ After ANY change to `data/`, run:
 python validate.py          # must exit 0
 ```
 
+## The source documents stay OFF the repo
+
+**No syllabus, handout, certificate or piece of Rafael's coursework goes into
+git.** They live in `syllabi/`, `handouts/` and `reference/` on his machine and
+are listed in `.gitignore`; they were in the repo until 28 Sep 2026 and were
+removed from its whole history that day, at his instruction — "the actual pdf
+documents we got the syllabus information from, those documents should stay
+offline", and "we don't want anything online that isn't related directly to the
+schedule we've built".
+
+The reasoning is the project's own: **the PDFs were the input to a process that
+has already run.** `data/*.csv` is the source of truth and the syllabi are how
+it was typed up once. One of them was pulled from behind his student login, one
+is an open-badge certificate with his name on it, and his coursework answers are
+his to hand in — none of that is a fact about when something is due.
+
+What this costs, and it is worth knowing before someone is surprised by it:
+
+- **`extract.py` cannot run from a fresh clone.** It needs the PDFs, which only
+  exist on Rafael's machine. That is fine — extraction is a once-per-syllabus
+  job, not part of running the app.
+- **`build/*.rows.json` STAYS**, and must. `validate.py` rule 8 reads it to match
+  every schedule row against its own row in the source table — the check that
+  catches an item filed on the wrong week. It is processed data, not a document.
+  The `build/*.txt` flattened dumps went with the PDFs: nothing reads them, and
+  this file already says never to go back to flattened text.
+- **`reference/claude-design*/` stays.** That is the app's own design export, not
+  a course document.
+
+The test for anything new: **is it a fact about when something is due, or a
+derived file the app or its checks read?** If not, it does not go in.
+
 ## Do not do these things
 
 - **Never auto-normalise assessment weights to 100%.** A course whose weights
@@ -84,6 +116,10 @@ pip install pdfplumber      # needed by extract.py and validate.py only
 python extract.py           # syllabi/ -> build/*.rows.json  (+ .txt for reading)
 python validate.py
 ```
+
+**This only runs on Rafael's machine.** `syllabi/` is not in the repo (see above),
+so a clone has `build/*.rows.json` but not the PDFs they came from. Nothing about
+running or checking the app needs them; re-extraction does.
 
 `validate.py` checks the DATA. For anything about the interface, see
 `tools/README.md` — it lists the six checks and the order to run them in.
@@ -278,7 +314,20 @@ rotating a phone mid-week is a real thing.
   is the wrong artefact, not a layout problem. What survives is what a grid cell
   holds: course, day, anything graded, topic, and `chapterChip()` keyed exactly
   as everywhere else, so one tick is still one row in `progress.csv`. Above it,
-  a strip of one cell per week tinted by the share of his grade falling in it.
+  a strip of one cell per week, **all the same colour**. It used to be tinted by
+  the share of his grade falling in each week, and that went on 28 Sep 2026 at
+  Rafael's request: fifteen shades of red across fifteen cells made every week
+  read as a warning, which is the same mistake as drawing 27 unstated scopes in
+  `--hot`. The strip's job is getting to a week, not ranking them. Red is left
+  saying exactly two things there, both about WHERE you are rather than how bad
+  it is — `.now` underlines the current week, `.on` boxes the week on screen —
+  and the aria-label dropped its "N% of your grade" with the tint, because a
+  screen reader should not describe an encoding that is no longer drawn. The
+  load figures are not lost: they are the Crunch screen's whole subject, and
+  This Week's runway still reads `crunchWeeks()`, which still supplies the week
+  list and `isBreak` here. `interact.mjs` asserts no cell carries an inline
+  style and that every non-study week paints the same background, so the tint
+  cannot return as either an inline background or a rule.
   **The list runs down in `WEEK_ORDER`, the same order the desktop's columns run
   across** (Rafael, 28 Sep 2026) — LGL156, LGL151, LGL250, LGL225, LGL154,
   LGL160, LGL152, LGL153. It was sorted by class date, which looked reasonable
@@ -420,9 +469,10 @@ build command blank, publish directory `dist`.
 site just shows last week quietly.
 
 **A Netlify URL is public to anyone who guesses it.** The repo is private and
-holds Seneca's eight syllabi (one of them pulled from behind Rafael's student
-login), his handouts, his integrity certificate with his name on it, his marks
-and his notes. So `build_static.py` **names the files it copies** rather than
+holds his marks and his notes. (The syllabi, handouts and certificate were
+taken out of the repo entirely on 28 Sep 2026 — see the top of this file — so
+the danger is smaller than it was, but the rule below is what kept them off the
+SITE even while they were in the repo, and it is still the rule.) So `build_static.py` **names the files it copies** rather than
 copying a folder and excluding things. Never invert that. `grades`, `cases`,
 `notes`, `syllabi` **and `progress`** ship as **empty arrays**, not as missing
 keys — the sidebar counts read `.length` off each on first paint, so dropping
@@ -473,6 +523,78 @@ folder itself on its own port, so it never needs 8787 free.
 with no asset route. So **no font file, image or SVG can be added without
 changing the server**, which is why the type uses only faces installed on
 Windows 11.
+
+## `style_docx.py` — the app's look on a Word document
+
+A utility, not part of the app. It puts the app's light theme onto any Word
+document Rafael writes for a course, so his own work reads the way his tracker
+does. **The documents themselves are not in this repo and must not be** — see
+the top of this file. It is the tool that is version-controlled, never its
+input or its output.
+
+    python style_docx.py "<a document>.docx" --report     # classify, write nothing
+    python style_docx.py "<a document>.docx"              # writes "<name> - styled.docx"
+    python style_docx.py "<a document>.docx" --google     # Archivo, for Google Docs
+
+Written for a document shaped as headings, short `Label:` lines and quoted
+source text; `--report` prints how it classified every paragraph, which is the
+thing to read before trusting the output on a new document.
+
+Reads the palette out of `app/app.css`'s light `:root`, so the document cannot
+drift from the app. **The input is never modified** — "Raw" stays raw, and
+re-running after he edits it is always safe. What was learned doing it:
+
+- **`extract.py` will not touch a new document.** That file maps course codes to
+  exact filenames instead of globbing `syllabi/*`, for the reason its own comment
+  gives, so dropping something into that folder is inert.
+- **A paragraph with no text is not necessarily blank.** 22 of them are Google
+  Docs horizontal rules — `<w:pict><v:rect o:hr="t">` — invisible to `.text`
+  and very visible on the page. Styling a heading with a rule above it drew a
+  second line beside each of those. `KEEP_SOURCE_RULES` picks one or the other;
+  never both.
+- **`Paragraph.runs` does not see a hyperlink's runs, but `Paragraph.text`
+  does.** 33 paragraphs hold real hyperlinks (66 `w:hyperlink` elements), so
+  rebuilding a paragraph from its `.text` and writing it back printed every URL
+  twice. Nothing in the script rebuilds text: runs are restyled where they sit,
+  which also keeps the links clickable.
+- **Styling changes how text looks and never what it says.** An early version
+  matched `":\s*"` on a label and reassembled the paragraph, silently deleting
+  the colon from 92 of them. The check that catches this is comparing every
+  paragraph's text against the source — it must come out identical.
+- **`w:pPr`, `w:pBdr` and `w:rPr` are ordered sequences.** Appending to them
+  gives a file Word opens but does not lay out as written. `insert_ordered()`
+  puts each element where the schema wants it.
+- **The accent is `--c-lgl225`, not `--accent`.** Red means stakes in this
+  project and a reference toolkit has none; the course's own hue is how the app
+  already tells Immigration Law apart. Red appears once, on "Important:", which
+  is Rafael's own flag, and uses `--accent-text` — the red allowed on words.
+- **Headings in Bahnschrift, body in Segoe UI**, both from the app's own
+  `--sans` chain in that order. Bahnschrift is a condensed DIN, which is right
+  for headings and chips and hard going for 26 pages of statutory prose.
+  `BODY_FACE = HEAD_FACE` makes it all Bahnschrift.
+- **It was checked by rendering it.** Word exports a PDF over PowerShell COM
+  with no extra package (`New-Object -ComObject Word.Application`), and
+  `pdfplumber` then reads back every rule position and every word's right edge
+  — which is how the duplicate rules were found and how "nothing crosses the
+  margin" is verified. Do not trust the docx XML alone; look at the page.
+- **All three faces ship with Windows 11** and resolve in Word on his machine.
+  In Google Docs, where the raw file was written, none of them do — hence
+  `--google`, which writes a second copy in **Archivo** throughout with
+  **Roboto Mono** for the URLs. Archivo is not a compromise there, it is the
+  original: the app was designed in Archivo and only uses Bahnschrift because
+  the app is offline (see `reference/claude-design/`). One face serves the whole
+  document, as `--sans` does in the app, because Archivo is a normal-width
+  grotesque rather than a condensed DIN. Two display properties do not survive
+  a Docs import — `w:caps` and character tracking — so the labels lose their
+  capitals and keep bold, grey and small, and `LABEL_PT` goes up slightly to
+  carry it. **The text is not uppercased to fake it**; that would change what
+  the document says.
+- **The Google Docs copy cannot be verified from here.** The Word render is the
+  real check on the Windows copy, but Archivo is not installed on this machine
+  and Word substitutes, so that render says nothing about how Docs will lay the
+  page out. Uploading Rafael's coursework to Google to find out is not this
+  project's call to make. What IS checked: the file opens, the text is
+  identical, the links survive, and no face is named that Docs does not have.
 
 ## The interface — where the look came from, and what was measured
 
